@@ -2,16 +2,39 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Golf Team Handicap Manager — The Rookie Golfer</title>
-<meta name="description" content="Calculate team scramble handicaps instantly. Built on the World Handicap System. Free tool for golf event organisers.">
-<meta name="theme-color" content="#0d1f15">
-<meta property="og:title" content="Golf Team Handicap Manager">
-<meta property="og:description" content="Calculate WHS team handicaps for scramble events. Supports 2–4 players per team.">
-<meta property="og:url" content="https://therookiegolfer.com">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26F3;</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<!-- Firebase compat SDKs — synchronous, no module timing issues -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- PWA core -->
+<meta name="application-name" content="TRG Team HCP">
+<meta name="theme-color" content="#0a1a10">
+<link rel="manifest" href="/player/manifest.json">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TRG Team HCP">
+<link rel="apple-touch-icon" href="/player/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/player/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/player/icons/icon-144.png">
+
+<!-- iOS splash screens (portrait iPhone sizes) -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- Android / general -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="msapplication-TileColor" content="#0a1a10">
+<meta name="msapplication-TileImage" content="/player/icons/icon-144.png">
+
+<!-- SEO / share -->
+<title>TRG Team HCP · Scramble Handicap Calculator</title>
+<meta name="description" content="Calculate WHS scramble team handicaps instantly. Free tool for golfers by The Rookie Golfer.">
+<meta property="og:title" content="TRG Team HCP">
+<meta property="og:description" content="Free WHS scramble handicap calculator for 2-player teams.">
+<meta property="og:url" content="https://therookiegolfer.com/player/">
+<meta property="og:type" content="website">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -24,1951 +47,1572 @@
     messagingSenderId: "574211331492",
     appId: "1:574211331492:web:1536d72cf2a8d9ee941d31"
   };
-
   firebase.initializeApp(firebaseConfig);
-  const _auth = firebase.auth();
-  const _db   = firebase.firestore();
+  window._fbAuth = firebase.auth();
+  window._fbDb   = firebase.firestore();
+  window._fbGoogleProvider = new firebase.auth.GoogleAuthProvider();
 
-  // ── Auth helpers exposed to global JS ──
-  window._fbAuth           = _auth;
-  window._fbGoogle         = new firebase.auth.GoogleAuthProvider();
-  window._fbSignIn         = (auth, email, pass) => _auth.signInWithEmailAndPassword(email, pass);
-  window._fbSignUp         = (auth, email, pass) => _auth.createUserWithEmailAndPassword(email, pass);
-  window._fbSignOut        = () => _auth.signOut();
-  window._fbGooglePopup    = () => _auth.signInWithPopup(window._fbGoogle);
-  window._fbUpdateProfile  = (user, data) => user.updateProfile(data);
-
-  // ── Firestore helpers ──
-  window._fbDb        = _db;
-  window._fbUpdateDoc = (ref, data) => ref.update(data);
-  window._fbDeleteDoc = (ref) => ref.delete();
-  window._fbDoc       = (db, col, id) => _db.collection(col).doc(id);
-
-  // ── Live submissions listener — filtered by organiserId ──
-  window._startSubmissionListener = function(uid) {
-    if (window._submissionUnsubscribe) window._submissionUnsubscribe();
-    window._submissionUnsubscribe = _db.collection('submissions')
-      .where('organiserId', '==', uid)
-      .onSnapshot(function(snapshot) {
-        const subs = [];
-        snapshot.forEach(function(d) { subs.push(Object.assign({ id: d.id }, d.data())); });
-        // Sort by submittedAt descending (handles both field names)
-        subs.sort(function(a, b) {
-          const ta = a.submittedAt || a.submitted || '';
-          const tb = b.submittedAt || b.submitted || '';
-          return tb.localeCompare(ta);
-        });
-        window._firestoreSubs = subs;
-        if (window._renderFirestorePending) window._renderFirestorePending();
-      }, function(err) {
-        console.error('Firestore listener error:', err.code, err.message);
-      });
-  };
-
-  window._stopSubmissionListener = function() {
-    if (window._submissionUnsubscribe) {
-      window._submissionUnsubscribe();
-      window._submissionUnsubscribe = null;
-    }
-    window._firestoreSubs = [];
-    if (window._renderFirestorePending) window._renderFirestorePending();
-  };
-
-  // ── Auth state listener ──
-  _auth.onAuthStateChanged(function(user) {
-    if (user) {
-      const name = user.displayName || user.email.split('@')[0];
-      window.completeLogin(name, user.email);
-    } else {
-      window.handleSignOut();
-    }
+  window._fbAuth.onAuthStateChanged(function(user) {
     const overlay = document.getElementById('authLoadingOverlay');
     if (overlay) overlay.style.display = 'none';
+    if (user) {
+      onSignedIn(user);
+    } else {
+      onSignedOut();
+    }
   });
 </script>
 <style>
+/* ─── TOKENS ─── */
 :root {
-  --bg: #0d1f15;
-  --surface: #132a1c;
-  --surface2: #1a3524;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --gold: #c8a84b;
-  --gold2: #e8c870;
-  --green: #4a9e6a;
-  --red: #c85a4a;
-  --blue: #4a8ec8;
-  --cream: #f0ebe0;
-  --muted: #7a9e88;
-  --white: #faf8f4;
-  --dark: #081008;
+  --bg:       #0a1a10;
+  --surface:  #111f17;
+  --surface2: #182e1e;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --gold:     #c8a84b;
+  --gold2:    #e5c96a;
+  --gold-dim: rgba(200,168,75,0.12);
+  --green:    #4a9e6a;
+  --muted:    #6a8e78;
+  --cream:    #ede8dc;
+  --white:    #f8f5ee;
+  --red:      #c85a4a;
+  --tee1:     #4a82d8;
+  --tee2:     #c8a84b;
+  --tee3:     #e08080;
+  --radius:   12px;
+  --radius-sm:8px;
 }
 
-* { margin:0; padding:0; box-sizing:border-box; }
+/* ─── RESET ─── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
 
 body {
   background: var(--bg);
   color: var(--cream);
-  font-family: 'Space Mono', monospace;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
   min-height: 100vh;
-  font-size: 16px;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
-/* Subtle fairway stripe */
+/* Fairway texture */
 body::before {
   content:'';
-  position:fixed; inset:0;
-  background: repeating-linear-gradient(
-    180deg,
-    transparent, transparent 80px,
-    rgba(255,255,255,0.008) 80px, rgba(255,255,255,0.008) 160px
-  );
-  pointer-events:none; z-index:0;
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(74,158,106,0.08) 0%, transparent 60%),
+    repeating-linear-gradient(175deg, transparent, transparent 60px, rgba(255,255,255,0.005) 60px, rgba(255,255,255,0.005) 120px);
 }
 
 /* ─── LAYOUT ─── */
-.app { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 20px 80px; }
-
-/* ─── HEADER ─── */
-.site-header {
-  display:flex; align-items:flex-end; justify-content:space-between;
-  padding: 40px 0 32px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 32px;
-  flex-wrap: wrap; gap: 16px;
+.app {
+  position:relative; z-index:1;
+  max-width:480px;
+  margin:0 auto;
+  padding:0 0 120px;
 }
 
-.logo {
+/* ─── HEADER ─── */
+.header {
+  padding: 52px 20px 24px;
+  text-align: center;
+  position: relative;
+}
+
+.header-flag {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  display: block;
+  filter: drop-shadow(0 0 12px rgba(200,168,75,0.3));
+}
+
+.header h1 {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: 2.2rem;
   font-weight: 700;
   color: var(--white);
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.logo span { color: var(--gold); }
-.logo small {
-  display:block;
-  font-size: 0.38em;
-  letter-spacing: 0.25em;
+.header h1 em {
+  color: var(--gold);
+  font-style: italic;
+}
+
+.header-sub {
+  margin-top: 8px;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
-  font-family: 'Space Mono', monospace;
-  font-weight: 400;
-  margin-top: 6px;
 }
 
-/* ─── TABS ─── */
-.tabs {
-  display:flex; gap:2px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 4px;
-  padding: 3px;
-}
-
-.tab-btn {
-  background: none; border: none;
-  padding: 9px 18px;
-  border-radius: 3px;
-  font-family: 'Space Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.tab-btn:hover { color: var(--cream); }
-.tab-btn.active { background: var(--surface2); color: var(--gold); }
-
-/* ─── PANELS ─── */
-.panel { display:none; }
-.panel.active { display:block; }
-
-/* ─── SECTION CARD ─── */
-.card {
+/* ─── SECTION ─── */
+.section {
+  margin: 0 16px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 24px;
-  margin-bottom: 20px;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-.card-title {
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 20px;
+.section-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.card-title::after { content:''; flex:1; height:1px; background:var(--border); }
-
-/* ─── COURSE ROW ─── */
-.course-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
-  gap: 14px;
-  align-items: end;
+.section-icon {
+  font-size: 0.9rem;
+  opacity: 0.7;
 }
 
-@media(max-width:700px){ .course-row { grid-template-columns:1fr 1fr; } }
+.section-title {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  flex: 1;
+}
 
-/* ─── FORM ELEMENTS ─── */
-.field { display:flex; flex-direction:column; gap:5px; }
+.section-body {
+  padding: 18px;
+}
+
+/* ─── FIELD ─── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.field:last-child { margin-bottom: 0; }
 
 .field label {
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-input[type=text], input[type=number], select {
-  background: rgba(0,0,0,0.25);
+input[type=text],
+input[type=number] {
+  background: rgba(0,0,0,0.3);
   border: 1px solid var(--border2);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   color: var(--white);
-  font-family: 'Space Mono', monospace;
-  font-size: 0.82rem;
-  padding: 9px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 1rem;
+  padding: 13px 14px;
   outline: none;
-  transition: border-color 0.2s;
-  -moz-appearance: textfield;
   width: 100%;
+  transition: border-color 0.2s, background 0.2s;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
-
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button { -webkit-appearance:none; }
-
-input:focus, select:focus { border-color: var(--gold); }
+input:focus { border-color: var(--gold); background: rgba(0,0,0,0.45); }
 input::placeholder { color: rgba(255,255,255,0.18); }
 
-select { cursor:pointer; }
-select option { background: #1a3524; }
+/* ─── GRID ─── */
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-/* ─── FORMAT PILL ─── */
-.format-pills { display:flex; gap:8px; flex-wrap:wrap; }
-
-.pill { position:relative; }
-.pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
-.pill label {
-  display:block;
-  padding: 7px 14px;
+/* ─── GENDER PILLS ─── */
+.gender-pills { display:flex; gap:8px; }
+.gender-pill { position:relative; flex:1; }
+.gender-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
+.gender-pill label {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding: 11px 10px;
   border: 1px solid var(--border2);
-  border-radius: 20px;
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
   color: var(--muted);
   cursor: pointer;
-  transition: all 0.2s;
-  text-transform: none;
+  transition: all 0.18s;
   white-space: nowrap;
 }
-.pill input:checked + label { border-color: var(--gold); color: var(--gold); background: rgba(200,168,75,0.1); }
-.pill label:hover { color: var(--cream); border-color: rgba(255,255,255,0.25); }
-
-/* ─── TEAMS AREA ─── */
-.teams-toolbar {
-  display:flex; justify-content:space-between; align-items:center;
-  margin-bottom: 16px; flex-wrap:wrap; gap:10px;
-}
-
-.teams-count {
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.teams-count strong { color: var(--gold); font-size: 1rem; font-family:'Cormorant Garamond',serif; }
-
-.btn {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: 3px;
-  color: var(--cream);
-  font-family: 'Space Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex; align-items:center; gap:6px;
-}
-
-.btn:hover { border-color: var(--gold); color: var(--gold); }
-
-.btn-primary {
-  background: var(--gold);
+.gender-pill input:checked + label {
   border-color: var(--gold);
-  color: var(--dark);
-  font-weight: 700;
+  color: var(--gold);
+  background: var(--gold-dim);
 }
+.gender-pill label:active { transform:scale(0.97); }
 
-.btn-primary:hover { background: var(--gold2); border-color: var(--gold2); color: var(--dark); }
+/* ─── TEE PILLS ─── */
+.tee-pills { display:flex; gap:8px; flex-wrap:wrap; }
+.tee-pill { position:relative; }
+.tee-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
+.tee-pill label {
+  display:flex; align-items:center; gap:6px;
+  padding: 9px 14px;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.tee-pill label .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.tee-pill input:checked + label { border-color: currentColor; }
+.tee-pill.t1 input:checked + label { color:var(--tee1); background:rgba(74,130,216,0.1); }
+.tee-pill.t2 input:checked + label { color:var(--tee2); background:rgba(200,168,75,0.1); }
+.tee-pill.t3 input:checked + label { color:var(--tee3); background:rgba(224,128,128,0.1); }
+.tee-pill label:active { transform:scale(0.97); }
 
-.btn-danger { border-color: rgba(200,90,74,0.4); color: var(--red); }
-.btn-danger:hover { border-color: var(--red); background: rgba(200,90,74,0.1); }
-
-.btn-sm { padding: 5px 10px; font-size: 0.58rem; }
-
-/* ─── TEAM CARD ─── */
-.team-card {
+/* ─── PLAYER CARD ─── */
+.player-card {
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  margin-bottom: 12px;
-  overflow: hidden;
-  transition: border-color 0.2s;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 10px;
+  position: relative;
 }
+.player-card:last-child { margin-bottom: 0; }
 
-.team-card:hover { border-color: var(--border2); }
-
-.team-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 14px 18px;
-  cursor: pointer;
-  user-select: none;
-  gap: 12px;
-}
-
-.team-header-left { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
-
-.team-num {
+.player-card-num {
+  position: absolute;
+  top: 10px; right: 14px;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: rgba(200,168,75,0.35);
+  font-size: 2.2rem; font-weight:700;
+  color: rgba(255,255,255,0.04);
   line-height: 1;
-  min-width: 28px;
+  pointer-events: none;
+  user-select: none;
 }
 
+/* ─── TEAM HEADER ─── */
+.team-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.team-label-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.5rem; font-weight:700;
+  color: var(--gold);
+  opacity: 0.25;
+  line-height: 1;
+}
 .team-name-input {
   background: transparent;
   border: none;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid var(--border2);
   border-radius: 0;
-  color: var(--white);
+  padding: 4px 2px;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  padding: 2px 4px;
-  width: 200px;
-  max-width: 100%;
+  color: var(--white);
+  width: 100%;
   transition: border-color 0.2s;
 }
+.team-name-input:focus { border-bottom-color: var(--gold); outline: none; }
+.team-name-input::placeholder { color: rgba(255,255,255,0.2); }
 
-.team-name-input:focus { border-bottom-color: var(--gold); outline: none; background: rgba(0,0,0,0.15); }
+/* ─── FORMAT TOGGLE ─── */
+.fmt-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.fmt-pill { position:relative; }
+.fmt-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
+.fmt-pill label {
+  display:block;
+  padding: 10px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  color: var(--muted);
+  cursor:pointer;
+  transition: all 0.18s;
+  line-height: 1.5;
+}
+.fmt-pill label strong { display:block; color:var(--cream); font-size:0.75rem; margin-bottom:2px; }
+.fmt-pill input:checked + label {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-dim);
+}
+.fmt-pill input:checked + label strong { color:var(--gold2); }
+.fmt-pill label:active { transform:scale(0.98); }
 
-.team-badge {
-  font-size: 0.6rem;
+/* ─── DIVIDER ─── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 16px 16px;
+}
+
+/* ─── CALC BUTTON ─── */
+.calc-wrap {
+  position: fixed;
+  bottom: 0; left:0; right:0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  z-index: 50;
+  max-width: 480px;
+  margin: 0 auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+.btn-calc {
+  width: 100%;
+  padding: 18px;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0a1a10;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 32px rgba(200,168,75,0.25);
+}
+.btn-calc:active { transform:scale(0.98); background:var(--gold2); }
+
+/* ─── RESULTS OVERLAY ─── */
+.results-overlay {
+  position: fixed; inset:0;
+  background: var(--bg);
+  z-index: 100;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.32,0,0,1);
+}
+.results-overlay.open { transform: translateY(0); }
+
+.results-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 0 80px;
+}
+
+/* Close button */
+.results-back {
+  position: sticky; top:0;
+  background: linear-gradient(to bottom, var(--bg) 80%, transparent);
+  padding: 16px 16px 12px;
+  z-index: 10;
+}
+.btn-back {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: rgba(200,168,75,0.15);
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex; align-items:center; gap:8px;
+  transition: all 0.2s;
+}
+.btn-back:hover, .btn-back:active { color:var(--cream); border-color:var(--border2); }
+
+/* Results header */
+.results-hero {
+  padding: 16px 20px 28px;
+  text-align: center;
+}
+.results-hero-flag { font-size:2rem; margin-bottom:10px; display:block; }
+.results-event {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem; font-weight:700;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.results-meta {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+/* Team result card */
+.result-card {
+  margin: 0 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: slideUp 0.4s ease both;
+}
+.result-card:nth-child(2) { animation-delay:0.05s; }
+.result-card:nth-child(3) { animation-delay:0.10s; }
+
+@keyframes slideUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.result-card-top {
+  padding: 18px 20px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-team-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight:700;
+  color: var(--white);
+  line-height: 1;
+  flex: 1;
+}
+
+.result-hcp-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.result-hcp-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem; font-weight:700;
   color: var(--gold);
+  line-height: 1;
+}
+
+.result-hcp-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.result-strokes {
+  display: inline-flex; align-items:center;
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.result-players {
+  padding: 0 20px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.result-player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.result-player-name {
+  font-size: 0.82rem;
+  color: var(--cream);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.team-badge.pending { background: rgba(122,158,136,0.15); color: var(--muted); }
+.result-player-meta {
+  display: flex; align-items:center; gap:6px;
+  flex-shrink: 0;
+}
 
-.team-toggle {
-  font-size: 0.7rem;
+.result-player-hcp {
+  font-size: 0.85rem;
+  color: var(--gold);
+}
+
+.tee-dot-sm {
+  width: 7px; height:7px; border-radius:50%; flex-shrink:0;
+}
+
+.result-pct {
+  font-size: 0.6rem;
   color: var(--muted);
-  transition: transform 0.2s;
-  flex-shrink:0;
+  min-width: 36px;
+  text-align: right;
 }
 
-.team-card.open .team-toggle { transform: rotate(180deg); }
-
-.team-body {
-  display:none;
-  padding: 0 18px 18px;
+/* Stroke difference badge on second team */
+.result-vs-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: var(--surface2);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  margin: 0 16px 12px;
+  border-radius: var(--radius-sm);
+  gap: 10px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.result-vs-diff {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight:700;
+  color: var(--cream);
 }
 
-.team-card.open .team-body { display:block; }
-
-.players-grid-4 {
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap:10px;
-}
-
-@media(max-width:700px){ .players-grid-4 { grid-template-columns:1fr 1fr; } }
-@media(max-width:400px){ .players-grid-4 { grid-template-columns:1fr; } }
-
-.player-slot {
-  background: rgba(0,0,0,0.2);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 12px;
-  position:relative;
-}
-
-.player-slot-num {
-  position:absolute; top:8px; right:10px;
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.8rem; font-weight:700;
-  color:rgba(255,255,255,0.03);
-  line-height:1; pointer-events:none;
-}
-
-.player-slot .field { margin-bottom:8px; }
-.player-slot .field:last-child { margin-bottom:0; }
-
-/* ─── CSV AREA ─── */
-.csv-zone {
-  border: 2px dashed var(--border2);
-  border-radius: 4px;
-  padding: 32px;
-  text-align:center;
-  cursor: pointer;
-  transition: all 0.2s;
-  position:relative;
-}
-
-.csv-zone:hover, .csv-zone.drag { border-color: var(--gold); background: rgba(200,168,75,0.05); }
-.csv-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
-
-.csv-zone-icon { font-size:2rem; margin-bottom:10px; opacity:0.5; }
-.csv-zone-text { font-size:0.72rem; color:var(--muted); line-height:1.8; }
-.csv-zone-text strong { color:var(--cream); }
-
-.csv-template {
-  margin-top:16px;
-  background: rgba(0,0,0,0.2);
-  border-radius:3px;
-  padding: 12px 16px;
-  text-align:left;
-}
-
-.csv-template-label { font-size:0.58rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-.csv-template code { font-size:0.7rem; color:var(--green); line-height:2; display:block; }
-
-/* ─── CALCULATE BTN ─── */
-.calc-bar {
-  position:sticky; bottom:24px;
-  display:flex; justify-content:center;
-  margin-top:24px;
-  z-index:10;
-  pointer-events:none;
-}
-
-.calc-bar-inner {
-  background: rgba(13,31,21,0.92);
-  border: 1px solid var(--gold);
-  border-radius: 50px;
-  padding: 10px 10px 10px 24px;
-  display:flex; align-items:center; gap:14px;
-  pointer-events:all;
+/* Error toast */
+.toast {
+  position: fixed;
+  bottom: 110px; left:50%; transform:translateX(-50%) translateY(20px);
+  background: rgba(200,90,74,0.95);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  z-index: 200;
+  max-width: 340px;
+  text-align: center;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s;
   backdrop-filter: blur(8px);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
 }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-.calc-bar-text { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
-.calc-bar-text strong { color:var(--cream); }
-
-.btn-calc {
-  background: var(--gold);
-  border: none;
-  border-radius: 40px;
-  padding: 12px 28px;
-  font-family:'Space Mono',monospace;
-  font-size:0.7rem;
-  font-weight:700;
-  letter-spacing:0.15em;
-  text-transform:uppercase;
-  color:var(--dark);
-  cursor:pointer;
-  transition:all 0.2s;
+/* Reset link */
+.reset-row {
+  text-align: center;
+  padding: 6px 0 0;
 }
-
-.btn-calc:hover { background:var(--gold2); transform:scale(1.02); }
-.btn-calc:active { transform:scale(0.98); }
-
-/* ─── RESULTS ─── */
-.results-panel {
-  display:none;
-  animation: fadeUp 0.4s ease both;
-}
-
-.results-panel.visible { display:block; }
-
-.results-header {
-  display:flex; align-items:flex-start; justify-content:space-between;
-  margin-bottom:20px; flex-wrap:wrap; gap:12px;
-}
-
-.results-title {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.8rem; font-weight:700;
-  color:var(--white);
-}
-
-.results-meta { font-size:0.62rem; color:var(--muted); margin-top:4px; line-height:1.8; }
-
-.results-table {
-  width:100%;
-  border-collapse:collapse;
-}
-
-.results-table th {
-  font-size:0.58rem;
-  letter-spacing:0.15em;
-  text-transform:uppercase;
-  color:var(--muted);
-  padding: 10px 14px;
-  text-align:left;
-  border-bottom: 1px solid var(--border);
-}
-
-.results-table th:last-child { text-align:right; }
-
-.results-table td {
-  padding: 13px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size:0.78rem;
-  vertical-align:middle;
-}
-
-.results-table td:last-child { text-align:right; }
-
-.results-table tr:last-child td { border-bottom:none; }
-
-.results-table tbody tr { transition: background 0.15s; }
-.results-table tbody tr:hover { background: rgba(255,255,255,0.03); }
-
-.rank-cell {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.4rem; font-weight:700;
-  color:rgba(255,255,255,0.15);
-  width:40px;
-}
-
-.rank-cell.top { color:var(--gold); }
-
-.team-name-cell { font-family:'Cormorant Garamond',serif; font-size:1rem; font-weight:600; color:var(--white); }
-
-.hcp-cell {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.8rem; font-weight:700;
-  color:var(--gold);
-  white-space:nowrap;
-}
-
-.players-cell { color:var(--muted); font-size:0.65rem; line-height:1.9; }
-
-.players-cell span { display:inline-block; margin-right:12px; }
-
-.strokes-cell {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.4rem; font-weight:700;
-  white-space:nowrap;
-  text-align:right;
-}
-
-.strokes-cell.leader { color: var(--green); font-size:1rem; letter-spacing:0.05em; }
-.strokes-cell.plus { color: var(--cream); }
-
-.strokes-badge {
-  display:inline-block;
-  font-size:0.65rem;
-  font-family:'Space Mono',monospace;
-  font-weight:700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.06);
+.btn-reset {
+  background: none; border:none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
-  letter-spacing:0.05em;
-  margin-left:6px;
-  vertical-align:middle;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.btn-reset:active { opacity: 1; }
+
+/* Info note */
+.info-note {
+  margin: 0 16px 16px;
+  padding: 12px 14px;
+  background: rgba(74,142,200,0.07);
+  border: 1px solid rgba(74,142,200,0.18);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  color: #7aace0;
+  line-height: 1.7;
 }
 
-/* ─── PLAYER FORM (submission) ─── */
-.submit-form {
-  max-width:520px; margin:0 auto;
+/* ─── AUTH LOADING OVERLAY ─── */
+#authLoadingOverlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 14px;
+}
+.auth-spinner {
+  width: 30px; height: 30px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-spinner-text {
+  font-size: 0.58rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted);
 }
 
-.submit-hero {
-  text-align:center;
-  padding: 32px 0 40px;
-}
-
-.submit-hero h2 {
-  font-family:'Cormorant Garamond',serif;
-  font-size:2.2rem; font-weight:700;
-  color:var(--white); margin-bottom:8px;
-}
-
-.submit-hero p { font-size:0.72rem; color:var(--muted); line-height:1.8; }
-
-.submit-fields { display:flex; flex-direction:column; gap:16px; }
-
-.submit-success {
-  text-align:center; padding:40px 20px;
-  display:none;
-}
-
-.submit-success.visible { display:block; }
-
-.submit-success-icon { font-size:3rem; margin-bottom:16px; }
-
-.submit-success h3 {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.6rem; font-weight:700;
-  color:var(--white); margin-bottom:8px;
-}
-
-.submit-success p { font-size:0.72rem; color:var(--muted); line-height:1.8; }
-
-/* ─── PENDING BADGE ─── */
-.pending-list {
-  display:flex; flex-direction:column; gap:8px;
-  max-height:300px; overflow-y:auto;
-}
-
-.pending-item {
-  display:flex; align-items:center; justify-content:space-between;
-  background: rgba(0,0,0,0.2); border-radius:3px;
-  padding: 10px 14px; gap:10px;
-}
-
-.pending-item-info { flex:1; }
-.pending-item-name { font-size:0.82rem; color:var(--white); margin-bottom:2px; }
-.pending-item-meta { font-size:0.62rem; color:var(--muted); }
-
-.pending-item-hcp {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.3rem; font-weight:700;
-  color:var(--gold);
-}
-
-.pending-actions { display:flex; gap:6px; }
-
-/* ─── ERROR / NOTICE ─── */
-.notice {
-  padding:10px 14px; border-radius:3px;
-  font-size:0.7rem; line-height:1.7;
-  margin-bottom:14px; display:none;
-}
-
-.notice.visible { display:block; }
-.notice.error { background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.3); color:#e08878; }
-.notice.success { background:rgba(74,158,106,0.12); border:1px solid rgba(74,158,106,0.3); color:#7ace98; }
-.notice.info { background:rgba(74,142,200,0.12); border:1px solid rgba(74,142,200,0.3); color:#88b8e0; }
-
-/* ─── PRINT ─── */
-@media print {
-  body { background:#fff; color:#000; font-size:11px; }
-  .tabs, .teams-area, .calc-bar, .btn, .no-print { display:none !important; }
-  .results-panel { display:block !important; }
-  .site-header { border-bottom:2px solid #000; }
-  .logo { color:#000; }
-  .logo span { color:#a07830; }
-  .results-table th { color:#555; }
-  .hcp-cell { color:#a07830; }
-  .results-table td, .results-table th { border-color:#ddd; }
-}
-
-/* ─── LOGIN MODAL ─── */
+/* ─── AUTH MODAL SHEET ─── */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(5,15,8,0.85);
-  backdrop-filter: blur(6px);
-  z-index: 100;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-  animation: fadeUp 0.3s ease both;
+  background: rgba(5, 15, 8, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fadeIn 0.2s ease both;
 }
 .modal-overlay.hidden { display: none; }
-.login-modal {
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.auth-sheet {
   background: var(--surface);
   border: 1px solid var(--border2);
-  border-radius: 6px;
-  padding: 40px; width: 100%; max-width: 380px;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  width: 100%; max-width: 480px;
+  padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
   position: relative;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: sheetUp 0.32s cubic-bezier(0.32, 0, 0, 1) both;
 }
-.login-modal::before {
-  content: ''; position: absolute;
-  top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--gold), transparent);
-  border-radius: 6px 6px 0 0;
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }
-.login-icon { font-size:2rem; text-align:center; display:block; margin-bottom:16px; }
-.login-title { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:700; color:var(--white); text-align:center; margin-bottom:4px; }
-.login-sub { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:28px; }
-.login-fields { display:flex; flex-direction:column; gap:14px; }
-.login-error { font-size:0.68rem; color:#e08878; background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.25); border-radius:3px; padding:9px 12px; display:none; text-align:center; }
-.login-error.visible { display:block; }
-.btn-login { width:100%; padding:13px; background:var(--gold); border:none; border-radius:3px; font-family:'Space Mono',monospace; font-size:0.7rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--dark); cursor:pointer; transition:all 0.2s; margin-top:4px; }
-.btn-login:hover { background:var(--gold2); }
-.btn-login:active { transform:scale(0.98); }
-
-/* Google button */
-.btn-google { width:100%; padding:11px 16px; background:#fff; border:1px solid #dadce0; border-radius:3px; font-family:'Space Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; color:#3c4043; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:4px; }
-.btn-google:hover { background:#f8f9fa; box-shadow:0 1px 6px rgba(0,0,0,0.2); }
-
-/* Divider */
-.auth-divider { display:flex; align-items:center; gap:12px; margin:16px 0; }
-.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border2); }
-.auth-divider span { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
-
-/* Switch link */
-.auth-switch { text-align:center; margin-top:16px; font-size:0.65rem; color:var(--muted); }
-.auth-switch button { background:none; border:none; color:var(--gold); font-family:'Space Mono',monospace; font-size:0.65rem; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; }
-.auth-switch button:hover { color:var(--gold2); }
-
-/* Close button */
-.modal-close { position:absolute; top:14px; right:16px; background:none; border:none; color:var(--muted); font-size:1rem; cursor:pointer; padding:4px; transition:color 0.2s; line-height:1; }
-.modal-close:hover { color:var(--cream); }
-
-/* Register success */
-.register-success { text-align:center; padding:16px 0 8px; }
-.register-success-icon { font-size:2rem; margin-bottom:10px; }
-.register-success h4 { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:700; color:var(--white); margin-bottom:6px; }
-.register-success p { font-size:0.68rem; color:var(--muted); line-height:1.8; }
-
-/* ─── AUTH STATUS ─── */
-.auth-status { display:flex; align-items:center; gap:10px; }
-.auth-user { font-size:0.65rem; letter-spacing:0.08em; color:var(--muted); display:none; }
-.auth-user.visible { display:flex; align-items:center; gap:8px; }
-.auth-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(74,158,106,0.6); flex-shrink:0; }
-.btn-login-header { background:none; border:1px solid var(--border2); border-radius:3px; padding:8px 16px; font-family:'Space Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); cursor:pointer; transition:all 0.2s; }
-.btn-login-header:hover { border-color:var(--gold); background:rgba(200,168,75,0.08); }
-.btn-logout { background:none; border:none; font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color 0.2s; }
-.btn-logout:hover { color:var(--red); }
-
-/* ─── LOCKED STATE ─── */
-.panel-locked { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 20px; text-align:center; gap:16px; }
-.panel-locked-icon { font-size:2.5rem; opacity:0.4; }
-.panel-locked h3 { font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:var(--white); }
-.panel-locked p { font-size:0.7rem; color:var(--muted); line-height:1.8; }
-
-/* ─── ANIMATIONS ─── */
-@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-@keyframes fadeDown { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
-.anim-in { animation:fadeDown 0.5s ease both; }
-
-/* Auth loading overlay */
-#authLoadingOverlay {
-  position:fixed; inset:0; background:var(--bg);
-  z-index:200; display:flex; align-items:center; justify-content:center;
-  flex-direction:column; gap:12px;
+.auth-sheet::before {
+  content: '';
+  position: absolute; top: 10px; left: 50%;
+  transform: translateX(-50%);
+  width: 36px; height: 4px;
+  background: var(--border2); border-radius: 2px;
 }
-.auth-loading-spinner {
-  width:32px; height:32px; border:2px solid var(--border2);
-  border-top-color:var(--gold); border-radius:50%;
-  animation:spin 0.7s linear infinite;
+.auth-sheet::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent 70%);
+  border-radius: var(--radius) var(--radius) 0 0;
 }
-@keyframes spin { to { transform:rotate(360deg); } }
-.auth-loading-text { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
 
-/* ─── TEES ─── */
-.tees-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
-.tee-card { background:rgba(0,0,0,0.2); border:1px solid var(--border2); border-radius:3px; padding:12px; }
-.tee-card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.tee-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-.tee-label { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--cream); font-weight:700; }
-.tee-fields { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-@media(max-width:700px){ .tees-grid{grid-template-columns:1fr;} }
-
-/* ─── GENDER PILL ─── */
-.gender-pills { display:flex; gap:8px; }
-.gender-pill { position:relative; }
-.gender-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
-.gender-pill label { display:flex; align-items:center; gap:6px; padding:7px 14px; border:1px solid var(--border2); border-radius:20px; font-size:0.65rem; letter-spacing:0.06em; color:var(--muted); cursor:pointer; transition:all 0.2s; text-transform:none; white-space:nowrap; }
-.gender-pill input:checked + label { border-color:var(--gold); color:var(--gold); background:rgba(200,168,75,0.1); }
-.gender-pill label:hover { color:var(--cream); border-color:rgba(255,255,255,0.25); }
-
-/* ─── CUSTOM FORMAT ─── */
-.custom-pct-row { display:none; margin-top:14px; background:rgba(0,0,0,0.15); border:1px solid var(--border2); border-radius:3px; padding:16px; }
-.custom-pct-row.visible { display:block; }
-.custom-pct-inputs { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:10px; }
-.custom-pct-field { display:flex; flex-direction:column; gap:4px; }
-.custom-pct-field label { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
-.custom-pct-field input { width:72px; text-align:center; }
-.custom-pct-total { font-size:0.65rem; color:var(--muted); margin-top:8px; }
-.custom-pct-total.ok { color:var(--green); }
-.custom-pct-total.warn { color:#e0a030; }
-
-/* ─── TEE SELECT ON PLAYER SLOT ─── */
-.tee-select { font-size:0.75rem; padding:7px 10px; }
-.gender-badge { display:inline-block; font-size:0.55rem; padding:2px 7px; border-radius:10px; letter-spacing:0.08em; text-transform:uppercase; margin-left:6px; vertical-align:middle; }
-.gender-badge.m { background:rgba(74,142,200,0.2); color:#88b8e0; }
-.gender-badge.f { background:rgba(200,74,130,0.2); color:#e088b8; }
-
-/* Firestore live badge */
-.share-link-input { font-size:0.72rem; }
-
-.live-badge {
-  display:inline-flex; align-items:center; gap:5px;
-  font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase;
-  color:var(--green); margin-left:10px;
+.auth-sheet-icon { text-align: center; font-size: 1.8rem; margin-bottom: 10px; }
+.auth-sheet-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--white); text-align: center; margin-bottom: 4px;
 }
-.live-dot {
-  width:6px; height:6px; border-radius:50%;
-  background:var(--green);
-  box-shadow:0 0 6px rgba(74,158,106,0.8);
-  animation:livePulse 2s ease infinite;
+.auth-sheet-sub {
+  font-size: 0.58rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+  text-align: center; margin-bottom: 24px;
 }
-@keyframes livePulse {
-  0%,100% { opacity:1; } 50% { opacity:0.4; }
+
+.btn-google {
+  width: 100%; padding: 14px 16px;
+  background: #fff; border: none; border-radius: var(--radius-sm);
+  font-family: 'DM Mono', monospace; font-size: 0.72rem;
+  letter-spacing: 0.04em; color: #3c4043;
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 14px;
 }
-.sub-source-badge {
-  font-size:0.55rem; padding:2px 7px; border-radius:10px;
-  letter-spacing:0.06em; text-transform:uppercase; margin-left:6px;
-  vertical-align:middle;
+.btn-google:active { background: #f0f0f0; transform: scale(0.98); }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
 }
-.sub-source-badge.form { background:rgba(74,142,200,0.2); color:#88b8e0; }
-.sub-source-badge.manual { background:rgba(122,158,136,0.2); color:var(--muted); }
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border2);
+}
+.auth-divider span {
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+.auth-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+
+.btn-auth {
+  width: 100%; padding: 15px;
+  background: var(--gold); border: none; border-radius: var(--radius-sm);
+  font-family: 'DM Mono', monospace; font-size: 0.72rem;
+  font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #0a1a10;
+  cursor: pointer; transition: all 0.18s;
+}
+.btn-auth:active { transform: scale(0.98); background: var(--gold2); }
+.btn-auth:disabled { opacity: 0.5; pointer-events: none; }
+
+.auth-switch {
+  text-align: center; margin-top: 14px;
+  font-size: 0.62rem; color: var(--muted);
+}
+.auth-switch button {
+  background: none; border: none;
+  font-family: 'DM Mono', monospace; font-size: 0.62rem;
+  color: var(--gold); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; padding: 0;
+}
+
+.auth-error {
+  background: rgba(200,90,74,0.12);
+  border: 1px solid rgba(200,90,74,0.28);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.65rem; color: #e08878;
+  display: none; margin-bottom: 12px; line-height: 1.5;
+}
+.auth-error.visible { display: block; }
+
+/* ─── HEADER AUTH PILL ─── */
+.header-auth {
+  margin-top: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 36px;
+}
+.btn-signin {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gold);
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-signin:active { border-color: var(--gold); background: var(--gold-dim); }
+.user-pill {
+  display: none;
+  align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 6px 14px 6px 8px;
+}
+.user-pill.visible { display: flex; }
+.user-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(74,158,106,0.6);
+  flex-shrink: 0;
+}
+.user-name {
+  font-size: 0.65rem; color: var(--cream);
+  max-width: 160px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-signout {
+  background: none; border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+  cursor: pointer; text-decoration: underline;
+  text-underline-offset: 3px; padding: 0; transition: color 0.2s;
+}
+.btn-signout:active { color: var(--red); }
 </style>
 </head>
 <body>
+<!-- AUTH LOADING OVERLAY -->
 <div id="authLoadingOverlay">
-  <div class="auth-loading-spinner"></div>
-  <div class="auth-loading-text">Connecting...</div>
+  <div class="auth-spinner"></div>
+  <div class="auth-spinner-text">Connecting…</div>
 </div>
-<div class="app">
 
-  <!-- LOGIN / REGISTER MODAL -->
-  <div class="modal-overlay hidden" id="loginModal">
-    <div class="login-modal">
-      <button class="modal-close" onclick="closeLogin()">&#x2715;</button>
-      <span class="login-icon">&#x26F3;</span>
-      <div class="login-title" id="modalTitle">Admin Access</div>
-      <div class="login-sub" id="modalSub">Team Handicap Manager</div>
-      <button class="btn-google" onclick="doGoogleAuth()">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-          <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
-      <div class="auth-divider"><span>or</span></div>
-      <div id="formSignIn">
-        <div class="login-fields">
-          <div class="field">
-            <label>Email Address</label>
-            <input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()">
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
-          </div>
-          <div class="login-error" id="loginError"></div>
-          <button class="btn-login" onclick="doLogin()">Sign In &#x2192;</button>
+<!-- AUTH MODAL -->
+<div class="modal-overlay hidden" id="authModal">
+  <div class="auth-sheet">
+    <div class="auth-sheet-icon">⛳</div>
+    <div class="auth-sheet-title" id="authModalTitle">Welcome back</div>
+    <div class="auth-sheet-sub" id="authModalSub">Team HCP · The Rookie Golfer</div>
+
+    <!-- Google -->
+    <button class="btn-google" onclick="doGoogleSignIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.075 17.64 11.768 17.64 9.2z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <!-- Sign In form -->
+    <div id="formSignIn">
+      <div class="auth-error" id="signInError"></div>
+      <div class="auth-fields">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="signInEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()">
         </div>
-        <div class="auth-switch">Don't have an account? <button onclick="switchToRegister()">Create one</button></div>
-      </div>
-      <div id="formRegister" style="display:none;">
-        <div class="login-fields">
-          <div class="field">
-            <label>Full Name</label>
-            <input type="text" id="regName" placeholder="Your name">
-          </div>
-          <div class="field">
-            <label>Email Address</label>
-            <input type="email" id="regEmail" placeholder="personal@example.com or work@company.com">
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input type="password" id="regPass" placeholder="Min. 6 characters">
-          </div>
-          <div class="field">
-            <label>Confirm Password</label>
-            <input type="password" id="regPassConfirm" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doRegister()">
-          </div>
-          <div class="login-error" id="registerError"></div>
-          <button class="btn-login" onclick="doRegister()">Create Account &#x2192;</button>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="signInPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()">
         </div>
-        <div class="auth-switch">Already have an account? <button onclick="switchToSignIn()">Sign in</button></div>
       </div>
+      <button class="btn-auth" id="btnSignIn" onclick="doEmailSignIn()">Sign In →</button>
+      <div class="auth-switch">No account? <button onclick="switchToRegister()">Create one</button></div>
+    </div>
+
+    <!-- Register form -->
+    <div id="formRegister" style="display:none;">
+      <div class="auth-error" id="registerError"></div>
+      <div class="auth-fields">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="regName" placeholder="Your name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" inputmode="email">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Min. 6 characters" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Confirm Password</label>
+          <input type="password" id="regPassConfirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+        </div>
+      </div>
+      <button class="btn-auth" id="btnRegister" onclick="doRegister()">Create Account →</button>
+      <div class="auth-switch">Already have an account? <button onclick="switchToSignIn()">Sign in</button></div>
+    </div>
+
+    <div style="text-align:center;margin-top:18px;">
+      <button onclick="closeAuthModal()" style="background:none;border:none;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:6px;">Cancel</button>
     </div>
   </div>
+</div>
+
+<div class="app">
 
   <!-- HEADER -->
-  <header class="site-header">
-    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;flex:1;">
-      <div class="logo">
-        Team <span>Handicap</span> Manager
-        <small>World Handicap System · Scramble</small>
-      </div>
-      <div class="tabs">
-        <button class="tab-btn active" id="adminTabBtn" onclick="requireAdmin(event)">⛳ Admin</button>
-        <button class="tab-btn" onclick="showTab('results', event)" id="resultsTab" style="display:none;">📋 Results</button>
-      </div>
-    </div>
-    <div class="auth-status">
-      <div class="auth-user" id="authUser">
-        <div class="auth-dot"></div>
-        <span id="authUserName">Admin</span>
-        <button class="btn-logout" onclick="doLogout()">logout</button>
+  <header class="header">
+    <span class="header-flag">⛳</span>
+    <h1>Team <em>HCP</em></h1>
+    <div class="header-sub">Scramble Handicap Calculator · WHS</div>
+    <div class="header-auth">
+      <button class="btn-signin" id="btnSignInHeader" onclick="openAuthModal()">Sign In</button>
+      <div class="user-pill" id="userPill">
+        <span class="user-dot"></span>
+        <span class="user-name" id="userPillName">Player</span>
+        <button class="btn-signout" onclick="doSignOut()">sign out</button>
       </div>
     </div>
   </header>
 
-  <!-- ══════════════ ADMIN PANEL ══════════════ -->
-  <div class="panel active" id="panel-admin">
-
-    <!-- Locked state -->
-    <div class="panel-locked" id="adminLocked">
-      <div class="panel-locked-icon">🔒</div>
-      <h3>Admin Access Required</h3>
-      <p>Please sign in to manage teams, import data,<br>and calculate handicaps.</p>
-      <button class="btn btn-primary" onclick="openLogin()">Sign In →</button>
+  <!-- COURSE DETAILS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📍</span>
+      <span class="section-title">Course Details</span>
     </div>
-
-    <!-- Admin content (hidden until logged in) -->
-    <div id="adminContent" style="display:none;">
-
-    <!-- Course + Event -->
-    <div class="card">
-      <div class="card-title">Event &amp; Course Details</div>
-      <div class="course-row" style="grid-template-columns:2fr 1fr;">
+    <div class="section-body">
+      <div class="grid-3">
         <div class="field">
-          <label>Event Name</label>
-          <input type="text" id="eventName" placeholder="e.g. The Rookie Golfer Open 2025" oninput="updateShareLinkEvent()">
+          <label>Rating</label>
+          <input type="number" id="course_rating" placeholder="70.5" step="0.1" min="55" max="85" inputmode="decimal">
         </div>
         <div class="field">
-          <label>Date</label>
-          <input type="text" id="eventDate" placeholder="e.g. 14 June 2025">
+          <label>Slope</label>
+          <input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Par</label>
+          <input type="number" id="course_par" placeholder="72" step="1" min="60" max="80" value="72" inputmode="numeric">
         </div>
       </div>
 
-      <!-- Tee Boxes -->
-      <div class="section-label" style="margin-top:20px;">Tee Boxes <small style="font-size:0.6rem;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:8px;">Set rating, slope and par per tee. Players will be assigned a tee.</small></div>
-      <div class="tees-grid">
-        <div class="tee-card">
-          <div class="tee-card-header">
-            <div class="tee-dot" style="background:#3a7bd5;"></div>
-            <div class="tee-label">Championship / Men</div>
-          </div>
-          <div class="tee-fields">
-            <div class="field"><label>Rating</label><input type="number" id="tee1_rating" placeholder="72.1" step="0.1" min="55" max="85" value=""></div>
-            <div class="field"><label>Slope</label><input type="number" id="tee1_slope" placeholder="131" step="1" min="55" max="155" value=""></div>
-            <div class="field"><label>Par</label><input type="number" id="tee1_par" placeholder="72" step="1" min="60" max="80" value="72"></div>
-          </div>
+      <!-- Optional: ladies tee -->
+      <div style="margin-top:4px;">
+        <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
+          Forward / Ladies Tee <span style="opacity:0.5;font-size:0.55rem;">(optional)</span>
         </div>
-        <div class="tee-card">
-          <div class="tee-card-header">
-            <div class="tee-dot" style="background:#e8c870;"></div>
-            <div class="tee-label">Medal / Standard</div>
+        <div class="grid-3">
+          <div class="field">
+            <label>Rating</label>
+            <input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="55" max="85" inputmode="decimal">
           </div>
-          <div class="tee-fields">
-            <div class="field"><label>Rating</label><input type="number" id="tee2_rating" placeholder="70.5" step="0.1" min="55" max="85" value=""></div>
-            <div class="field"><label>Slope</label><input type="number" id="tee2_slope" placeholder="128" step="1" min="55" max="155" value=""></div>
-            <div class="field"><label>Par</label><input type="number" id="tee2_par" placeholder="72" step="1" min="60" max="80" value="72"></div>
+          <div class="field">
+            <label>Slope</label>
+            <input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric">
           </div>
-        </div>
-        <div class="tee-card">
-          <div class="tee-card-header">
-            <div class="tee-dot" style="background:#e88080;"></div>
-            <div class="tee-label">Forward / Ladies</div>
-          </div>
-          <div class="tee-fields">
-            <div class="field"><label>Rating</label><input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="55" max="85" value=""></div>
-            <div class="field"><label>Slope</label><input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" value=""></div>
-            <div class="field"><label>Par</label><input type="number" id="tee3_par" placeholder="72" step="1" min="60" max="80" value="72"></div>
+          <div class="field">
+            <label>Par</label>
+            <input type="number" id="tee3_par" placeholder="72" step="1" min="60" max="80" value="72" inputmode="numeric">
           </div>
         </div>
       </div>
-      <div class="notice info visible" style="margin-top:4px;margin-bottom:0;">
-        Fill in the tees used at your event. Players will be assigned their tee in the team editor. Leave unused tees blank.
-      </div>
     </div>
+  </div>
 
-    <!-- Scramble Format -->
-    <div class="card">
-      <div class="card-title">Scramble Allowance (applied to all teams)</div>
-      <div class="format-pills">
-        <div class="pill"><input type="radio" name="fmt" id="fA" value="20_15_10_5" checked><label for="fA">20% / 15% / 10% / 5% — Standard 4-player</label></div>
-        <div class="pill"><input type="radio" name="fmt" id="fB" value="25_20_15_10"><label for="fB">25% / 20% / 15% / 10% — Higher allowance</label></div>
-        <div class="pill"><input type="radio" name="fmt" id="fC" value="25_25_25_25"><label for="fC">25% / 25% / 25% / 25% — Equal / casual</label></div>
-        <div class="pill"><input type="radio" name="fmt" id="fD" value="5_10_15_20"><label for="fD">5% / 10% / 15% / 20% — USGA ascending</label></div>
-        <div class="pill"><input type="radio" name="fmt" id="fE" value="35_15"><label for="fE">35% / 15% — 2-player teams</label></div>
-        <div class="pill"><input type="radio" name="fmt" id="fF" value="20_15_10"><label for="fF">20% / 15% / 10% — 3-player teams</label></div>
-        <div class="pill"><input type="radio" name="fmt" id="fG" value="custom" onchange="toggleCustomPct()"><label for="fG">✏️ Custom %</label></div>
-      </div>
-      <div class="custom-pct-row" id="customPctRow">
-        <div style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);">Enter allowance % for each rank (lowest → highest Course Handicap)</div>
-        <div class="custom-pct-inputs">
-          <div class="custom-pct-field"><label>1st (lowest)</label><input type="number" id="cp1" placeholder="20" min="0" max="100" step="1" oninput="updateCustomPctTotal()"></div>
-          <div class="custom-pct-field"><label>2nd</label><input type="number" id="cp2" placeholder="15" min="0" max="100" step="1" oninput="updateCustomPctTotal()"></div>
-          <div class="custom-pct-field"><label>3rd</label><input type="number" id="cp3" placeholder="10" min="0" max="100" step="1" oninput="updateCustomPctTotal()"></div>
-          <div class="custom-pct-field"><label>4th (highest)</label><input type="number" id="cp4" placeholder="5" min="0" max="100" step="1" oninput="updateCustomPctTotal()"></div>
+  <!-- FORMAT -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">⚙️</span>
+      <span class="section-title">Scramble Format</span>
+    </div>
+    <div class="section-body">
+      <div class="fmt-grid">
+        <div class="fmt-pill">
+          <input type="radio" name="fmt" id="fA" value="35_15" checked>
+          <label for="fA">
+            <strong>35% / 15%</strong>
+            2-player scramble
+          </label>
         </div>
-        <div class="custom-pct-total" id="customPctTotal">Enter at least 2 values.</div>
-      </div>
-    </div>
-
-    <!-- CSV Import -->
-    <div class="card">
-      <div class="card-title">Import via CSV</div>
-      <div class="notice info visible">
-        CSV format: <strong>Team Name, Player Name, Handicap Index</strong> — one player per row, no header row needed. Players with the same team name are grouped automatically.
-      </div>
-      <div class="csv-zone" id="csvZone"
-           ondragover="event.preventDefault();this.classList.add('drag')"
-           ondragleave="this.classList.remove('drag')"
-           ondrop="handleDrop(event)">
-        <input type="file" accept=".csv,.txt" onchange="handleCSVFile(event)">
-        <div class="csv-zone-icon">📂</div>
-        <div class="csv-zone-text">
-          <strong>Click to upload or drag &amp; drop a CSV file</strong><br>
-          Accepted: .csv or .txt
+        <div class="fmt-pill">
+          <input type="radio" name="fmt" id="fB" value="25_20">
+          <label for="fB">
+            <strong>25% / 20%</strong>
+            Higher allowance
+          </label>
+        </div>
+        <div class="fmt-pill">
+          <input type="radio" name="fmt" id="fC" value="20_15">
+          <label for="fC">
+            <strong>20% / 15%</strong>
+            Lower allowance
+          </label>
+        </div>
+        <div class="fmt-pill">
+          <input type="radio" name="fmt" id="fD" value="50_50">
+          <label for="fD">
+            <strong>50% / 50%</strong>
+            Equal / casual
+          </label>
         </div>
       </div>
-      <div class="csv-template">
-        <div class="csv-template-label">Example CSV content</div>
-        <code>
-Team Eagles,Alex Johnson,12.4<br>
-Team Eagles,Jordan Smith,7.6<br>
-Team Eagles,Sam Lee,18.2<br>
-Team Eagles,Taylor Brown,22.0<br>
-Team Birdies,Chris White,5.1<br>
-Team Birdies,Morgan Davis,14.8<br>
-        </code>
-      </div>
-      <div id="csvNotice" class="notice" style="margin-top:12px;margin-bottom:0;"></div>
     </div>
+  </div>
 
-    <!-- Pending Submissions -->
-    <div class="card" id="pendingCard" style="display:none;">
-      <div class="card-title">
-        Pending Player Submissions
-        <span class="live-badge" id="liveBadge" style="display:none;">
-          <span class="live-dot"></span>Live
-        </span>
-      </div>
-      <div class="notice info visible" id="pendingNotice" style="margin-bottom:14px;display:none;">
-        Players who submitted via the registration link appear here automatically.
-      </div>
-      <div class="pending-list" id="pendingList"></div>
+  <!-- TEAM 1 -->
+  <div class="section" id="team1-section">
+    <div class="section-header">
+      <span class="section-icon">🏌️</span>
+      <span class="section-title">Team 1</span>
     </div>
-
-    <!-- Player Registration Link -->
-    <div class="card" id="shareCard" style="display:none;">
-      <div class="card-title">Player Registration Link</div>
-      <div class="notice info visible" style="margin-bottom:14px;">
-        Share this link with your players so they can submit their handicap. Only submissions from <strong>your link</strong> will appear in your Pending list.
+    <div class="section-body">
+      <div class="team-label">
+        <div class="team-label-num">1</div>
+        <input class="team-name-input" type="text" id="team1_name" placeholder="Team name…" value="Team Eagles">
       </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <input type="text" id="shareLinkInput" readonly
-          style="flex:1;min-width:200px;background:rgba(0,0,0,0.3);color:var(--gold);font-size:0.72rem;cursor:text;"
-          onclick="this.select()">
-        <button class="btn btn-primary" onclick="copyShareLink()" id="copyLinkBtn">Copy Link</button>
-      </div>
-      <div style="margin-top:12px;font-size:0.65rem;color:var(--muted);line-height:1.8;">
-        💡 The link updates automatically when you fill in the <strong style="color:var(--cream);">Event Name</strong> above. Copy it after entering your event name.
-      </div>
-    </div>
-
-    <!-- Teams -->
-    <div class="card">
-      <div class="card-title">Teams</div>
-      <div class="teams-toolbar">
-        <div class="teams-count">
-          <strong id="teamCountDisplay">0</strong> teams · <span id="playerCountDisplay">0</span> players
+      <!-- Player 1 -->
+      <div class="player-card">
+        <div class="player-card-num">1</div>
+        <div class="field">
+          <label>Player 1 Name</label>
+          <input type="text" id="t1p1_name" placeholder="Optional">
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn" onclick="addTeam()">+ Add Team</button>
-          <button class="btn btn-danger btn-sm" onclick="clearAllTeams()">Clear Teams</button>
-          <button class="btn btn-danger btn-sm" onclick="resetAllData()">&#x21BA; Reset All</button>
+        <div class="grid-2">
+          <div class="field">
+            <label>Handicap Index</label>
+            <input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <div class="gender-pills">
+              <div class="gender-pill">
+                <input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked>
+                <label for="t1p1_gM">♂ M</label>
+              </div>
+              <div class="gender-pill">
+                <input type="radio" name="t1p1_g" id="t1p1_gF" value="F">
+                <label for="t1p1_gF">♀ F</label>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div id="teamsContainer"></div>
-      <div id="noTeams" style="text-align:center;padding:32px;color:var(--muted);font-size:0.72rem;">
-        No teams yet — add teams manually or import a CSV above.
-      </div>
-    </div>
-
-    <!-- Sticky Calc Bar -->
-    <div class="calc-bar">
-      <div class="calc-bar-inner">
-        <div class="calc-bar-text">Ready to calculate? <strong id="calcTeamCount">0 teams</strong></div>
-        <button class="btn-calc" onclick="calculateAll()">Calculate All Handicaps →</button>
-      </div>
-    </div>
-
-  </div><!-- /adminContent -->
-  </div><!-- /admin -->
-
-  <!-- ══════════════ PLAYER SUBMIT PANEL ══════════════ -->
-  <!-- Player Submit removed — use standalone player-submit.html -->
-
-  <!-- ══════════════ RESULTS PANEL ══════════════ -->
-  <div class="panel" id="panel-results">
-    <div id="noResults" style="text-align:center;padding:60px 20px;color:var(--muted);font-size:0.72rem;">
-      Calculate team handicaps in the Admin tab to see results here.
-    </div>
-    <div class="results-panel" id="resultsPanel">
-      <div class="results-header">
-        <div>
-          <div class="results-title" id="resultsTitle">Event Results</div>
-          <div class="results-meta" id="resultsMeta"></div>
-        </div>
-        <div style="display:flex;gap:8px;" class="no-print">
-          <button class="btn" onclick="window.print()">🖨 Print</button>
-          <button class="btn" onclick="exportCSV()">⬇ Export CSV</button>
+        <div class="field">
+          <label>Tee</label>
+          <div class="tee-pills">
+            <div class="tee-pill t2">
+              <input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked>
+              <label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+            </div>
+            <div class="tee-pill t1">
+              <input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ">
+              <label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+            </div>
+            <div class="tee-pill t3">
+              <input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd">
+              <label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="card" style="padding:0;overflow:hidden;">
-        <table class="results-table" id="resultsTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Team</th>
-              <th>Players</th>
-              <th>Team HCP</th>
-              <th style="text-align:right;">Extra Strokes</th>
-            </tr>
-          </thead>
-          <tbody id="resultsBody"></tbody>
-        </table>
+      <!-- Player 2 -->
+      <div class="player-card">
+        <div class="player-card-num">2</div>
+        <div class="field">
+          <label>Player 2 Name</label>
+          <input type="text" id="t1p2_name" placeholder="Optional">
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Handicap Index</label>
+            <input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <div class="gender-pills">
+              <div class="gender-pill">
+                <input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked>
+                <label for="t1p2_gM">♂ M</label>
+              </div>
+              <div class="gender-pill">
+                <input type="radio" name="t1p2_g" id="t1p2_gF" value="F">
+                <label for="t1p2_gF">♀ F</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tee</label>
+          <div class="tee-pills">
+            <div class="tee-pill t2">
+              <input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked>
+              <label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+            </div>
+            <div class="tee-pill t1">
+              <input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ">
+              <label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+            </div>
+            <div class="tee-pill t3">
+              <input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd">
+              <label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div><!-- /results -->
+  </div>
+
+  <!-- TEAM 2 -->
+  <div class="section" id="team2-section">
+    <div class="section-header">
+      <span class="section-icon">🏌️</span>
+      <span class="section-title">Team 2</span>
+    </div>
+    <div class="section-body">
+      <div class="team-label">
+        <div class="team-label-num">2</div>
+        <input class="team-name-input" type="text" id="team2_name" placeholder="Team name…" value="Team Birdies">
+      </div>
+      <!-- Player 1 -->
+      <div class="player-card">
+        <div class="player-card-num">1</div>
+        <div class="field">
+          <label>Player 1 Name</label>
+          <input type="text" id="t2p1_name" placeholder="Optional">
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Handicap Index</label>
+            <input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <div class="gender-pills">
+              <div class="gender-pill">
+                <input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked>
+                <label for="t2p1_gM">♂ M</label>
+              </div>
+              <div class="gender-pill">
+                <input type="radio" name="t2p1_g" id="t2p1_gF" value="F">
+                <label for="t2p1_gF">♀ F</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tee</label>
+          <div class="tee-pills">
+            <div class="tee-pill t2">
+              <input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked>
+              <label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+            </div>
+            <div class="tee-pill t1">
+              <input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ">
+              <label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+            </div>
+            <div class="tee-pill t3">
+              <input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd">
+              <label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Player 2 -->
+      <div class="player-card">
+        <div class="player-card-num">2</div>
+        <div class="field">
+          <label>Player 2 Name</label>
+          <input type="text" id="t2p2_name" placeholder="Optional">
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Handicap Index</label>
+            <input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <div class="gender-pills">
+              <div class="gender-pill">
+                <input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked>
+                <label for="t2p2_gM">♂ M</label>
+              </div>
+              <div class="gender-pill">
+                <input type="radio" name="t2p2_g" id="t2p2_gF" value="F">
+                <label for="t2p2_gF">♀ F</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tee</label>
+          <div class="tee-pills">
+            <div class="tee-pill t2">
+              <input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked>
+              <label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+            </div>
+            <div class="tee-pill t1">
+              <input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ">
+              <label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+            </div>
+            <div class="tee-pill t3">
+              <input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd">
+              <label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-note">
+    ℹ️ Course Handicap is calculated per WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH is multiplied by their format %, then summed and rounded to the nearest whole number.
+  </div>
+
+  <div class="reset-row">
+    <button class="btn-reset" onclick="resetAll()">↺ Reset all fields</button>
+  </div>
+
+  <!-- STICKY CALCULATE BUTTON -->
+  <div class="calc-wrap">
+    <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
+  </div>
 
 </div><!-- /app -->
 
-<script>
-// ─── STATE ───
-let teams = []; // [{id, name, players:[{name,hcp}]}]
-let pendingSubmissions = []; // [{name, team, hcp}]
-let teamIdCounter = 0;
-let resultsData = [];
+<!-- RESULTS OVERLAY -->
+<div class="results-overlay" id="resultsOverlay">
+  <div class="results-inner">
+    <div class="results-back">
+      <button class="btn-back" onclick="closeResults()">← Back</button>
+    </div>
+    <div class="results-hero">
+      <span class="results-hero-flag">⛳</span>
+      <div class="results-event" id="res_event">Results</div>
+      <div class="results-meta" id="res_meta"></div>
+    </div>
+    <div id="resultsContent"></div>
+  </div>
+</div>
 
+<!-- ERROR TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── FORMATS ───
 const FORMATS = {
-  '20_15_10_5':  [0.20,0.15,0.10,0.05],
-  '25_20_15_10': [0.25,0.20,0.15,0.10],
-  '25_25_25_25': [0.25,0.25,0.25,0.25],
-  '5_10_15_20':  [0.05,0.10,0.15,0.20],
-  '35_15':       [0.35,0.15],
-  '20_15_10':    [0.20,0.15,0.10],
+  '35_15': [0.35, 0.15],
+  '25_20': [0.25, 0.20],
+  '20_15': [0.20, 0.15],
+  '50_50': [0.50, 0.50],
 };
 
-// ─── AUTH (Firebase) ───
-let isLoggedIn = false;
-
-function openLogin() {
-  switchToSignIn();
-  document.getElementById('loginModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('loginEmail').focus(), 100);
+// ─── HELPERS ───
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function closeLogin() {
-  document.getElementById('loginModal').classList.add('hidden');
-  clearLoginForms();
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-function clearLoginForms() {
-  ['loginEmail','loginPass','regName','regEmail','regPass','regPassConfirm'].forEach(id => {
+function val(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function numVal(id) { return parseFloat(document.getElementById(id)?.value); }
+function radio(name) { return document.querySelector(`input[name="${name}"]:checked`)?.value; }
+
+// ─── COURSE HANDICAP (WHS) ───
+function getCH(index, slope, rating, par) {
+  return index * (slope / 113) + (rating - par);
+}
+
+// Resolve tee values: 'main', 'champ', 'fwd'
+function getTee(teeKey) {
+  if (teeKey === 'fwd') {
+    const r = numVal('tee3_rating');
+    const s = numVal('tee3_slope');
+    const p = numVal('tee3_par') || 72;
+    // If forward tee not filled in, fall back to main
+    if (!isNaN(r) && !isNaN(s)) return { rating:r, slope:s, par:p, key:'fwd' };
+  }
+  // 'main' or 'champ' both use the main tee for this simplified app
+  // (championship tee is same as standard in the simplified version)
+  const r = numVal('course_rating');
+  const s = numVal('course_slope');
+  const p = numVal('course_par') || 72;
+  return { rating:r, slope:s, par:p, key: teeKey === 'champ' ? 'champ' : 'main' };
+}
+
+// ─── BUILD PLAYER ───
+function getPlayer(teamIdx, playerIdx) {
+  const prefix = `t${teamIdx}p${playerIdx}_`;
+  const hcp = parseFloat(document.getElementById(prefix + 'hcp')?.value);
+  const name = val(prefix + 'name') || `Player ${playerIdx}`;
+  const gender = radio(prefix + 'g') || 'M';
+  const teeKey = radio(prefix + 'tee') || 'main';
+  return { name, hcp, gender, teeKey };
+}
+
+// ─── CALCULATE TEAM ───
+function calcTeam(players, pcts) {
+  const active = players.filter(p => !isNaN(p.hcp) && p.hcp >= 0 && p.hcp <= 54);
+  if (active.length === 0) return null;
+
+  active.forEach(p => {
+    const tee = getTee(p.teeKey);
+    p.ch = getCH(p.hcp, tee.slope, tee.rating, tee.par);
+    p.teeUsed = tee.key;
+  });
+
+  // Sort lowest CH first (best player gets highest %)
+  active.sort((a, b) => a.ch - b.ch);
+
+  let total = 0;
+  active.forEach((p, i) => {
+    const pct = pcts[Math.min(i, pcts.length - 1)] || 0;
+    p.pct = pct;
+    p.contrib = p.ch * pct;
+    total += p.contrib;
+  });
+
+  return { players: active, hcp: Math.round(total) };
+}
+
+// ─── MAIN CALCULATE ───
+function calculate() {
+  const rating = numVal('course_rating');
+  const slope  = numVal('course_slope');
+  if (isNaN(rating) || isNaN(slope)) {
+    showToast('Please fill in the Course Rating and Slope first.');
+    return;
+  }
+
+  const fmtKey = radio('fmt') || '35_15';
+  const pcts = FORMATS[fmtKey];
+
+  const teams = [
+    {
+      name: val('team1_name') || 'Team 1',
+      players: [getPlayer(1,1), getPlayer(1,2)]
+    },
+    {
+      name: val('team2_name') || 'Team 2',
+      players: [getPlayer(2,1), getPlayer(2,2)]
+    }
+  ];
+
+  // Check at least one player per team has a handicap
+  const results = [];
+  let hasAnyPlayer = false;
+
+  for (const team of teams) {
+    const res = calcTeam(team.players, pcts);
+    if (res) {
+      hasAnyPlayer = true;
+      results.push({ name: team.name, ...res });
+    } else {
+      results.push({ name: team.name, hcp: null, players: [] });
+    }
+  }
+
+  if (!hasAnyPlayer) {
+    showToast('Enter at least one player\'s handicap to calculate.');
+    return;
+  }
+
+  renderResults(results, rating, slope, numVal('course_par') || 72, pcts);
+  document.getElementById('resultsOverlay').classList.add('open');
+  document.getElementById('resultsOverlay').scrollTop = 0;
+}
+
+// ─── RENDER RESULTS ───
+function renderResults(results, rating, slope, par, pcts) {
+  const fmtLabel = pcts.map(p => Math.round(p*100)+'%').join(' / ');
+
+  document.getElementById('res_event').textContent = 'Scramble Results';
+  document.getElementById('res_meta').innerHTML =
+    `Course Rating ${rating} · Slope ${slope} · Par ${par}<br>Format: ${fmtLabel} scramble allowance`;
+
+  // Sort by hcp ascending (nulls last)
+  const sorted = [...results].sort((a,b) => {
+    if (a.hcp === null) return 1;
+    if (b.hcp === null) return -1;
+    return a.hcp - b.hcp;
+  });
+
+  const teeColors = { main:'var(--tee2)', champ:'var(--tee1)', fwd:'var(--tee3)' };
+  const teeNames  = { main:'Std', champ:'Champ', fwd:'Fwd' };
+
+  let html = '';
+
+  sorted.forEach((team, idx) => {
+    if (team.hcp === null) {
+      html += `
+        <div class="result-card">
+          <div class="result-card-top">
+            <div class="result-team-name">${esc(team.name)}</div>
+            <div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">No players entered</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const playerRows = team.players.map(p => {
+      const tColor = teeColors[p.teeUsed] || teeColors.main;
+      const tName  = teeNames[p.teeUsed]  || 'Std';
+      return `
+        <div class="result-player-row">
+          <div class="result-player-name">${esc(p.name)}</div>
+          <div class="result-player-meta">
+            <span class="result-player-hcp">${p.hcp.toFixed(1)}</span>
+            <span class="tee-dot-sm" style="background:${tColor}"></span>
+            <span class="result-pct">${Math.round(p.pct*100)}%</span>
+          </div>
+        </div>`;
+    }).join('');
+
+    html += `
+      <div class="result-card">
+        <div class="result-card-top">
+          <div>
+            <div class="result-team-name">${esc(team.name)}</div>
+            <div class="result-strokes">+${team.hcp} stroke${team.hcp !== 1 ? 's' : ''} off scratch</div>
+          </div>
+          <div class="result-hcp-block">
+            <div class="result-hcp-num">${team.hcp}</div>
+            <div class="result-hcp-label">Team HCP</div>
+          </div>
+        </div>
+        <div class="result-players">${playerRows}</div>
+      </div>`;
+
+    // Stroke difference between teams
+    if (idx === 0 && sorted.length === 2 && sorted[1].hcp !== null) {
+      const diff = Math.abs(sorted[1].hcp - sorted[0].hcp);
+      html += `
+        <div class="result-vs-badge">
+          <span>${esc(sorted[0].name)}</span>
+          <span class="result-vs-diff">${diff === 0 ? 'Even' : diff + ' stroke' + (diff !== 1 ? 's' : '')}</span>
+          <span>${esc(sorted[1].name)}</span>
+        </div>`;
+    }
+  });
+
+  document.getElementById('resultsContent').innerHTML = html;
+}
+
+function closeResults() {
+  document.getElementById('resultsOverlay').classList.remove('open');
+}
+
+function resetAll() {
+  if (!confirm('Reset all fields?')) return;
+  ['course_rating','course_slope','tee3_rating','tee3_slope',
+   't1p1_name','t1p1_hcp','t1p2_name','t1p2_hcp',
+   't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['loginError','registerError'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.classList.remove('visible'); el.removeAttribute('style'); }
+  document.getElementById('course_par').value = '72';
+  document.getElementById('tee3_par').value = '72';
+  document.getElementById('team1_name').value = 'Team Eagles';
+  document.getElementById('team2_name').value = 'Team Birdies';
+  // Reset radios to defaults
+  ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(name => {
+    const el = document.querySelector(`input[name="${name}"][value="M"]`);
+    if (el) el.checked = true;
   });
-  const btn = document.querySelector('#formSignIn .btn-login');
-  if (btn) { btn.textContent = 'Sign In →'; btn.disabled = false; }
-  const btnR = document.querySelector('#formRegister .btn-login');
-  if (btnR) { btnR.textContent = 'Create Account →'; btnR.disabled = false; }
+  ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(name => {
+    const el = document.querySelector(`input[name="${name}"][value="main"]`);
+    if (el) el.checked = true;
+  });
+  document.getElementById('fA').checked = true;
 }
 
-function switchToRegister() {
-  document.getElementById('formSignIn').style.display = 'none';
-  document.getElementById('formRegister').style.display = 'block';
-  document.getElementById('modalTitle').textContent = 'Create Account';
-  document.getElementById('modalSub').textContent = 'Join Team Handicap Manager';
-  setTimeout(() => document.getElementById('regName').focus(), 50);
+// Close results on back button / swipe
+window.addEventListener('popstate', () => {
+  if (document.getElementById('resultsOverlay').classList.contains('open')) {
+    closeResults();
+  }
+});
+
+// ─── AUTH ───
+function openAuthModal() {
+  switchToSignIn();
+  document.getElementById('authModal').classList.remove('hidden');
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.add('hidden');
+  clearAuthForms();
+}
+
+function clearAuthForms() {
+  ['signInEmail','signInPass','regName','regEmail','regPass','regPassConfirm']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  setAuthError('signInError', '');
+  setAuthError('registerError', '');
+  setAuthBtnLoading('btnSignIn', false, 'Sign In →');
+  setAuthBtnLoading('btnRegister', false, 'Create Account →');
 }
 
 function switchToSignIn() {
   document.getElementById('formSignIn').style.display = 'block';
   document.getElementById('formRegister').style.display = 'none';
-  document.getElementById('modalTitle').textContent = 'Admin Access';
-  document.getElementById('modalSub').textContent = 'Team Handicap Manager';
+  document.getElementById('authModalTitle').textContent = 'Welcome back';
 }
 
-function setLoginLoading(loading) {
-  const btn = document.querySelector('#formSignIn .btn-login');
-  if (btn) { btn.textContent = loading ? 'Signing in...' : 'Sign In →'; btn.disabled = loading; }
+function switchToRegister() {
+  document.getElementById('formSignIn').style.display = 'none';
+  document.getElementById('formRegister').style.display = 'block';
+  document.getElementById('authModalTitle').textContent = 'Create account';
 }
 
-function setRegisterLoading(loading) {
-  const btn = document.querySelector('#formRegister .btn-login');
-  if (btn) { btn.textContent = loading ? 'Creating account...' : 'Create Account →'; btn.disabled = loading; }
-}
-
-function showAuthError(elId, msg) {
+function setAuthError(elId, msg) {
   const el = document.getElementById(elId);
-  if (el) { el.textContent = msg; el.classList.add('visible'); }
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.toggle('visible', !!msg);
 }
 
-async function doGoogleAuth() {
-  if (!window._fbAuth) { showAuthError('loginError', 'Firebase not loaded yet. Please wait a moment.'); return; }
+function setAuthBtnLoading(btnId, loading, defaultText) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.textContent = loading ? 'Please wait…' : defaultText;
+  btn.disabled = loading;
+}
+
+async function doGoogleSignIn() {
+  if (!window._fbAuth) return;
+  setAuthError('signInError', '');
   try {
-    await window._fbGooglePopup();
-    closeLogin();
+    await window._fbAuth.signInWithPopup(window._fbGoogleProvider);
+    closeAuthModal();
   } catch(e) {
-    const msg = e.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.'
-      : e.code === 'auth/popup-blocked' ? 'Popup blocked — please allow popups for this site.'
-      : e.code === 'auth/operation-not-allowed' ? 'Google Sign-In is not enabled in Firebase Console.'
-      : 'Google sign-in failed: ' + e.message;
-    showAuthError('loginError', msg);
+    const msg = e.code === 'auth/popup-closed-by-user'   ? 'Sign-in cancelled.' :
+                e.code === 'auth/popup-blocked'          ? 'Popup blocked — allow popups for this site.' :
+                'Google sign-in failed. Please try again.';
+    setAuthError('signInError', msg);
   }
 }
 
-async function doLogin() {
-  if (!window._fbAuth) { showAuthError('loginError', 'Firebase not loaded yet. Please wait.'); return; }
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  const err   = document.getElementById('loginError');
-  err.classList.remove('visible');
-
-  if (!email) { showAuthError('loginError', 'Please enter your email address.'); return; }
-  if (!pass)  { showAuthError('loginError', 'Please enter your password.'); return; }
-
-  setLoginLoading(true);
+async function doEmailSignIn() {
+  if (!window._fbAuth) return;
+  const email = document.getElementById('signInEmail').value.trim();
+  const pass  = document.getElementById('signInPass').value;
+  setAuthError('signInError', '');
+  if (!email) { setAuthError('signInError', 'Please enter your email.'); return; }
+  if (!pass)  { setAuthError('signInError', 'Please enter your password.'); return; }
+  setAuthBtnLoading('btnSignIn', true, 'Sign In →');
   try {
-    await window._fbSignIn(null, email, pass);
-    closeLogin();
+    await window._fbAuth.signInWithEmailAndPassword(email, pass);
+    closeAuthModal();
   } catch(e) {
     const msg = (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
       ? 'Incorrect email or password.'
-      : e.code === 'auth/invalid-email' ? 'Please enter a valid email address.'
-      : e.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later.'
+      : e.code === 'auth/invalid-email'      ? 'Please enter a valid email address.'
+      : e.code === 'auth/too-many-requests'  ? 'Too many attempts — try again later.'
       : 'Sign-in failed: ' + e.message;
-    showAuthError('loginError', msg);
-    document.getElementById('loginPass').value = '';
+    setAuthError('signInError', msg);
+    document.getElementById('signInPass').value = '';
   } finally {
-    setLoginLoading(false);
+    setAuthBtnLoading('btnSignIn', false, 'Sign In →');
   }
 }
 
 async function doRegister() {
-  if (!window._fbAuth) { showAuthError('registerError', 'Firebase not loaded yet. Please wait.'); return; }
+  if (!window._fbAuth) return;
   const name    = document.getElementById('regName').value.trim();
   const email   = document.getElementById('regEmail').value.trim();
   const pass    = document.getElementById('regPass').value;
   const confirm = document.getElementById('regPassConfirm').value;
-
-  if (!name)           { showAuthError('registerError', 'Please enter your full name.'); return; }
-  if (!email)          { showAuthError('registerError', 'Please enter your email address.'); return; }
-  if (pass.length < 6) { showAuthError('registerError', 'Password must be at least 6 characters.'); return; }
-  if (pass !== confirm) { showAuthError('registerError', 'Passwords do not match.'); return; }
-
-  setRegisterLoading(true);
+  setAuthError('registerError', '');
+  if (!name)             { setAuthError('registerError', 'Please enter your name.'); return; }
+  if (!email)            { setAuthError('registerError', 'Please enter your email.'); return; }
+  if (pass.length < 6)   { setAuthError('registerError', 'Password must be at least 6 characters.'); return; }
+  if (pass !== confirm)  { setAuthError('registerError', 'Passwords do not match.'); return; }
+  setAuthBtnLoading('btnRegister', true, 'Create Account →');
   try {
-    const cred = await window._fbSignUp(null, email, pass);
-    await window._fbUpdateProfile(cred.user, { displayName: name });
-    closeLogin();
+    const cred = await window._fbAuth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    closeAuthModal();
   } catch(e) {
     const msg = e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.'
-      : e.code === 'auth/invalid-email' ? 'Please enter a valid email address.'
-      : e.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.'
+      : e.code === 'auth/invalid-email'   ? 'Please enter a valid email address.'
+      : e.code === 'auth/weak-password'   ? 'Password too weak — use at least 6 characters.'
       : 'Registration failed: ' + e.message;
-    showAuthError('registerError', msg);
+    setAuthError('registerError', msg);
   } finally {
-    setRegisterLoading(false);
+    setAuthBtnLoading('btnRegister', false, 'Create Account →');
   }
 }
 
-window.completeLogin = function(name, email) {
-  isLoggedIn = true;
-  document.getElementById('authUser').classList.add('visible');
-  document.getElementById('authUserName').textContent = name;
-  document.getElementById('adminLocked').style.display = 'none';
-  document.getElementById('adminContent').style.display = 'block';
-  document.getElementById('resultsTab').style.display = '';
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-admin').classList.add('active');
-  document.getElementById('adminTabBtn').classList.add('active');
-
-  // Get organiser UID, show share link and start live submissions listener
-  const uid = window._fbAuth && window._fbAuth.currentUser ? window._fbAuth.currentUser.uid : null;
-  if (uid) {
-    window._organiserId = uid;
-    if (window._startSubmissionListener) window._startSubmissionListener(uid);
-    setTimeout(function() { renderShareLink(uid); }, 150);
-  }
-};
-
-window.handleSignOut = function() {
-  isLoggedIn = false;
-  window._organiserId = null;
-  if (window._stopSubmissionListener) window._stopSubmissionListener();
-  const shareCard = document.getElementById('shareCard');
-  if (shareCard) shareCard.style.display = 'none';
-  document.getElementById('authUser').classList.remove('visible');
-  document.getElementById('adminLocked').style.display = '';
-  document.getElementById('adminContent').style.display = 'none';
-  document.getElementById('resultsTab').style.display = 'none';
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-admin').classList.add('active');
-  document.getElementById('adminTabBtn').classList.add('active');
-};
-
-async function doLogout() {
-  if (window._fbAuth) {
-    await window._fbSignOut();
-    // UI is handled by onAuthStateChanged -> handleSignOut
-  } else {
-    window.handleSignOut();
-  }
+async function doSignOut() {
+  if (window._fbAuth) await window._fbAuth.signOut();
 }
 
-function requireAdmin(e) {
-  if (isLoggedIn) {
-    showTab('admin', e);
-  } else {
-    openLogin();
-  }
+// ─── AUTH STATE ───
+function onSignedIn(user) {
+  const name = user.displayName || user.email.split('@')[0];
+  document.getElementById('userPillName').textContent = name;
+  document.getElementById('userPill').classList.add('visible');
+  document.getElementById('btnSignInHeader').style.display = 'none';
 }
 
-// ─── TABS ───
-function showTab(name, e) {
-  const ev = e || event;
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  if (ev && ev.target) ev.target.classList.add('active');
+function onSignedOut() {
+  document.getElementById('userPill').classList.remove('visible');
+  document.getElementById('btnSignInHeader').style.display = '';
 }
 
-// ─── TEAMS ───
-function addTeam(name='', players=[]) {
-  const id = ++teamIdCounter;
-  const team = { id, name: name || 'Team ' + id, players: [] };
-
-  // Fill up to 4 players
-  for (let i = 0; i < 4; i++) {
-    team.players.push(players[i] ? { ...players[i] } : { name:'', hcp:'' });
-  }
-
-  teams.push(team);
-  renderTeam(team);
-  updateCounts();
-  document.getElementById('noTeams').style.display = 'none';
-}
-
-function renderTeam(team) {
-  const container = document.getElementById('teamsContainer');
-  const el = document.createElement('div');
-  el.className = 'team-card open anim-in';
-  el.id = 'team-' + team.id;
-
-  el.innerHTML = `
-    <div class="team-header" onclick="toggleTeam(${team.id})">
-      <div class="team-header-left">
-        <div class="team-num">${team.id}</div>
-        <input class="team-name-input" type="text" value="${escHtml(team.name)}"
-          placeholder="Team name"
-          onclick="event.stopPropagation()"
-          oninput="updateTeamName(${team.id}, this.value)">
-        <div class="team-badge pending" id="badge-${team.id}">Pending</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-danger btn-sm no-print" onclick="event.stopPropagation();removeTeam(${team.id})">Remove</button>
-        <div class="team-toggle">&#x25BC;</div>
-      </div>
-    </div>
-    <div class="team-body">
-      <div class="players-grid-4">
-        ${[0,1,2,3].map(i => `
-          <div class="player-slot">
-            <div class="player-slot-num">${i+1}</div>
-            <div class="field">
-              <label>Player ${i+1} Name</label>
-              <input type="text" value="${escHtml(team.players[i].name)}"
-                placeholder="Optional"
-                oninput="updatePlayer(${team.id},${i},'name',this.value)">
-            </div>
-            <div class="field">
-              <label>Handicap Index</label>
-              <input type="number" value="${team.players[i].hcp}"
-                placeholder="0–54" step="0.1" min="0" max="54"
-                oninput="updatePlayer(${team.id},${i},'hcp',this.value)">
-            </div>
-            <div class="field">
-              <label>Gender</label>
-              <div class="gender-pills" style="gap:6px;">
-                <div class="gender-pill"><input type="radio" name="g_${team.id}_${i}" id="gm_${team.id}_${i}" value="M" ${(team.players[i].gender||'M')==='M'?'checked':''} onchange="updatePlayer(${team.id},${i},'gender','M')"><label for="gm_${team.id}_${i}" style="padding:5px 10px;">&#9794;</label></div>
-                <div class="gender-pill"><input type="radio" name="g_${team.id}_${i}" id="gf_${team.id}_${i}" value="F" ${(team.players[i].gender||'M')==='F'?'checked':''} onchange="updatePlayer(${team.id},${i},'gender','F')"><label for="gf_${team.id}_${i}" style="padding:5px 10px;">&#9792;</label></div>
-              </div>
-            </div>
-            <div class="field">
-              <label>Tee</label>
-              <select class="tee-select" onchange="updatePlayer(${team.id},${i},'tee',this.value)">
-                <option value="auto" ${(team.players[i].tee||'auto')==='auto'?'selected':''}>Auto (by gender)</option>
-                <option value="tee1" ${team.players[i].tee==='tee1'?'selected':''}>&#128309; Championship</option>
-                <option value="tee2" ${team.players[i].tee==='tee2'?'selected':''}>&#128993; Medal</option>
-                <option value="tee3" ${team.players[i].tee==='tee3'?'selected':''}>&#128308; Forward/Ladies</option>
-              </select>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-
-  container.appendChild(el);
-}
-
-function toggleTeam(id) {
-  document.getElementById('team-' + id).classList.toggle('open');
-}
-
-function updateTeamName(id, val) {
-  const t = teams.find(t => t.id === id);
-  if (t) t.name = val;
-}
-
-function updatePlayer(teamId, playerIdx, field, val) {
-  const t = teams.find(t => t.id === teamId);
-  if (t) t.players[playerIdx][field] = val;
-  updateCounts();
-}
-
-function removeTeam(id) {
-  teams = teams.filter(t => t.id !== id);
-  const el = document.getElementById('team-' + id);
-  if (el) el.remove();
-  updateCounts();
-  if (teams.length === 0) document.getElementById('noTeams').style.display = 'block';
-}
-
-function clearAllTeams() {
-  if (teams.length && !confirm('Remove all teams?')) return;
-  teams = [];
-  document.getElementById('teamsContainer').innerHTML = '';
-  document.getElementById('noTeams').style.display = 'block';
-  updateCounts();
-}
-
-function updateCounts() {
-  const playerCount = teams.reduce((s, t) =>
-    s + t.players.filter(p => p.hcp !== '' && !isNaN(parseFloat(p.hcp))).length, 0);
-  document.getElementById('teamCountDisplay').textContent = teams.length;
-  document.getElementById('playerCountDisplay').textContent = playerCount;
-  document.getElementById('calcTeamCount').textContent = teams.length + ' team' + (teams.length !== 1 ? 's' : '');
-}
-
-// ─── CSV IMPORT ───
-function handleCSVFile(e) {
-  const file = e.target.files[0];
-  if (file) readCSV(file);
-}
-
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('csvZone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) readCSV(file);
-}
-
-function readCSV(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => parseCSV(e.target.result);
-  reader.readAsText(file);
-}
-
-function parseCSV(text) {
-  const notice = document.getElementById('csvNotice');
-  notice.className = 'notice';
-  notice.style.display = 'none';
-
-  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
-  const teamMap = {};
-  let errors = 0, imported = 0;
-
-  lines.forEach((line, i) => {
-    const parts = line.split(',').map(s => s.trim());
-    if (parts.length < 3) { errors++; return; }
-    const [teamName, playerName, hcpStr] = parts;
-    const hcp = parseFloat(hcpStr);
-    if (!teamName || isNaN(hcp) || hcp < 0 || hcp > 54) { errors++; return; }
-
-    if (!teamMap[teamName]) teamMap[teamName] = [];
-    if (teamMap[teamName].length < 4) {
-      teamMap[teamName].push({ name: playerName || '', hcp });
-      imported++;
-    }
-  });
-
-  const newTeams = Object.entries(teamMap);
-  if (newTeams.length === 0) {
-    notice.textContent = 'No valid data found. Check your CSV format.';
-    notice.className = 'notice error visible';
-    return;
-  }
-
-  newTeams.forEach(([name, players]) => addTeam(name, players));
-
-  notice.textContent = `✓ Imported ${newTeams.length} teams (${imported} players).` +
-    (errors ? ` ${errors} rows skipped due to errors.` : '');
-  notice.className = 'notice success visible';
-}
-
-// ─── PLAYER SUBMISSION ───
-function submitPlayer() {
-  const name   = document.getElementById('sub_name').value.trim();
-  const team   = document.getElementById('sub_team').value.trim();
-  const hcp    = parseFloat(document.getElementById('sub_hcp').value);
-  const gender = document.querySelector('input[name="sub_gender"]:checked')?.value || 'M';
-  const notice = document.getElementById('submitNotice');
-
-  notice.className = 'notice';
-  if (!name) { notice.textContent = 'Please enter your name.'; notice.className = 'notice error visible'; return; }
-  if (isNaN(hcp) || hcp < 0 || hcp > 54) { notice.textContent = 'Please enter a valid handicap index (0–54).'; notice.className = 'notice error visible'; return; }
-
-  pendingSubmissions.push({ name, team: team || 'Unassigned', hcp, gender });
-  renderPending();
-
-  document.getElementById('submitFormFields').style.display = 'none';
-  document.getElementById('submitSuccess').classList.add('visible');
-}
-
-function resetSubmitForm() {
-  document.getElementById('sub_name').value = '';
-  document.getElementById('sub_team').value = '';
-  document.getElementById('sub_hcp').value = '';
-  document.getElementById('submitNotice').className = 'notice';
-  document.getElementById('submitFormFields').style.display = 'flex';
-  document.getElementById('submitSuccess').classList.remove('visible');
-}
-
-// Render Firestore submissions in pending list
-window._renderFirestorePending = function() {
-  const firestoreSubs = window._firestoreSubs || [];
-  const card = document.getElementById('pendingCard');
-  const list = document.getElementById('pendingList');
-  const liveBadge = document.getElementById('liveBadge');
-  const notice = document.getElementById('pendingNotice');
-
-  const total = pendingSubmissions.length + firestoreSubs.length;
-
-  if (total === 0) {
-    card.style.display = 'none';
-    return;
-  }
-
-  card.style.display = 'block';
-
-  if (firestoreSubs.length > 0) {
-    liveBadge.style.display = 'inline-flex';
-    notice.style.display = 'block';
-  }
-
-  // Firestore submissions (from player form)
-  const firestoreHTML = firestoreSubs.map((s) => `
-    <div class="pending-item">
-      <div class="pending-item-info">
-        <div class="pending-item-name">
-          ${escHtml(s.name)}
-          <span class="gender-badge ${(s.gender||'M').toLowerCase()}">${s.gender||'M'}</span>
-          <span class="sub-source-badge form">Form</span>
-        </div>
-        <div class="pending-item-meta">
-          Team: ${escHtml(s.team||'Unassigned')}
-          ${s.email ? ' · ' + escHtml(s.email) : ''}
-          ${s.notes ? ' · <em>' + escHtml(s.notes) + '</em>' : ''}
-        </div>
-      </div>
-      <div class="pending-item-hcp">${parseFloat(s.hcp).toFixed(1)}</div>
-      <div class="pending-actions">
-        <button class="btn btn-sm" onclick="assignFirestorePending('${s.id}')">+ Assign</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFirestorePending('${s.id}')">✕</button>
-      </div>
-    </div>`).join('');
-
-  // Manual submissions (from in-app form)
-  const manualHTML = pendingSubmissions.map((s, i) => `
-    <div class="pending-item">
-      <div class="pending-item-info">
-        <div class="pending-item-name">
-          ${escHtml(s.name)}
-          <span class="gender-badge ${(s.gender||'M').toLowerCase()}">${s.gender||'M'}</span>
-          <span class="sub-source-badge manual">Manual</span>
-        </div>
-        <div class="pending-item-meta">Team: ${escHtml(s.team)}</div>
-      </div>
-      <div class="pending-item-hcp">${s.hcp.toFixed(1)}</div>
-      <div class="pending-actions">
-        <button class="btn btn-sm" onclick="assignPending(${i})">+ Assign</button>
-        <button class="btn btn-danger btn-sm" onclick="removePending(${i})">✕</button>
-      </div>
-    </div>`).join('');
-
-  list.innerHTML = firestoreHTML + manualHTML;
-};
-
-function renderPending() {
-  if (window._renderFirestorePending) {
-    window._renderFirestorePending();
-  }
-}
-
-async function assignFirestorePending(id) {
-  const s = (window._firestoreSubs || []).find(function(sub) { return sub.id === id; });
-  if (!s) { alert('Submission not found. Please try again.'); return; }
-  const hcp = parseFloat(s.hcp);
-  const name = s.name || '—';
-  const teamName = s.team && s.team !== 'Unassigned' ? s.team : '';
-  const gender = s.gender || 'M';
-
-  let team = teamName ? teams.find(t => t.name.toLowerCase() === teamName.toLowerCase()) : null;
-  if (!team) {
-    addTeam(teamName || name + "'s Team", [{ name, hcp, gender }]);
-  } else {
-    const slot = team.players.findIndex(p => p.hcp === '' || isNaN(parseFloat(p.hcp)));
-    if (slot >= 0) {
-      team.players[slot] = { name, hcp, gender };
-      const card = document.getElementById('team-' + team.id);
-      if (card) {
-        const slots = card.querySelectorAll('.player-slot');
-        const slotEl = slots[slot];
-        if (slotEl) {
-          slotEl.querySelectorAll('input')[0].value = name;
-          slotEl.querySelectorAll('input')[1].value = hcp;
-        }
-      }
-      updateCounts();
-    } else {
-      alert('Team "' + teamName + '" already has 4 players.');
-      return;
-    }
-  }
-
-  // Remove from Firestore so it disappears from the submissions list
-  try {
-    await window._fbDb.collection('submissions').doc(id).delete();
-  } catch(e) { console.warn('Could not delete from Firestore:', e); }
-}
-
-async function deleteFirestorePending(id) {
-  try {
-    await window._fbDb.collection('submissions').doc(id).delete();
-  } catch(e) { console.warn('Could not delete from Firestore:', e); }
-}
-
-function assignPending(i) {
-  const sub = pendingSubmissions[i];
-  // Find existing team or create new one
-  let team = teams.find(t => t.name.toLowerCase() === sub.team.toLowerCase());
-  if (!team) {
-    addTeam(sub.team, [{ name: sub.name, hcp: sub.hcp }]);
-  } else {
-    const slot = team.players.findIndex(p => p.hcp === '' || isNaN(parseFloat(p.hcp)));
-    if (slot >= 0) {
-      team.players[slot] = { name: sub.name, hcp: sub.hcp };
-      // Update input fields in DOM
-      const card = document.getElementById('team-' + team.id);
-      if (card) {
-        const inputs = card.querySelectorAll('.player-slot');
-        const slotEl = inputs[slot];
-        if (slotEl) {
-          slotEl.querySelectorAll('input')[0].value = sub.name;
-          slotEl.querySelectorAll('input')[1].value = sub.hcp;
-        }
-      }
-      updateCounts();
-    } else {
-      alert('Team "' + sub.team + '" already has 4 players.');
-      return;
-    }
-  }
-  pendingSubmissions.splice(i, 1);
-  renderPending();
-}
-
-function removePending(i) {
-  pendingSubmissions.splice(i, 1);
-  renderPending();
-}
-
-// ─── CALCULATE ───
-function getCH(index, slope, rating, par) {
-  return index * (slope / 113) + (rating - par);
-}
-
-function getTeeTriplet(teeKey, gender) {
-  // Auto-select tee by gender if 'auto'
-  const effectiveTee = teeKey === 'auto'
-    ? (gender === 'F' ? 'tee3' : 'tee2')
-    : teeKey;
-
-  const rating = parseFloat(document.getElementById(effectiveTee + '_rating')?.value);
-  const slope  = parseFloat(document.getElementById(effectiveTee + '_slope')?.value);
-  const par    = parseFloat(document.getElementById(effectiveTee + '_par')?.value) || 72;
-
-  // Fall back to tee2 values if tee not filled in
-  const fallbackRating = parseFloat(document.getElementById('tee2_rating')?.value);
-  const fallbackSlope  = parseFloat(document.getElementById('tee2_slope')?.value);
-  const fallbackPar    = parseFloat(document.getElementById('tee2_par')?.value) || 72;
-
-  return {
-    rating: isNaN(rating) ? fallbackRating : rating,
-    slope:  isNaN(slope)  ? fallbackSlope  : slope,
-    par:    isNaN(par)    ? fallbackPar    : par,
-    teeKey: effectiveTee
-  };
-}
-
-function toggleCustomPct() {
-  const isCustom = document.querySelector('input[name="fmt"]:checked')?.value === 'custom';
-  document.getElementById('customPctRow').classList.toggle('visible', isCustom);
-}
-
-function updateCustomPctTotal() {
-  const vals = [1,2,3,4].map(i => parseFloat(document.getElementById('cp'+i)?.value) || 0).filter(v => v > 0);
-  const total = vals.reduce((a,b) => a+b, 0);
-  const el = document.getElementById('customPctTotal');
-  if (vals.length < 2) { el.textContent = 'Enter at least 2 values.'; el.className = 'custom-pct-total warn'; return; }
-  el.textContent = `Total: ${total}% ${total === 100 ? '✓ Adds up to 100%' : '(does not need to equal 100%)'}`;
-  el.className = 'custom-pct-total ' + (total > 0 ? 'ok' : 'warn');
-}
-
-function getActivePcts() {
-  const val = document.querySelector('input[name="fmt"]:checked').value;
-  if (val === 'custom') {
-    const pcts = [1,2,3,4]
-      .map(i => parseFloat(document.getElementById('cp'+i)?.value))
-      .filter(v => !isNaN(v) && v >= 0)
-      .map(v => v / 100);
-    return pcts.length >= 2 ? pcts : [0.20, 0.15, 0.10, 0.05];
-  }
-  return FORMATS[val] || FORMATS['20_15_10_5'];
-}
-
-function calculateAll() {
-  // Validate at least one tee is filled in
-  const t2r = parseFloat(document.getElementById('tee2_rating')?.value);
-  const t2s = parseFloat(document.getElementById('tee2_slope')?.value);
-  if (isNaN(t2r) || isNaN(t2s)) {
-    alert('Please fill in at least the Medal/Standard tee details (Rating and Slope) before calculating.');
-    return;
-  }
-
-  if (teams.length === 0) {
-    alert('No teams to calculate. Add some teams first.');
-    return;
-  }
-
-  const pcts = getActivePcts();
-  resultsData = [];
-
-  teams.forEach(team => {
-    const activePlayers = team.players
-      .map(p => ({ name: p.name || '—', hcp: parseFloat(p.hcp), gender: p.gender || 'M', tee: p.tee || 'auto' }))
-      .filter(p => !isNaN(p.hcp) && p.hcp >= 0 && p.hcp <= 54);
-
-    if (activePlayers.length === 0) return;
-
-    activePlayers.forEach(p => {
-      const tee = getTeeTriplet(p.tee, p.gender);
-      p.ch = getCH(p.hcp, tee.slope, tee.rating, tee.par);
-      p.teeUsed = tee.teeKey;
-    });
-    activePlayers.sort((a, b) => a.ch - b.ch);
-
-    let total = 0;
-    activePlayers.forEach((p, i) => {
-      const pct = pcts[Math.min(i, pcts.length - 1)] || 0;
-      p.pct = pct;
-      p.contrib = p.ch * pct;
-      total += p.contrib;
-    });
-
-    const teamHcp = Math.round(total);
-
-    // Update badge
-    const badge = document.getElementById('badge-' + team.id);
-    if (badge) {
-      badge.textContent = 'HCP ' + teamHcp;
-      badge.className = 'team-badge';
-    }
-
-    resultsData.push({ team: team.name, hcp: teamHcp, players: activePlayers });
-  });
-
-  // Sort by handicap ascending
-  resultsData.sort((a, b) => a.hcp - b.hcp);
-
-  // Use Medal tee as reference for results header display
-  const displayRating = parseFloat(document.getElementById('tee2_rating')?.value) || t2r;
-  const displaySlope  = parseFloat(document.getElementById('tee2_slope')?.value)  || t2s;
-  const displayPar    = parseFloat(document.getElementById('tee2_par')?.value)    || 72;
-
-  renderResults(displayRating, displaySlope, displayPar, pcts);
-
-  // Switch to results tab
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-results').classList.add('active');
-  document.getElementById('resultsTab').style.display = '';
-  document.getElementById('resultsTab').classList.add('active');
-}
-
-function renderResults(rating, slope, par, pcts) {
-  const eventName = document.getElementById('eventName').value.trim() || 'Golf Event';
-  const eventDate = document.getElementById('eventDate').value.trim();
-  const fmtLabel  = pcts.map(p => Math.round(p*100)+'%').join(' / ');
-
-  document.getElementById('resultsTitle').textContent = eventName;
-  document.getElementById('resultsMeta').innerHTML =
-    (eventDate ? eventDate + ' · ' : '') +
-    `Course ${rating} / ${slope} · Par ${par} · Scramble allowance: ${fmtLabel}`;
-
-  const leaderHcp = resultsData.length > 0 ? resultsData[0].hcp : 0;
-
-  const tbody = document.getElementById('resultsBody');
-  tbody.innerHTML = resultsData.map((r, i) => {
-    const diff = r.hcp - leaderHcp;
-    const strokesCell = `<td class="strokes-cell plus">+${r.hcp} <span class="strokes-badge">stroke${r.hcp !== 1 ? 's' : ''}</span></td>`;
-    return `
-    <tr>
-      <td class="rank-cell ${i < 3 ? 'top' : ''}">${i+1}</td>
-      <td class="team-name-cell">${escHtml(r.team)}</td>
-      <td class="players-cell">
-        ${r.players.map(p => {
-          const teeColors = {tee1:'#3a7bd5',tee2:'#c8a84b',tee3:'#e88080'};
-          const teeNames  = {tee1:'Champ',tee2:'Medal',tee3:'Fwd'};
-          const teeColor  = teeColors[p.teeUsed] || teeColors.tee2;
-          const teeName   = teeNames[p.teeUsed]  || 'Medal';
-          const gIcon = p.gender === 'F' ? '&#9792;' : '&#9794;';
-          return `<span>${escHtml(p.name)} <em style="color:var(--gold);opacity:0.7">${p.hcp.toFixed(1)}</em> <span style="font-size:0.6rem;color:${teeColor};opacity:0.9">${teeName}</span> <span style="font-size:0.6rem;color:var(--muted);">${gIcon}</span></span>`;
-        }).join('')}
-      </td>
-      <td class="hcp-cell">${r.hcp}</td>
-      ${strokesCell}
-    </tr>`;
-  }).join('');
-
-  document.getElementById('noResults').style.display = 'none';
-  document.getElementById('resultsPanel').classList.add('visible');
-}
-
-// ─── EXPORT CSV ───
-function exportCSV() {
-  if (!resultsData.length) return;
-  const eventName = document.getElementById('eventName').value.trim() || 'Event';
-  let csv = 'Rank,Team Name,Team Handicap,Extra Strokes,Players\n';
-  const leaderHcp = resultsData[0].hcp;
-  resultsData.forEach((r, i) => {
-    const players = r.players.map(p => p.name + ' (' + p.hcp.toFixed(1) + ')').join(' | ');
-    csv += `${i+1},"${r.team}",${r.hcp},"+${r.hcp}","${players}"\n`;
-  });
-  const blob = new Blob([csv], { type:'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = eventName.replace(/\s+/g,'-') + '-handicaps.csv';
-  a.click();
-}
-
-
-function resetAllData() {
-  if (!confirm('Reset ALL data? This will clear all teams, results, course details and event info.')) return;
-
-  // Clear teams
-  teams = [];
-  teamIdCounter = 0;
-  resultsData = [];
-  pendingSubmissions = [];
-  document.getElementById('teamsContainer').innerHTML = '';
-  document.getElementById('noTeams').style.display = 'block';
-  updateCounts();
-
-  // Clear event/course fields
-  ['eventName','eventDate','tee1_rating','tee1_slope','tee1_par',
-   'tee2_rating','tee2_slope','tee2_par',
-   'tee3_rating','tee3_slope','tee3_par'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = id.includes('par') ? '72' : '';
-  });
-
-  // Reset format to default
-  const fA = document.getElementById('fA');
-  if (fA) fA.checked = true;
-  document.getElementById('customPctRow').classList.remove('visible');
-  [1,2,3,4].forEach(i => {
-    const el = document.getElementById('cp'+i);
-    if (el) el.value = '';
-  });
-
-  // Clear results panel
-  document.getElementById('resultsPanel').classList.remove('visible');
-  document.getElementById('noResults').style.display = 'block';
-  document.getElementById('resultsBody').innerHTML = '';
-
-  // Hide results tab again
-  document.getElementById('resultsTab').style.display = 'none';
-  document.getElementById('resultsTab').classList.remove('active');
-
-  // Clear pending
-  renderPending();
-
-  // Switch to admin tab
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-admin').classList.add('active');
-  document.getElementById('adminTabBtn').classList.add('active');
-
-  // Re-add 2 blank starter teams
-  addTeam('Team Eagles');
-  addTeam('Team Birdies');
-}
-// ─── SHARE LINK ───
-function renderShareLink(uid) {
-  const uidToUse = uid || window._organiserId;
-  if (!uidToUse) return;
-  const base      = window.location.origin + '/player-submit.html';
-  const eventName = document.getElementById('eventName')?.value.trim() || '';
-  const eventParam = eventName ? '&event=' + encodeURIComponent(eventName) : '';
-  const link = base + '?org=' + uidToUse + eventParam;
-  const card  = document.getElementById('shareCard');
-  const input = document.getElementById('shareLinkInput');
-  if (card) card.style.display = 'block';
-  if (input) input.value = link;
-}
-
-function updateShareLinkEvent() {
-  if (window._organiserId) renderShareLink(window._organiserId);
-}
-
-function copyShareLink() {
-  const input = document.getElementById('shareLinkInput');
-  if (!input) return;
-  navigator.clipboard.writeText(input.value).then(() => {
-    const btn = document.getElementById('copyLinkBtn');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 2000);
-  }).catch(() => {
-    input.select();
-    document.execCommand('copy');
+// Tap backdrop to close modal
+document.getElementById('authModal').addEventListener('click', function(e) {
+  if (e.target === this) closeAuthModal();
+});
+
+// ─── SERVICE WORKER ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/player/sw.js')
+      .then(reg => {
+        // Check for updates every time the app loads
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available — could show an update banner here
+              console.log('TRG Team HCP: new version available.');
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('SW registration failed:', err));
   });
 }
-
-// ─── HELPERS ───
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// Init with 2 blank teams
-addTeam('Team Eagles');
-addTeam('Team Birdies');
 </script>
 </body>
 </html>
