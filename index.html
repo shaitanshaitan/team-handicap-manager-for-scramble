@@ -1353,21 +1353,30 @@ window.completeLogin = function(name, email) {
   document.getElementById('authUserName').textContent = name;
   document.getElementById('adminLocked').style.display = 'none';
   document.getElementById('adminContent').style.display = 'block';
-  // Show Results tab when admin is logged in
   document.getElementById('resultsTab').style.display = '';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-admin').classList.add('active');
   document.getElementById('adminTabBtn').classList.add('active');
+
+  // Get organiser UID, show share link and start live submissions listener
+  const uid = window._fbAuth && window._fbAuth.currentUser ? window._fbAuth.currentUser.uid : null;
+  if (uid) {
+    window._organiserId = uid;
+    if (window._startSubmissionListener) window._startSubmissionListener(uid);
+    setTimeout(function() { renderShareLink(uid); }, 150);
+  }
 };
 
 window.handleSignOut = function() {
   isLoggedIn = false;
   window._organiserId = null;
+  if (window._stopSubmissionListener) window._stopSubmissionListener();
+  const shareCard = document.getElementById('shareCard');
+  if (shareCard) shareCard.style.display = 'none';
   document.getElementById('authUser').classList.remove('visible');
   document.getElementById('adminLocked').style.display = '';
   document.getElementById('adminContent').style.display = 'none';
-  // Hide Results tab when logged out
   document.getElementById('resultsTab').style.display = 'none';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
