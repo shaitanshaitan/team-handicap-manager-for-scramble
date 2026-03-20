@@ -49,16 +49,33 @@
   window._fbDeleteDoc = deleteDoc;
   window._fbDoc = doc;
 
-  // Live listener — updates pending list whenever a player submits
-  const submissionsQuery = query(collection(db, 'submissions'), orderBy('submitted', 'desc'));
-  onSnapshot(submissionsQuery, (snapshot) => {
-    const firestoreSubs = [];
-    snapshot.forEach(d => {
-      firestoreSubs.push({ id: d.id, ...d.data() });
+  // Live listener — only loads submissions for the currently logged-in organiser
+  import { where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  window._fbWhere = where;
+
+  window._startSubmissionListener = function(uid) {
+    if (window._submissionUnsubscribe) window._submissionUnsubscribe();
+    const q = query(
+      collection(db, 'submissions'),
+      where('organiserId', '==', uid),
+      orderBy('submitted', 'desc')
+    );
+    window._submissionUnsubscribe = onSnapshot(q, (snapshot) => {
+      const firestoreSubs = [];
+      snapshot.forEach(d => firestoreSubs.push({ id: d.id, ...d.data() }));
+      window._firestoreSubs = firestoreSubs;
+      if (window._renderFirestorePending) window._renderFirestorePending();
     });
-    window._firestoreSubs = firestoreSubs;
+  };
+
+  window._stopSubmissionListener = function() {
+    if (window._submissionUnsubscribe) {
+      window._submissionUnsubscribe();
+      window._submissionUnsubscribe = null;
+    }
+    window._firestoreSubs = [];
     if (window._renderFirestorePending) window._renderFirestorePending();
-  });
+  };
 
   // Check for redirect result first (Google Sign-In redirect flow)
   getRedirectResult(auth).then((result) => {
@@ -807,6 +824,8 @@ select option { background: #1a3524; }
 .gender-badge.f { background:rgba(200,74,130,0.2); color:#e088b8; }
 
 /* Firestore live badge */
+.share-link-input { font-size:0.72rem; }
+
 .live-badge {
   display:inline-flex; align-items:center; gap:5px;
   font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase;
@@ -1054,6 +1073,24 @@ Team Birdies,Morgan Davis,14.8<br>
         Players who submitted via the registration link appear here automatically.
       </div>
       <div class="pending-list" id="pendingList"></div>
+    </div>
+
+    <!-- Player Registration Link -->
+    <div class="card" id="shareCard" style="display:none;">
+      <div class="card-title">Player Registration Link</div>
+      <div class="notice info visible" style="margin-bottom:14px;">
+        Share this link with your players so they can submit their handicap. Only submissions from <strong>your link</strong> will appear in your Pending list.
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="shareLinkInput" readonly
+          style="flex:1;min-width:200px;background:rgba(0,0,0,0.3);color:var(--gold);font-size:0.72rem;cursor:text;"
+          onclick="this.select()">
+        <button class="btn btn-primary" onclick="copyShareLink()" id="copyLinkBtn">Copy Link</button>
+      </div>
+      <div style="margin-top:12px;font-size:0.65rem;color:var(--muted);line-height:1.8;">
+        💡 Add your event name to the link for a personalised experience —
+        e.g. append <code style="color:var(--gold);">&amp;event=Spring+Open+2025</code>
+      </div>
     </div>
 
     <!-- Teams -->
@@ -1326,6 +1363,7 @@ window.completeLogin = function(name, email) {
 
 window.handleSignOut = function() {
   isLoggedIn = false;
+  window._organiserId = null;
   document.getElementById('authUser').classList.remove('visible');
   document.getElementById('adminLocked').style.display = '';
   document.getElementById('adminContent').style.display = 'none';
@@ -1945,6 +1983,30 @@ function resetAllData() {
   addTeam('Team Eagles');
   addTeam('Team Birdies');
 }
+// ─── SHARE LINK ───
+function renderShareLink(uid) {
+  const base = window.location.origin + '/player-submit.html';
+  const link = base + '?org=' + uid;
+  const card = document.getElementById('shareCard');
+  const input = document.getElementById('shareLinkInput');
+  if (card) card.style.display = 'block';
+  if (input) input.value = link;
+}
+
+function copyShareLink() {
+  const input = document.getElementById('shareLinkInput');
+  if (!input) return;
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.getElementById('copyLinkBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+  });
+}
+
 // ─── HELPERS ───
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

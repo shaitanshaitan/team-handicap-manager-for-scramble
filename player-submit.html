@@ -382,6 +382,9 @@ footer a:hover { text-decoration:underline; }
 
   <!-- Form -->
   <div class="form-card" id="formCard">
+    <div class="notice error" id="noOrgNotice" style="display:none;margin-bottom:14px;">
+      ⚠️ This link appears to be incomplete. Please ask your event organiser for the correct registration link.
+    </div>
     <div class="notice info visible" id="topNotice">
       Fields marked <span style="color:var(--gold);">*</span> are required.
     </div>
@@ -453,12 +456,20 @@ footer a:hover { text-decoration:underline; }
 </footer>
 
 <script>
-  // Read event name from URL param e.g. ?event=Spring+Open+2025
+  // Read URL params
   const urlParams = new URLSearchParams(window.location.search);
-  const eventName = urlParams.get('event') || '';
+  const eventName   = urlParams.get('event') || '';
+  const organiserId = urlParams.get('org')   || '';
+
   if (eventName) {
     document.getElementById('eventBadge').style.display = 'inline-flex';
     document.getElementById('eventBadgeText').textContent = decodeURIComponent(eventName);
+  }
+
+  // Warn if no organiser ID — link may be invalid
+  if (!organiserId) {
+    console.warn('No organiser ID in URL. Submissions will not be linked to an organiser.');
+    document.getElementById('noOrgNotice').style.display = 'block';
   }
 
   function showError(msg) {
@@ -501,12 +512,13 @@ footer a:hover { text-decoration:underline; }
         name,
         email,
         hcp,
-        team:      team   || 'Unassigned',
+        team:        team   || 'Unassigned',
         gender,
-        notes:     notes  || '',
-        event:     eventName || 'General',
-        submitted: window._fbTs ? window._fbTs() : new Date().toISOString(),
-        status:    'pending'
+        notes:       notes  || '',
+        event:       eventName ? decodeURIComponent(eventName) : 'General',
+        organiserId: organiserId || 'unknown',
+        submitted:   window._fbTs ? window._fbTs() : new Date().toISOString(),
+        status:      'pending'
       };
 
       if (window._fbDb && window._fbAdd && window._fbCol) {
