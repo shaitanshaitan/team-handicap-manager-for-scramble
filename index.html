@@ -11,14 +11,11 @@
 <meta property="og:url" content="https://therookiegolfer.com">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26F3;</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-           signOut, GoogleAuthProvider, signInWithPopup, getRedirectResult, onAuthStateChanged,
-           updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+<!-- Firebase compat SDKs — synchronous, no module timing issues -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyDdC1Byy8mzzIcYIlVChNW7qJDm27zNlmg",
     authDomain: "whs-teamhcp-trg-26-app.firebaseapp.com",
@@ -28,44 +25,44 @@
     appId: "1:574211331492:web:1536d72cf2a8d9ee941d31"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const googleProvider = new GoogleAuthProvider();
+  firebase.initializeApp(firebaseConfig);
+  const _auth = firebase.auth();
+  const _db   = firebase.firestore();
 
-  // Expose auth functions to global scope
-  window._fbAuth = auth;
-  window._fbGoogle = googleProvider;
-  window._fbSignIn = signInWithEmailAndPassword;
-  window._fbSignUp = createUserWithEmailAndPassword;
-  window._fbSignOut = signOut;
-  window._fbGooglePopup = signInWithPopup;
-  window._fbGetRedirectResult = getRedirectResult;
-  window._fbUpdateProfile = updateProfile;
+  // ── Auth helpers exposed to global JS ──
+  window._fbAuth           = _auth;
+  window._fbGoogle         = new firebase.auth.GoogleAuthProvider();
+  window._fbSignIn         = (auth, email, pass) => _auth.signInWithEmailAndPassword(email, pass);
+  window._fbSignUp         = (auth, email, pass) => _auth.createUserWithEmailAndPassword(email, pass);
+  window._fbSignOut        = () => _auth.signOut();
+  window._fbGooglePopup    = () => _auth.signInWithPopup(window._fbGoogle);
+  window._fbUpdateProfile  = (user, data) => user.updateProfile(data);
 
-  // Firestore setup
-  const db = getFirestore(app);
-  window._fbDb = db;
-  window._fbUpdateDoc = updateDoc;
-  window._fbDeleteDoc = deleteDoc;
-  window._fbDoc = doc;
+  // ── Firestore helpers ──
+  window._fbDb        = _db;
+  window._fbUpdateDoc = (ref, data) => ref.update(data);
+  window._fbDeleteDoc = (ref) => ref.delete();
+  window._fbDoc       = (db, col, id) => _db.collection(col).doc(id);
 
-  // Live listener — only loads submissions for the currently logged-in organiser
-  import { where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  window._fbWhere = where;
-
+  // ── Live submissions listener — filtered by organiserId ──
   window._startSubmissionListener = function(uid) {
     if (window._submissionUnsubscribe) window._submissionUnsubscribe();
-    const q = query(
-      collection(db, 'submissions'),
-      where('organiserId', '==', uid),
-      orderBy('submittedAt', 'desc')
-    );
-    window._submissionUnsubscribe = onSnapshot(q, (snapshot) => {
-      const firestoreSubs = [];
-      snapshot.forEach(d => firestoreSubs.push({ id: d.id, ...d.data() }));
-      window._firestoreSubs = firestoreSubs;
-      if (window._renderFirestorePending) window._renderFirestorePending();
-    });
+    window._submissionUnsubscribe = _db.collection('submissions')
+      .where('organiserId', '==', uid)
+      .onSnapshot(function(snapshot) {
+        const subs = [];
+        snapshot.forEach(function(d) { subs.push(Object.assign({ id: d.id }, d.data())); });
+        // Sort by submittedAt descending (handles both field names)
+        subs.sort(function(a, b) {
+          const ta = a.submittedAt || a.submitted || '';
+          const tb = b.submittedAt || b.submitted || '';
+          return tb.localeCompare(ta);
+        });
+        window._firestoreSubs = subs;
+        if (window._renderFirestorePending) window._renderFirestorePending();
+      }, function(err) {
+        console.error('Firestore listener error:', err.code, err.message);
+      });
   };
 
   window._stopSubmissionListener = function() {
@@ -77,28 +74,14 @@
     if (window._renderFirestorePending) window._renderFirestorePending();
   };
 
-  // Check for redirect result first (Google Sign-In redirect flow)
-  getRedirectResult(auth).then((result) => {
-    if (result && result.user) {
-      // Redirect sign-in succeeded — onAuthStateChanged will handle UI
-      const overlay = document.getElementById('authLoadingOverlay');
-      if (overlay) overlay.style.display = 'flex';
-    }
-  }).catch((error) => {
-    console.warn('Redirect result error:', error.message);
-    const overlay = document.getElementById('authLoadingOverlay');
-    if (overlay) overlay.style.display = 'none';
-  });
-
-  // Listen for auth state changes
-  onAuthStateChanged(auth, (user) => {
+  // ── Auth state listener ──
+  _auth.onAuthStateChanged(function(user) {
     if (user) {
       const name = user.displayName || user.email.split('@')[0];
       window.completeLogin(name, user.email);
     } else {
       window.handleSignOut();
     }
-    // Hide loading overlay once auth state is known
     const overlay = document.getElementById('authLoadingOverlay');
     if (overlay) overlay.style.display = 'none';
   });
@@ -1280,7 +1263,7 @@ function showAuthError(elId, msg) {
 async function doGoogleAuth() {
   if (!window._fbAuth) { showAuthError('loginError', 'Firebase not loaded yet. Please wait a moment.'); return; }
   try {
-    await window._fbGooglePopup(window._fbAuth, window._fbGoogle);
+    await window._fbGooglePopup();
     closeLogin();
   } catch(e) {
     const msg = e.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.'
@@ -1303,7 +1286,7 @@ async function doLogin() {
 
   setLoginLoading(true);
   try {
-    await window._fbSignIn(window._fbAuth, email, pass);
+    await window._fbSignIn(null, email, pass);
     closeLogin();
   } catch(e) {
     const msg = (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
@@ -1332,7 +1315,7 @@ async function doRegister() {
 
   setRegisterLoading(true);
   try {
-    const cred = await window._fbSignUp(window._fbAuth, email, pass);
+    const cred = await window._fbSignUp(null, email, pass);
     await window._fbUpdateProfile(cred.user, { displayName: name });
     closeLogin();
   } catch(e) {
@@ -1385,7 +1368,7 @@ window.handleSignOut = function() {
 
 async function doLogout() {
   if (window._fbAuth) {
-    await window._fbSignOut(window._fbAuth);
+    await window._fbSignOut();
     // UI is handled by onAuthStateChanged -> handleSignOut
   } else {
     window.handleSignOut();
@@ -1711,17 +1694,13 @@ async function assignFirestorePending(id, s) {
 
   // Mark as assigned in Firestore
   try {
-    if (window._fbDb && window._fbUpdateDoc && window._fbDoc) {
-      await window._fbUpdateDoc(window._fbDoc(window._fbDb, 'submissions', id), { status: 'assigned' });
-    }
+    await window._fbDb.collection('submissions').doc(id).update({ status: 'assigned' });
   } catch(e) { console.warn('Could not update Firestore:', e); }
 }
 
 async function deleteFirestorePending(id) {
   try {
-    if (window._fbDb && window._fbDeleteDoc && window._fbDoc) {
-      await window._fbDeleteDoc(window._fbDoc(window._fbDb, 'submissions', id));
-    }
+    await window._fbDb.collection('submissions').doc(id).delete();
   } catch(e) { console.warn('Could not delete from Firestore:', e); }
 }
 
