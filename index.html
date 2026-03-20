@@ -1651,10 +1651,10 @@ async function assignFirestorePending(id) {
     }
   }
 
-  // Mark as assigned in Firestore
+  // Remove from Firestore so it disappears from the submissions list
   try {
-    await window._fbDb.collection('submissions').doc(id).update({ status: 'assigned' });
-  } catch(e) { console.warn('Could not update Firestore:', e); }
+    await window._fbDb.collection('submissions').doc(id).delete();
+  } catch(e) { console.warn('Could not delete from Firestore:', e); }
 }
 
 async function deleteFirestorePending(id) {
