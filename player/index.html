@@ -7,15 +7,15 @@
 <!-- PWA core -->
 <meta name="application-name" content="TRG Team HCP">
 <meta name="theme-color" content="#0a1a10">
-<link rel="manifest" href="/player/manifest.json">
+<link rel="manifest" href="/manifest.json">
 
 <!-- iOS PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TRG Team HCP">
-<link rel="apple-touch-icon" href="/player/icons/icon-192.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/player/icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="144x144" href="/player/icons/icon-144.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png">
 
 <!-- iOS splash screens (portrait iPhone sizes) -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,14 +23,14 @@
 <!-- Android / general -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="msapplication-TileColor" content="#0a1a10">
-<meta name="msapplication-TileImage" content="/player/icons/icon-144.png">
+<meta name="msapplication-TileImage" content="/icons/icon-144.png">
 
 <!-- SEO / share -->
 <title>TRG Team HCP · Scramble Handicap Calculator</title>
 <meta name="description" content="Calculate WHS scramble team handicaps instantly. Free tool for golfers by The Rookie Golfer.">
 <meta property="og:title" content="TRG Team HCP">
 <meta property="og:description" content="Free WHS scramble handicap calculator for 2-player teams.">
-<meta property="og:url" content="https://therookiegolfer.com/player/">
+<meta property="og:url" content="https://teamhcp.therookiegolfer.com/">
 <meta property="og:type" content="website">
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
@@ -1597,7 +1597,7 @@ document.getElementById('authModal').addEventListener('click', function(e) {
 // ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/player/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .then(reg => {
         // Check for updates every time the app loads
         reg.addEventListener('updatefound', () => {
