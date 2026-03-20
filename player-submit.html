@@ -25,7 +25,8 @@
   };
 
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  // Use var so db is globally accessible across all script blocks
+  var db = firebase.firestore();
 
   document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('loadingOverlay').style.display = 'none';
