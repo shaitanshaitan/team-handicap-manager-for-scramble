@@ -58,7 +58,7 @@
     const q = query(
       collection(db, 'submissions'),
       where('organiserId', '==', uid),
-      orderBy('submitted', 'desc')
+      orderBy('submittedAt', 'desc')
     );
     window._submissionUnsubscribe = onSnapshot(q, (snapshot) => {
       const firestoreSubs = [];
@@ -956,7 +956,7 @@ select option { background: #1a3524; }
       <div class="course-row" style="grid-template-columns:2fr 1fr;">
         <div class="field">
           <label>Event Name</label>
-          <input type="text" id="eventName" placeholder="e.g. The Rookie Golfer Open 2025">
+          <input type="text" id="eventName" placeholder="e.g. The Rookie Golfer Open 2025" oninput="updateShareLinkEvent()">
         </div>
         <div class="field">
           <label>Date</label>
@@ -1088,8 +1088,7 @@ Team Birdies,Morgan Davis,14.8<br>
         <button class="btn btn-primary" onclick="copyShareLink()" id="copyLinkBtn">Copy Link</button>
       </div>
       <div style="margin-top:12px;font-size:0.65rem;color:var(--muted);line-height:1.8;">
-        💡 Add your event name to the link for a personalised experience —
-        e.g. append <code style="color:var(--gold);">&amp;event=Spring+Open+2025</code>
+        💡 The link updates automatically when you fill in the <strong style="color:var(--cream);">Event Name</strong> above. Copy it after entering your event name.
       </div>
     </div>
 
@@ -1994,12 +1993,20 @@ function resetAllData() {
 }
 // ─── SHARE LINK ───
 function renderShareLink(uid) {
-  const base = window.location.origin + '/player-submit.html';
-  const link = base + '?org=' + uid;
-  const card = document.getElementById('shareCard');
+  const uidToUse = uid || window._organiserId;
+  if (!uidToUse) return;
+  const base      = window.location.origin + '/player-submit.html';
+  const eventName = document.getElementById('eventName')?.value.trim() || '';
+  const eventParam = eventName ? '&event=' + encodeURIComponent(eventName) : '';
+  const link = base + '?org=' + uidToUse + eventParam;
+  const card  = document.getElementById('shareCard');
   const input = document.getElementById('shareLinkInput');
   if (card) card.style.display = 'block';
   if (input) input.value = link;
+}
+
+function updateShareLinkEvent() {
+  if (window._organiserId) renderShareLink(window._organiserId);
 }
 
 function copyShareLink() {
