@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit Your Handicap — The Rookie Golfer</title>
+<meta name="description" content="Submit your WHS Handicap Index for your upcoming golf event. Quick and easy — takes less than a minute.">
+<meta name="theme-color" content="#0d1f15">
+<meta property="og:title" content="Submit Your Handicap — The Rookie Golfer">
+<meta property="og:description" content="Enter your details for the upcoming golf event. Quick and easy.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26F3;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDdC1Byy8mzzIcYIlVChNW7qJDm27zNlmg",
+    authDomain: "whs-teamhcp-trg-26-app.firebaseapp.com",
+    projectId: "whs-teamhcp-trg-26-app",
+    storageBucket: "whs-teamhcp-trg-26-app.firebasestorage.app",
+    messagingSenderId: "574211331492",
+    appId: "1:574211331492:web:1536d72cf2a8d9ee941d31"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  window._fbDb      = db;
+  window._fbAdd     = addDoc;
+  window._fbCol     = collection;
+  window._fbTs      = serverTimestamp;
+  window._fbReady   = true;
+
+  document.getElementById('loadingOverlay').style.display = 'none';
+</script>
+
+<style>
+:root {
+  --bg:      #0d1f15;
+  --surface: #132a1c;
+  --surface2:#1a3524;
+  --border:  rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --gold:    #c8a84b;
+  --gold2:   #e8c870;
+  --green:   #4a9e6a;
+  --red:     #c85a4a;
+  --cream:   #f0ebe0;
+  --muted:   #7a9e88;
+  --white:   #faf8f4;
+  --dark:    #081008;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Space Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(
+    180deg, transparent, transparent 80px,
+    rgba(255,255,255,0.008) 80px, rgba(255,255,255,0.008) 160px
+  );
+  pointer-events:none; z-index:0;
+}
+
+/* Loading overlay */
+#loadingOverlay {
+  position:fixed; inset:0;
+  background: var(--bg);
+  z-index:100;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:12px;
+}
+.spinner {
+  width:28px; height:28px;
+  border:2px solid var(--border2);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner-text { font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+
+/* Page wrapper */
+.page {
+  position:relative; z-index:1;
+  width:100%; max-width:520px;
+  margin:0 auto;
+  padding:40px 24px 60px;
+  flex:1;
+}
+
+/* Header */
+.page-header {
+  text-align:center;
+  margin-bottom:40px;
+}
+
+.logo-icon {
+  font-size:3rem;
+  display:block;
+  margin-bottom:12px;
+  filter:drop-shadow(0 4px 12px rgba(200,56,42,0.4));
+}
+
+.site-name {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;
+  color:var(--muted);
+  letter-spacing:0.08em;
+  margin-bottom:24px;
+  display:block;
+}
+
+.page-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.8rem,6vw,2.6rem);
+  font-weight:700;
+  color:var(--white);
+  line-height:1.1;
+  margin-bottom:8px;
+}
+
+.page-title span { color:var(--gold); }
+
+.page-sub {
+  font-size:0.72rem;
+  color:var(--muted);
+  line-height:1.8;
+}
+
+.divider {
+  width:50px; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:20px auto;
+}
+
+/* Event badge - shown if event name passed in URL */
+.event-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(200,168,75,0.12);
+  border:1px solid rgba(200,168,75,0.3);
+  border-radius:20px;
+  padding:6px 16px;
+  font-size:0.65rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:28px;
+}
+
+/* Form card */
+.form-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:28px 24px;
+  position:relative;
+  overflow:hidden;
+}
+
+.form-card::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--gold),transparent);
+}
+
+.field {
+  display:flex; flex-direction:column; gap:5px;
+  margin-bottom:18px;
+}
+
+.field:last-of-type { margin-bottom:0; }
+
+label {
+  font-size:0.6rem;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+label .req { color:var(--gold); margin-left:2px; }
+
+input[type=text],
+input[type=number],
+input[type=email] {
+  background:rgba(0,0,0,0.25);
+  border:1px solid var(--border2);
+  border-radius:3px;
+  color:var(--white);
+  font-family:'Space Mono',monospace;
+  font-size:0.85rem;
+  padding:11px 14px;
+  outline:none;
+  transition:border-color 0.2s;
+  width:100%;
+  -moz-appearance:textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button { -webkit-appearance:none; }
+
+input:focus { border-color:var(--gold); }
+input::placeholder { color:rgba(255,255,255,0.2); }
+
+/* Gender pills */
+.gender-pills { display:flex; gap:8px; flex-wrap:wrap; }
+.gender-pill { position:relative; }
+.gender-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
+.gender-pill label {
+  display:flex; align-items:center; gap:6px;
+  padding:9px 16px;
+  border:1px solid var(--border2);
+  border-radius:20px;
+  font-size:0.68rem;
+  letter-spacing:0.05em;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all 0.2s;
+  text-transform:none;
+}
+.gender-pill input:checked + label {
+  border-color:var(--gold);
+  color:var(--gold);
+  background:rgba(200,168,75,0.1);
+}
+.gender-pill label:hover { color:var(--cream); border-color:rgba(255,255,255,0.25); }
+
+/* Notice */
+.notice {
+  padding:10px 14px;
+  border-radius:3px;
+  font-size:0.7rem;
+  line-height:1.7;
+  margin-bottom:16px;
+  display:none;
+}
+.notice.visible { display:block; }
+.notice.info { background:rgba(74,142,200,0.12); border:1px solid rgba(74,142,200,0.3); color:#88b8e0; }
+.notice.error { background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.3); color:#e08878; }
+
+/* Submit button */
+.btn-submit {
+  width:100%;
+  margin-top:22px;
+  padding:15px;
+  background:var(--gold);
+  border:none;
+  border-radius:3px;
+  font-family:'Space Mono',monospace;
+  font-size:0.75rem;
+  font-weight:700;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--dark);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-submit:hover { background:var(--gold2); }
+.btn-submit:active { transform:scale(0.99); }
+.btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+/* Success screen */
+.success-screen {
+  display:none;
+  text-align:center;
+  padding:20px 0;
+  animation:fadeUp 0.5s ease both;
+}
+.success-screen.visible { display:block; }
+
+.success-icon {
+  font-size:4rem;
+  margin-bottom:16px;
+  filter:drop-shadow(0 4px 16px rgba(74,158,106,0.4));
+}
+
+.success-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:2rem;
+  font-weight:700;
+  color:var(--white);
+  margin-bottom:8px;
+}
+
+.success-sub {
+  font-size:0.72rem;
+  color:var(--muted);
+  line-height:1.9;
+  margin-bottom:28px;
+}
+
+.success-summary {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:18px 20px;
+  text-align:left;
+  margin-bottom:24px;
+}
+
+.summary-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:7px 0;
+  border-bottom:1px solid var(--border);
+  font-size:0.72rem;
+}
+.summary-row:last-child { border-bottom:none; }
+.summary-label { color:var(--muted); }
+.summary-value { color:var(--white); font-weight:700; }
+
+.btn-again {
+  background:none;
+  border:1px solid var(--border2);
+  border-radius:3px;
+  color:var(--cream);
+  font-family:'Space Mono',monospace;
+  font-size:0.65rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  padding:10px 20px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-again:hover { border-color:var(--gold); color:var(--gold); }
+
+/* Footer */
+footer {
+  position:relative; z-index:1;
+  text-align:center;
+  padding:20px;
+  font-size:0.6rem;
+  color:var(--muted);
+  letter-spacing:0.08em;
+}
+
+footer a { color:var(--gold); text-decoration:none; }
+footer a:hover { text-decoration:underline; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="spinner-text">Loading...</div>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <span class="logo-icon">⛳</span>
+    <span class="site-name">The Rookie Golfer</span>
+    <h1 class="page-title">Submit Your<br><span>Handicap</span></h1>
+    <div class="divider"></div>
+    <p class="page-sub">Fill in your details below.<br>Your organiser will confirm your team assignment.</p>
+    <div id="eventBadge" class="event-badge" style="display:none;">
+      <span>📅</span><span id="eventBadgeText"></span>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card" id="formCard">
+    <div class="notice info visible" id="topNotice">
+      Fields marked <span style="color:var(--gold);">*</span> are required.
+    </div>
+
+    <div class="field">
+      <label>Your Full Name <span class="req">*</span></label>
+      <input type="text" id="f_name" placeholder="e.g. Alex Johnson" autocomplete="name">
+    </div>
+
+    <div class="field">
+      <label>Email Address <span class="req">*</span></label>
+      <input type="email" id="f_email" placeholder="you@example.com" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label>WHS Handicap Index <span class="req">*</span></label>
+      <input type="number" id="f_hcp" placeholder="e.g. 14.2" step="0.1" min="0" max="54">
+    </div>
+
+    <div class="field">
+      <label>Team Name (if already assigned)</label>
+      <input type="text" id="f_team" placeholder="Leave blank if unknown">
+    </div>
+
+    <div class="field">
+      <label>Gender <span class="req">*</span></label>
+      <div class="gender-pills">
+        <div class="gender-pill">
+          <input type="radio" name="f_gender" id="fg_m" value="M" checked>
+          <label for="fg_m">♂ Male</label>
+        </div>
+        <div class="gender-pill">
+          <input type="radio" name="f_gender" id="fg_f" value="F">
+          <label for="fg_f">♀ Female</label>
+        </div>
+        <div class="gender-pill">
+          <input type="radio" name="f_gender" id="fg_x" value="X">
+          <label for="fg_x">Prefer not to say</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Any notes for your organiser</label>
+      <input type="text" id="f_notes" placeholder="Optional — e.g. dietary requirements, accessibility needs">
+    </div>
+
+    <div class="notice error" id="formError"></div>
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">Submit My Details →</button>
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🏌️</div>
+    <div class="success-title">You're registered!</div>
+    <p class="success-sub">
+      Your details have been submitted successfully.<br>
+      Your organiser will be in touch to confirm your team.
+    </p>
+    <div class="success-summary" id="successSummary"></div>
+    <button class="btn-again" onclick="resetForm()">Submit another player</button>
+  </div>
+
+</div>
+
+<footer>
+  Powered by <a href="https://therookiegolfer.com" target="_blank">therookiegolfer.com</a>
+  &nbsp;·&nbsp; Golf Event Handicap Manager
+</footer>
+
+<script>
+  // Read event name from URL param e.g. ?event=Spring+Open+2025
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventName = urlParams.get('event') || '';
+  if (eventName) {
+    document.getElementById('eventBadge').style.display = 'inline-flex';
+    document.getElementById('eventBadgeText').textContent = decodeURIComponent(eventName);
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('formError');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearError() {
+    const el = document.getElementById('formError');
+    el.textContent = '';
+    el.classList.remove('visible');
+  }
+
+  async function submitForm() {
+    clearError();
+
+    const name   = document.getElementById('f_name').value.trim();
+    const email  = document.getElementById('f_email').value.trim();
+    const hcp    = parseFloat(document.getElementById('f_hcp').value);
+    const team   = document.getElementById('f_team').value.trim();
+    const gender = document.querySelector('input[name="f_gender"]:checked')?.value || 'M';
+    const notes  = document.getElementById('f_notes').value.trim();
+
+    // Validate
+    if (!name)  { showError('Please enter your full name.'); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('Please enter a valid email address.'); return;
+    }
+    if (isNaN(hcp) || hcp < 0 || hcp > 54) {
+      showError('Please enter a valid WHS Handicap Index between 0 and 54.'); return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+
+    try {
+      const data = {
+        name,
+        email,
+        hcp,
+        team:      team   || 'Unassigned',
+        gender,
+        notes:     notes  || '',
+        event:     eventName || 'General',
+        submitted: window._fbTs ? window._fbTs() : new Date().toISOString(),
+        status:    'pending'
+      };
+
+      if (window._fbDb && window._fbAdd && window._fbCol) {
+        await window._fbAdd(window._fbCol(window._fbDb, 'submissions'), data);
+      }
+
+      // Show success
+      document.getElementById('formCard').style.display = 'none';
+      const screen = document.getElementById('successScreen');
+      screen.classList.add('visible');
+
+      document.getElementById('successSummary').innerHTML = `
+        <div class="summary-row"><span class="summary-label">Name</span><span class="summary-value">${escHtml(name)}</span></div>
+        <div class="summary-row"><span class="summary-label">Email</span><span class="summary-value">${escHtml(email)}</span></div>
+        <div class="summary-row"><span class="summary-label">Handicap Index</span><span class="summary-value">${hcp.toFixed(1)}</span></div>
+        <div class="summary-row"><span class="summary-label">Team</span><span class="summary-value">${escHtml(team || 'To be assigned')}</span></div>
+        <div class="summary-row"><span class="summary-label">Gender</span><span class="summary-value">${gender === 'M' ? '♂ Male' : gender === 'F' ? '♀ Female' : 'Not specified'}</span></div>
+        ${eventName ? `<div class="summary-row"><span class="summary-label">Event</span><span class="summary-value">${escHtml(decodeURIComponent(eventName))}</span></div>` : ''}
+      `;
+
+    } catch(e) {
+      showError('Something went wrong. Please try again or contact your organiser.');
+      btn.textContent = 'Submit My Details →';
+      btn.disabled = false;
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('f_name').value = '';
+    document.getElementById('f_email').value = '';
+    document.getElementById('f_hcp').value = '';
+    document.getElementById('f_team').value = '';
+    document.getElementById('f_notes').value = '';
+    document.getElementById('fg_m').checked = true;
+    clearError();
+    document.getElementById('formCard').style.display = 'block';
+    document.getElementById('successScreen').classList.remove('visible');
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Submit My Details →';
+    btn.disabled = false;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
