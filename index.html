@@ -1588,7 +1588,7 @@ window._renderFirestorePending = function() {
       </div>
       <div class="pending-item-hcp">${parseFloat(s.hcp).toFixed(1)}</div>
       <div class="pending-actions">
-        <button class="btn btn-sm" onclick="assignFirestorePending('${s.id}', ${JSON.stringify(s).replace(/'/g,"&#39;")})">+ Assign</button>
+        <button class="btn btn-sm" onclick="assignFirestorePending('${s.id}')">+ Assign</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFirestorePending('${s.id}')">✕</button>
       </div>
     </div>`).join('');
@@ -1620,7 +1620,9 @@ function renderPending() {
   }
 }
 
-async function assignFirestorePending(id, s) {
+async function assignFirestorePending(id) {
+  const s = (window._firestoreSubs || []).find(function(sub) { return sub.id === id; });
+  if (!s) { alert('Submission not found. Please try again.'); return; }
   const hcp = parseFloat(s.hcp);
   const name = s.name || '—';
   const teamName = s.team && s.team !== 'Unassigned' ? s.team : '';
