@@ -11,12 +11,10 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26F3;</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+<!-- Firebase via CDN compat (non-module, globally available) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyDdC1Byy8mzzIcYIlVChNW7qJDm27zNlmg",
     authDomain: "whs-teamhcp-trg-26-app.firebaseapp.com",
@@ -26,16 +24,12 @@
     appId: "1:574211331492:web:1536d72cf2a8d9ee941d31"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  window._fbDb      = db;
-  window._fbAdd     = addDoc;
-  window._fbCol     = collection;
-  window._fbTs      = serverTimestamp;
-  window._fbReady   = true;
-
-  document.getElementById('loadingOverlay').style.display = 'none';
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  });
 </script>
 
 <style>
@@ -385,6 +379,9 @@ footer a:hover { text-decoration:underline; }
     <div class="notice error" id="noOrgNotice" style="display:none;margin-bottom:14px;">
       ⚠️ This link appears to be incomplete. Please ask your event organiser for the correct registration link.
     </div>
+    <div class="notice error" id="permissionNotice" style="display:none;margin-bottom:14px;">
+      ⚠️ Unable to connect to the database. Your organiser may need to update their Firebase settings.
+    </div>
     <div class="notice info visible" id="topNotice">
       Fields marked <span style="color:var(--gold);">*</span> are required.
     </div>
@@ -507,6 +504,14 @@ footer a:hover { text-decoration:underline; }
     btn.textContent = 'Submitting...';
     btn.disabled = true;
 
+    // Check Firebase compat db is ready
+    if (typeof db === 'undefined') {
+      showError('Still connecting to the server. Please wait a moment and try again.');
+      btn.textContent = 'Submit My Details →';
+      btn.disabled = false;
+      return;
+    }
+
     try {
       const data = {
         name,
@@ -517,30 +522,36 @@ footer a:hover { text-decoration:underline; }
         notes:       notes  || '',
         event:       eventName ? decodeURIComponent(eventName) : 'General',
         organiserId: organiserId || 'unknown',
-        submitted:   window._fbTs ? window._fbTs() : new Date().toISOString(),
+        submittedAt: new Date().toISOString(),
         status:      'pending'
       };
 
-      if (window._fbDb && window._fbAdd && window._fbCol) {
-        await window._fbAdd(window._fbCol(window._fbDb, 'submissions'), data);
-      }
+      const docRef = await db.collection('submissions').add(data);
+      console.log('Submission saved with ID:', docRef.id);
 
       // Show success
       document.getElementById('formCard').style.display = 'none';
       const screen = document.getElementById('successScreen');
       screen.classList.add('visible');
 
-      document.getElementById('successSummary').innerHTML = `
-        <div class="summary-row"><span class="summary-label">Name</span><span class="summary-value">${escHtml(name)}</span></div>
-        <div class="summary-row"><span class="summary-label">Email</span><span class="summary-value">${escHtml(email)}</span></div>
-        <div class="summary-row"><span class="summary-label">Handicap Index</span><span class="summary-value">${hcp.toFixed(1)}</span></div>
-        <div class="summary-row"><span class="summary-label">Team</span><span class="summary-value">${escHtml(team || 'To be assigned')}</span></div>
-        <div class="summary-row"><span class="summary-label">Gender</span><span class="summary-value">${gender === 'M' ? '♂ Male' : gender === 'F' ? '♀ Female' : 'Not specified'}</span></div>
-        ${eventName ? `<div class="summary-row"><span class="summary-label">Event</span><span class="summary-value">${escHtml(decodeURIComponent(eventName))}</span></div>` : ''}
-      `;
+      const evDisplay = eventName ? decodeURIComponent(eventName) : '';
+      document.getElementById('successSummary').innerHTML =
+        `<div class="summary-row"><span class="summary-label">Name</span><span class="summary-value">${escHtml(name)}</span></div>` +
+        `<div class="summary-row"><span class="summary-label">Email</span><span class="summary-value">${escHtml(email)}</span></div>` +
+        `<div class="summary-row"><span class="summary-label">Handicap Index</span><span class="summary-value">${hcp.toFixed(1)}</span></div>` +
+        `<div class="summary-row"><span class="summary-label">Team</span><span class="summary-value">${escHtml(team || 'To be assigned')}</span></div>` +
+        `<div class="summary-row"><span class="summary-label">Gender</span><span class="summary-value">${gender === 'M' ? '&#9794; Male' : gender === 'F' ? '&#9792; Female' : 'Not specified'}</span></div>` +
+        (evDisplay ? `<div class="summary-row"><span class="summary-label">Event</span><span class="summary-value">${escHtml(evDisplay)}</span></div>` : '');
 
     } catch(e) {
-      showError('Something went wrong. Please try again or contact your organiser.');
+      console.error('Firestore error:', e);
+      if (e.code === 'permission-denied') {
+        showError('Permission denied. Please ask your organiser to check their Firebase Firestore rules are set to test mode.');
+      } else if (e.code === 'unavailable') {
+        showError('Cannot reach the server. Please check your internet connection and try again.');
+      } else {
+        showError('Something went wrong: ' + e.message + '. Please contact your organiser.');
+      }
       btn.textContent = 'Submit My Details →';
       btn.disabled = false;
     }
