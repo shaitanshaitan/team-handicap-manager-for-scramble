@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Golf Team Handicap Manager — The Rookie Golfer</title>
+<title>Golf Event Handicap Manager — The Rookie Golfer</title>
 <meta name="description" content="Calculate team scramble handicaps instantly. Built on the World Handicap System. Free tool for golf event organisers.">
 <meta name="theme-color" content="#0d1f15">
-<meta property="og:title" content="Golf Team Handicap Manager">
+<meta property="og:title" content="Golf Event Handicap Manager">
 <meta property="og:description" content="Calculate WHS team handicaps for scramble events. Supports 2–4 players per team.">
 <meta property="og:url" content="https://therookiegolfer.com">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26F3;</text></svg>">
@@ -845,7 +845,7 @@ select option { background: #1a3524; }
       <button class="modal-close" onclick="closeLogin()">&#x2715;</button>
       <span class="login-icon">&#x26F3;</span>
       <div class="login-title" id="modalTitle">Admin Access</div>
-      <div class="login-sub" id="modalSub">Team Handicap Manager</div>
+      <div class="login-sub" id="modalSub">Event Handicap Manager</div>
       <button class="btn-google" onclick="doGoogleAuth()">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -905,9 +905,8 @@ select option { background: #1a3524; }
         <small>World Handicap System · Scramble</small>
       </div>
       <div class="tabs">
-        <button class="tab-btn" id="adminTabBtn" onclick="requireAdmin(event)">⛳ Admin</button>
+        <button class="tab-btn active" id="adminTabBtn" onclick="requireAdmin(event)">⛳ Admin</button>
         <button class="tab-btn" onclick="showTab('results', event)" id="resultsTab" style="display:none;">📋 Results</button>
-        <button class="tab-btn active" onclick="showTab('player', event)" id="playerTabBtn">👤 Player Submit</button>
       </div>
     </div>
     <div class="auth-status">
@@ -920,7 +919,7 @@ select option { background: #1a3524; }
   </header>
 
   <!-- ══════════════ ADMIN PANEL ══════════════ -->
-  <div class="panel" id="panel-admin">
+  <div class="panel active" id="panel-admin">
 
     <!-- Locked state -->
     <div class="panel-locked" id="adminLocked">
@@ -1106,49 +1105,7 @@ Team Birdies,Morgan Davis,14.8<br>
   </div><!-- /admin -->
 
   <!-- ══════════════ PLAYER SUBMIT PANEL ══════════════ -->
-  <div class="panel" id="panel-player">
-    <div class="submit-form">
-      <div class="submit-hero">
-        <h2>Submit Your Handicap</h2>
-        <p>Enter your details below and your organiser will assign you to a team.</p>
-      </div>
-
-      <div id="submitFormFields" class="submit-fields">
-        <div class="notice info visible">Fields marked with * are required.</div>
-        <div class="field">
-          <label>Your Name *</label>
-          <input type="text" id="sub_name" placeholder="Full name">
-        </div>
-        <div class="field">
-          <label>Team Name (if known)</label>
-          <input type="text" id="sub_team" placeholder="Leave blank if unassigned">
-        </div>
-        <div class="field">
-          <label>WHS Handicap Index *</label>
-          <input type="number" id="sub_hcp" placeholder="e.g. 14.2" step="0.1" min="0" max="54">
-        </div>
-        <div class="field">
-          <label>Gender *</label>
-          <div class="gender-pills">
-            <div class="gender-pill"><input type="radio" name="sub_gender" id="sub_gm" value="M" checked><label for="sub_gm">&#9794; Male</label></div>
-            <div class="gender-pill"><input type="radio" name="sub_gender" id="sub_gf" value="F"><label for="sub_gf">&#9792; Female</label></div>
-            <div class="gender-pill"><input type="radio" name="sub_gender" id="sub_gx" value="X"><label for="sub_gx">Prefer not to say</label></div>
-          </div>
-        </div>
-        <div id="submitNotice" class="notice"></div>
-        <button class="btn btn-primary" onclick="submitPlayer()" style="width:100%;justify-content:center;padding:14px;">
-          Submit &#x2192;
-        </button>
-      </div>
-
-      <div class="submit-success" id="submitSuccess">
-        <div class="submit-success-icon">⛳</div>
-        <h3>You're in!</h3>
-        <p>Your handicap has been submitted.<br>The event organiser will confirm your team.</p>
-        <button class="btn" style="margin-top:20px;" onclick="resetSubmitForm()">Submit another player</button>
-      </div>
-    </div>
-  </div><!-- /player -->
+  <!-- Player Submit removed — use standalone player-submit.html -->
 
   <!-- ══════════════ RESULTS PANEL ══════════════ -->
   <div class="panel" id="panel-results">
@@ -1234,7 +1191,7 @@ function switchToRegister() {
   document.getElementById('formSignIn').style.display = 'none';
   document.getElementById('formRegister').style.display = 'block';
   document.getElementById('modalTitle').textContent = 'Create Account';
-  document.getElementById('modalSub').textContent = 'Join Team Handicap Manager';
+  document.getElementById('modalSub').textContent = 'Join Event Handicap Manager';
   setTimeout(() => document.getElementById('regName').focus(), 50);
 }
 
@@ -1242,7 +1199,7 @@ function switchToSignIn() {
   document.getElementById('formSignIn').style.display = 'block';
   document.getElementById('formRegister').style.display = 'none';
   document.getElementById('modalTitle').textContent = 'Admin Access';
-  document.getElementById('modalSub').textContent = 'Team Handicap Manager';
+  document.getElementById('modalSub').textContent = 'Event Handicap Manager';
 }
 
 function setLoginLoading(loading) {
@@ -1362,8 +1319,8 @@ window.handleSignOut = function() {
   document.getElementById('resultsTab').style.display = 'none';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-player').classList.add('active');
-  document.getElementById('playerTabBtn').classList.add('active');
+  document.getElementById('panel-admin').classList.add('active');
+  document.getElementById('adminTabBtn').classList.add('active');
 };
 
 async function doLogout() {
