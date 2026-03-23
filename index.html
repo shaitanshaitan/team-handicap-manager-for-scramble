@@ -1017,7 +1017,7 @@ select option { background: #1a3524; }
     <div class="card">
       <div class="card-title">Import via CSV</div>
       <div class="notice info visible">
-        CSV format: <strong>Team Name, Player Name, Handicap Index</strong> — one player per row, no header row needed. Players with the same team name are grouped automatically.
+        CSV format: <strong>Team Name, Player Name, Handicap Index, gender</strong> — one player per row, no header row needed. Players with the same team name are grouped automatically.
       </div>
       <div class="csv-zone" id="csvZone"
            ondragover="event.preventDefault();this.classList.add('drag')"
@@ -1033,12 +1033,9 @@ select option { background: #1a3524; }
       <div class="csv-template">
         <div class="csv-template-label">Example CSV content</div>
         <code>
-Team Eagles,Alex Johnson,12.4<br>
-Team Eagles,Jordan Smith,7.6<br>
-Team Eagles,Sam Lee,18.2<br>
-Team Eagles,Taylor Brown,22.0<br>
-Team Birdies,Chris White,5.1<br>
-Team Birdies,Morgan Davis,14.8<br>
+Team Eagles,Alex Johnson,12.4,gender<br>
+Team Eagles,Jordan Smith,7.6,gender<br>
+Team Eagles,Sam Lee,18.2,gender<br>
         </code>
       </div>
       <div id="csvNotice" class="notice" style="margin-top:12px;margin-bottom:0;"></div>
