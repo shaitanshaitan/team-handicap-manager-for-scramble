@@ -953,7 +953,7 @@ select option { background: #1a3524; }
         <div class="tee-card">
           <div class="tee-card-header">
             <div class="tee-dot" style="background:#3a7bd5;"></div>
-            <div class="tee-label">Championship / Men</div>
+            <div class="tee-label">Championship</div>
           </div>
           <div class="tee-fields">
             <div class="field"><label>Rating</label><input type="number" id="tee1_rating" placeholder="72.1" step="0.1" min="55" max="85" value=""></div>
@@ -964,7 +964,7 @@ select option { background: #1a3524; }
         <div class="tee-card">
           <div class="tee-card-header">
             <div class="tee-dot" style="background:#e8c870;"></div>
-            <div class="tee-label">Medal / Standard</div>
+            <div class="tee-label">Medal</div>
           </div>
           <div class="tee-fields">
             <div class="field"><label>Rating</label><input type="number" id="tee2_rating" placeholder="70.5" step="0.1" min="55" max="85" value=""></div>
@@ -975,7 +975,7 @@ select option { background: #1a3524; }
         <div class="tee-card">
           <div class="tee-card-header">
             <div class="tee-dot" style="background:#e88080;"></div>
-            <div class="tee-label">Forward / Ladies</div>
+            <div class="tee-label">Forward</div>
           </div>
           <div class="tee-fields">
             <div class="field"><label>Rating</label><input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="55" max="85" value=""></div>
@@ -1417,7 +1417,7 @@ function renderTeam(team) {
                 <option value="auto" ${(team.players[i].tee||'auto')==='auto'?'selected':''}>Auto (by gender)</option>
                 <option value="tee1" ${team.players[i].tee==='tee1'?'selected':''}>&#128309; Championship</option>
                 <option value="tee2" ${team.players[i].tee==='tee2'?'selected':''}>&#128993; Medal</option>
-                <option value="tee3" ${team.players[i].tee==='tee3'?'selected':''}>&#128308; Forward/Ladies</option>
+                <option value="tee3" ${team.players[i].tee==='tee3'?'selected':''}>&#128308; Forward</option>
               </select>
             </div>
           </div>`).join('')}
