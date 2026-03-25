@@ -11,7 +11,7 @@
 <meta property="og:description" content="Calculate WHS team handicaps for scramble events. Supports 2–4 players per team.">
 <meta property="og:url" content="https://therookiegolfer.com">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26F3;</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
 <!-- Firebase compat SDKs — synchronous, no module timing issues -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -110,9 +110,10 @@
 body {
   background: var(--bg);
   color: var(--cream);
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
   min-height: 100vh;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 /* Subtle fairway stripe */
@@ -140,7 +141,7 @@ body::before {
 }
 
 .logo {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 700;
   color: var(--white);
@@ -154,7 +155,7 @@ body::before {
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--muted);
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-weight: 400;
   margin-top: 6px;
 }
@@ -171,7 +172,7 @@ body::before {
   background: none; border: none;
   padding: 9px 18px;
   border-radius: 3px;
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -235,7 +236,7 @@ input[type=text], input[type=number], select {
   border: 1px solid var(--border2);
   border-radius: 3px;
   color: var(--white);
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.82rem;
   padding: 9px 12px;
   outline: none;
@@ -287,14 +288,14 @@ select option { background: #1a3524; }
   color: var(--muted);
 }
 
-.teams-count strong { color: var(--gold); font-size: 1rem; font-family:'Cormorant Garamond',serif; }
+.teams-count strong { color: var(--gold); font-size: 1rem; font-family:'Inter',sans-serif; }
 
 .btn {
   background: none;
   border: 1px solid var(--border2);
   border-radius: 3px;
   color: var(--cream);
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -343,7 +344,7 @@ select option { background: #1a3524; }
 .team-header-left { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
 
 .team-num {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
   color: rgba(200,168,75,0.35);
@@ -357,7 +358,7 @@ select option { background: #1a3524; }
   border-bottom: 1px solid transparent;
   border-radius: 0;
   color: var(--white);
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   padding: 2px 4px;
@@ -416,7 +417,7 @@ select option { background: #1a3524; }
 
 .player-slot-num {
   position:absolute; top:8px; right:10px;
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.8rem; font-weight:700;
   color:rgba(255,255,255,0.03);
   line-height:1; pointer-events:none;
@@ -482,7 +483,7 @@ select option { background: #1a3524; }
   border: none;
   border-radius: 40px;
   padding: 12px 28px;
-  font-family:'Space Mono',monospace;
+  font-family:'Roboto',sans-serif;
   font-size:0.7rem;
   font-weight:700;
   letter-spacing:0.15em;
@@ -509,7 +510,7 @@ select option { background: #1a3524; }
 }
 
 .results-title {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.8rem; font-weight:700;
   color:var(--white);
 }
@@ -548,7 +549,7 @@ select option { background: #1a3524; }
 .results-table tbody tr:hover { background: rgba(255,255,255,0.03); }
 
 .rank-cell {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.4rem; font-weight:700;
   color:rgba(255,255,255,0.15);
   width:40px;
@@ -556,10 +557,10 @@ select option { background: #1a3524; }
 
 .rank-cell.top { color:var(--gold); }
 
-.team-name-cell { font-family:'Cormorant Garamond',serif; font-size:1rem; font-weight:600; color:var(--white); }
+.team-name-cell { font-family:'Inter',sans-serif; font-size:1rem; font-weight:600; color:var(--white); }
 
 .hcp-cell {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.8rem; font-weight:700;
   color:var(--gold);
   white-space:nowrap;
@@ -570,7 +571,7 @@ select option { background: #1a3524; }
 .players-cell span { display:inline-block; margin-right:12px; }
 
 .strokes-cell {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.4rem; font-weight:700;
   white-space:nowrap;
   text-align:right;
@@ -582,7 +583,7 @@ select option { background: #1a3524; }
 .strokes-badge {
   display:inline-block;
   font-size:0.65rem;
-  font-family:'Space Mono',monospace;
+  font-family:'Roboto',sans-serif;
   font-weight:700;
   padding: 3px 9px;
   border-radius: 20px;
@@ -604,7 +605,7 @@ select option { background: #1a3524; }
 }
 
 .submit-hero h2 {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:2.2rem; font-weight:700;
   color:var(--white); margin-bottom:8px;
 }
@@ -623,7 +624,7 @@ select option { background: #1a3524; }
 .submit-success-icon { font-size:3rem; margin-bottom:16px; }
 
 .submit-success h3 {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.6rem; font-weight:700;
   color:var(--white); margin-bottom:8px;
 }
@@ -647,7 +648,7 @@ select option { background: #1a3524; }
 .pending-item-meta { font-size:0.62rem; color:var(--muted); }
 
 .pending-item-hcp {
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Inter',sans-serif;
   font-size:1.3rem; font-weight:700;
   color:var(--gold);
 }
@@ -705,17 +706,17 @@ select option { background: #1a3524; }
   border-radius: 6px 6px 0 0;
 }
 .login-icon { font-size:2rem; text-align:center; display:block; margin-bottom:16px; }
-.login-title { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:700; color:var(--white); text-align:center; margin-bottom:4px; }
+.login-title { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:700; color:var(--white); text-align:center; margin-bottom:4px; }
 .login-sub { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:28px; }
 .login-fields { display:flex; flex-direction:column; gap:14px; }
 .login-error { font-size:0.68rem; color:#e08878; background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.25); border-radius:3px; padding:9px 12px; display:none; text-align:center; }
 .login-error.visible { display:block; }
-.btn-login { width:100%; padding:13px; background:var(--gold); border:none; border-radius:3px; font-family:'Space Mono',monospace; font-size:0.7rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--dark); cursor:pointer; transition:all 0.2s; margin-top:4px; }
+.btn-login { width:100%; padding:13px; background:var(--gold); border:none; border-radius:3px; font-family:'Roboto',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--dark); cursor:pointer; transition:all 0.2s; margin-top:4px; }
 .btn-login:hover { background:var(--gold2); }
 .btn-login:active { transform:scale(0.98); }
 
 /* Google button */
-.btn-google { width:100%; padding:11px 16px; background:#fff; border:1px solid #dadce0; border-radius:3px; font-family:'Space Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; color:#3c4043; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:4px; }
+.btn-google { width:100%; padding:11px 16px; background:#fff; border:1px solid #dadce0; border-radius:3px; font-family:'Roboto',sans-serif; font-size:0.68rem; letter-spacing:0.05em; color:#3c4043; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:4px; }
 .btn-google:hover { background:#f8f9fa; box-shadow:0 1px 6px rgba(0,0,0,0.2); }
 
 /* Divider */
@@ -725,7 +726,7 @@ select option { background: #1a3524; }
 
 /* Switch link */
 .auth-switch { text-align:center; margin-top:16px; font-size:0.65rem; color:var(--muted); }
-.auth-switch button { background:none; border:none; color:var(--gold); font-family:'Space Mono',monospace; font-size:0.65rem; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; }
+.auth-switch button { background:none; border:none; color:var(--gold); font-family:'Roboto',sans-serif; font-size:0.65rem; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; }
 .auth-switch button:hover { color:var(--gold2); }
 
 /* Close button */
@@ -735,7 +736,7 @@ select option { background: #1a3524; }
 /* Register success */
 .register-success { text-align:center; padding:16px 0 8px; }
 .register-success-icon { font-size:2rem; margin-bottom:10px; }
-.register-success h4 { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:700; color:var(--white); margin-bottom:6px; }
+.register-success h4 { font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:700; color:var(--white); margin-bottom:6px; }
 .register-success p { font-size:0.68rem; color:var(--muted); line-height:1.8; }
 
 /* ─── AUTH STATUS ─── */
@@ -743,15 +744,15 @@ select option { background: #1a3524; }
 .auth-user { font-size:0.65rem; letter-spacing:0.08em; color:var(--muted); display:none; }
 .auth-user.visible { display:flex; align-items:center; gap:8px; }
 .auth-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(74,158,106,0.6); flex-shrink:0; }
-.btn-login-header { background:none; border:1px solid var(--border2); border-radius:3px; padding:8px 16px; font-family:'Space Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); cursor:pointer; transition:all 0.2s; }
+.btn-login-header { background:none; border:1px solid var(--border2); border-radius:3px; padding:8px 16px; font-family:'Roboto',sans-serif; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); cursor:pointer; transition:all 0.2s; }
 .btn-login-header:hover { border-color:var(--gold); background:rgba(200,168,75,0.08); }
-.btn-logout { background:none; border:none; font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color 0.2s; }
+.btn-logout { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color 0.2s; }
 .btn-logout:hover { color:var(--red); }
 
 /* ─── LOCKED STATE ─── */
 .panel-locked { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 20px; text-align:center; gap:16px; }
 .panel-locked-icon { font-size:2.5rem; opacity:0.4; }
-.panel-locked h3 { font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:var(--white); }
+.panel-locked h3 { font-family:'Inter',sans-serif; font-size:1.4rem; color:var(--white); }
 .panel-locked p { font-size:0.7rem; color:var(--muted); line-height:1.8; }
 
 /* ─── ANIMATIONS ─── */
@@ -939,7 +940,7 @@ select option { background: #1a3524; }
       <div class="course-row" style="grid-template-columns:2fr 1fr;">
         <div class="field">
           <label>Event Name</label>
-          <input type="text" id="eventName" placeholder="e.g. The Rookie Golfer Open 2025" oninput="updateShareLinkEvent()">
+          <input type="text" id="eventName" placeholder="e.g. Add your event title here" oninput="updateShareLinkEvent()">
         </div>
         <div class="field">
           <label>Date</label>
@@ -1081,8 +1082,8 @@ Team Eagles,Sammy Lee,18.2,female<br>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn" onclick="addTeam()">+ Add Team</button>
-          <button class="btn btn-danger btn-sm" onclick="clearAllTeams()">Clear Teams</button>
-          <button class="btn btn-danger btn-sm" onclick="resetAllData()">&#x21BA; Reset All</button>
+          <button class="btn btn-danger btn-sm" onclick="clearAllTeams()">Delete Teams</button>
+          <button class="btn btn-danger btn-sm" onclick="resetAllData()">&#x21BA; Reset Teams</button>
         </div>
       </div>
       <div id="teamsContainer"></div>
