@@ -241,6 +241,7 @@ input[type=text], input[type=number], select {
   padding: 9px 12px;
   outline: none;
   transition: border-color 0.2s;
+  appearance: textfield;
   -moz-appearance: textfield;
   width: 100%;
 }
@@ -766,6 +767,16 @@ select option { background: #1a3524; }
 .sub-source-badge.form { background:rgba(74,142,200,0.2); color:#88b8e0; }
 .sub-source-badge.manual { background:rgba(122,158,136,0.2); color:var(--muted); }
 
+/* css */
+.audit-status-badge {
+  font-size: 0.55rem; padding: 2px 8px; border-radius: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  display: inline-block; white-space: nowrap;
+}
+.audit-status-badge.assigned   { background: rgba(74,158,106,0.2);  color: #7ace98; }
+.audit-status-badge.pending    { background: rgba(74,142,200,0.15); color: #88b8e0; }
+.audit-status-badge.unassigned { background: rgba(200,168,75,0.15); color: var(--gold); }
+
 /* Pending list */
 .pending-list {
   display:flex; flex-direction:column; gap:8px;
@@ -786,6 +797,10 @@ select option { background: #1a3524; }
 }
 .pending-actions { display:flex; gap:6px; }
 </style>
+
+/* SheetJS (XLSX) for CSV parsing */
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>
 <body>
 <div id="authLoadingOverlay">
@@ -862,6 +877,7 @@ select option { background: #1a3524; }
       <div class="tabs">
         <button class="tab-btn active" id="adminTabBtn" onclick="requireAdmin(event)">⛳ Admin</button>
         <button class="tab-btn" onclick="showTab('results', event)" id="resultsTab" style="display:none;">📋 Results</button>
+        <button class="tab-btn" onclick="showTab('export', event)" id="exportTab" style="display:none;">📤 Export</button>
       </div>
     </div>
     <div class="auth-status">
@@ -1089,6 +1105,64 @@ Team Eagles,Sammy Lee,18.2,female<br>
     </div>
   </div><!-- /results -->
 
+<!-- ══════════════ EXPORT PANEL ══════════════ -->
+  <div class="panel" id="panel-export">
+
+    <div class="card">
+      <div class="card-title">Player Roster &amp; Submission Audit</div>
+
+      <div class="notice info visible" style="margin-bottom:16px;">
+        This table tracks every player who submitted via the registration link, plus any manually added or CSV-imported players.
+        Assigned players remain visible here even after they are removed from the Pending list.
+      </div>
+
+      <!-- Toolbar -->
+      <div class="teams-toolbar" style="margin-bottom:16px;">
+        <div class="teams-count">
+          <strong id="exportTotalCount">0</strong> total players ·
+          <span id="exportAssignedCount">0</span> assigned ·
+          <span id="exportUnassignedCount">0</span> unassigned
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="exportXLSX()">⬇ Export XLSX</button>
+          <button class="btn" onclick="exportAuditCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Filter pills -->
+      <div class="format-pills" style="margin-bottom:16px;">
+        <div class="pill"><input type="radio" name="auditFilter" id="afAll" value="all" checked onchange="renderAuditTable()"><label for="afAll">All</label></div>
+        <div class="pill"><input type="radio" name="auditFilter" id="afAssigned" value="assigned" onchange="renderAuditTable()"><label for="afAssigned">Assigned</label></div>
+        <div class="pill"><input type="radio" name="auditFilter" id="afUnassigned" value="unassigned" onchange="renderAuditTable()"><label for="afUnassigned">Unassigned / Pending</label></div>
+      </div>
+
+      <!-- Table -->
+      <div style="overflow-x:auto;">
+        <table class="results-table" id="auditTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>HCP Index</th>
+              <th>Gender</th>
+              <th>Team</th>
+              <th>Source</th>
+              <th style="text-align:left;">Status</th>
+              <th>Submitted At</th>
+            </tr>
+          </thead>
+          <tbody id="auditBody"></tbody>
+        </table>
+      </div>
+
+      <div id="auditEmpty" style="text-align:center;padding:32px;color:var(--muted);font-size:0.72rem;display:none;">
+        No submission data yet. Players appear here after submitting via the registration link or being added manually.
+      </div>
+    </div>
+
+  </div><!-- /export -->
+
 </div><!-- /app -->
 
 <script>
@@ -1242,6 +1316,7 @@ window.completeLogin = function(name, email) {
   document.getElementById('adminLocked').style.display = 'none';
   document.getElementById('adminContent').style.display = 'block';
   document.getElementById('resultsTab').style.display = '';
+  document.getElementById('exportTab').style.display = '';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-admin').classList.add('active');
@@ -1265,6 +1340,7 @@ window.handleSignOut = function() {
   document.getElementById('adminLocked').style.display = '';
   document.getElementById('adminContent').style.display = 'none';
   document.getElementById('resultsTab').style.display = 'none';
+  document.getElementById('exportTab').style.display = 'none';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-admin').classList.add('active');
@@ -1442,13 +1518,15 @@ function parseCSV(text) {
   lines.forEach((line, i) => {
     const parts = line.split(',').map(s => s.trim());
     if (parts.length < 3) { errors++; return; }
-    const [teamName, playerName, hcpStr] = parts;
+    const [teamName, playerName, hcpStr, genderRaw] = parts;
     const hcp = parseFloat(hcpStr);
     if (!teamName || isNaN(hcp) || hcp < 0 || hcp > 54) { errors++; return; }
 
+    const gender = genderRaw && genderRaw.toLowerCase().startsWith('f') ? 'F' : 'M';
+
     if (!teamMap[teamName]) teamMap[teamName] = [];
     if (teamMap[teamName].length < 4) {
-      teamMap[teamName].push({ name: playerName || '', hcp });
+      teamMap[teamName].push({ name: playerName || '', hcp, gender });
       imported++;
     }
   });
@@ -1528,6 +1606,13 @@ window._renderFirestorePending = function() {
     </div>`).join('');
 
   list.innerHTML = firestoreHTML + manualHTML;
+
+// Keep audit table live if visible
+  if (document.getElementById('panel-export')?.classList.contains('active')) {
+    renderAuditTable();
+  } else {
+    refreshAuditCounts();
+  }
 };
 
 function renderPending() {
@@ -1563,6 +1648,14 @@ async function assignFirestorePending(id) {
       alert('Team "' + teamName + '" already has 4 players.');
       return;
     }
+  }
+
+  // ── Log the submission BEFORE deleting it ──
+  const assignedTeamName = teamName || (name + "'s Team");
+  logSubmission(Object.assign({}, s, { team: assignedTeamName, status: 'assigned' }));
+  // Refresh audit table if it's currently visible
+  if (document.getElementById('panel-export')?.classList.contains('active')) {
+    renderAuditTable();
   }
 
   try {
@@ -1863,6 +1956,300 @@ function escHtml(s) {
 // Init with 2 blank teams
 addTeam('Team Eagles');
 addTeam('Team Birdies');
+
+// ─── SUBMISSION LOG ───
+// Persists across the session — survives deletion from Firestore
+window._submissionLog = window._submissionLog || [];
+
+function logSubmission(entry) {
+  // Avoid duplicates keyed by Firestore id or name+hcp combo
+  const key = entry.id || (entry.name + '|' + entry.hcp);
+  const exists = window._submissionLog.some(function(e) {
+    return (e.id && e.id === entry.id) || (!e.id && (e.name + '|' + e.hcp) === key);
+  });
+  if (!exists) {
+    window._submissionLog.push(Object.assign({ _loggedAt: new Date().toISOString() }, entry));
+  }
+  refreshAuditCounts();
+}
+
+function buildAuditRows() {
+  // Merge log + current Firestore pending (not yet assigned) + teams already built
+  var rows = [];
+
+  // 1. All logged submissions (form + previously assigned)
+  (window._submissionLog || []).forEach(function(s) {
+    rows.push({
+      name:        s.name || '—',
+      email:       s.email || '',
+      hcp:         parseFloat(s.hcp),
+      gender:      s.gender || 'M',
+      team:        s.team && s.team !== 'Unassigned' ? s.team : '',
+      source:      'form',
+      status:      'assigned',  // it was assigned (hence logged on assign)
+      submittedAt: s.submittedAt || s._loggedAt || '',
+      notes:       s.notes || ''
+    });
+  });
+
+  // 2. Still-pending Firestore subs (not yet assigned)
+  (window._firestoreSubs || []).forEach(function(s) {
+    // Skip if already in log
+    var alreadyLogged = (window._submissionLog || []).some(function(e) { return e.id === s.id; });
+    if (!alreadyLogged) {
+      rows.push({
+        name:        s.name || '—',
+        email:       s.email || '',
+        hcp:         parseFloat(s.hcp),
+        gender:      s.gender || 'M',
+        team:        s.team && s.team !== 'Unassigned' ? s.team : '',
+        source:      'form',
+        status:      'pending',
+        submittedAt: s.submittedAt || '',
+        notes:       s.notes || ''
+      });
+    }
+  });
+
+  // 3. Players already in teams (CSV import or manual — not from form)
+  teams.forEach(function(t) {
+    t.players.forEach(function(p) {
+      if (p.hcp === '' || isNaN(parseFloat(p.hcp))) return;
+      // Skip if this player is already captured from the form log
+      var fromLog = (window._submissionLog || []).some(function(e) {
+        return e.name && e.name.toLowerCase() === (p.name || '').toLowerCase()
+          && Math.abs(parseFloat(e.hcp) - parseFloat(p.hcp)) < 0.05;
+      });
+      if (!fromLog) {
+        rows.push({
+          name:        p.name || '—',
+          email:       '',
+          hcp:         parseFloat(p.hcp),
+          gender:      p.gender || 'M',
+          team:        t.name || '',
+          source:      'manual',
+          status:      'assigned',
+          submittedAt: '',
+          notes:       ''
+        });
+      }
+    });
+  });
+
+  return rows;
+}
+
+function refreshAuditCounts() {
+  var rows = buildAuditRows();
+  var assigned   = rows.filter(function(r) { return r.status === 'assigned' && r.team; }).length;
+  var pending    = rows.filter(function(r) { return r.status === 'pending' || (r.status === 'assigned' && !r.team); }).length;
+  var total = rows.length;
+  var tc = document.getElementById('exportTotalCount');
+  var ac = document.getElementById('exportAssignedCount');
+  var uc = document.getElementById('exportUnassignedCount');
+  if (tc) tc.textContent = total;
+  if (ac) ac.textContent = assigned;
+  if (uc) uc.textContent = pending;
+}
+
+function renderAuditTable() {
+  var filter = document.querySelector('input[name="auditFilter"]:checked')?.value || 'all';
+  var rows = buildAuditRows();
+
+  if (filter === 'assigned')   rows = rows.filter(function(r) { return r.status === 'assigned' && r.team; });
+  if (filter === 'unassigned') rows = rows.filter(function(r) { return r.status === 'pending' || !r.team; });
+
+  var tbody = document.getElementById('auditBody');
+  var empty = document.getElementById('auditEmpty');
+  if (!tbody) return;
+
+  refreshAuditCounts();
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  var teeColors  = { tee1:'#3a7bd5', tee2:'#c8a84b', tee3:'#e88080' };
+  var genderIcon = function(g) { return g === 'F' ? '&#9792;' : '&#9794;'; };
+
+  var statusLabel = function(r) {
+    if (r.status === 'pending')  return '<span class="audit-status-badge pending">Pending</span>';
+    if (r.team)                  return '<span class="audit-status-badge assigned">Assigned</span>';
+    return '<span class="audit-status-badge unassigned">Unassigned</span>';
+  };
+
+  var sourceLabel = function(s) {
+    return s === 'form'
+      ? '<span class="sub-source-badge form">Form</span>'
+      : '<span class="sub-source-badge manual">Manual</span>';
+  };
+
+  var formatDate = function(iso) {
+    if (!iso) return '—';
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+             + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    } catch(e) { return iso; }
+  };
+
+  tbody.innerHTML = rows.map(function(r, i) {
+    return '<tr>' +
+      '<td class="rank-cell">' + (i + 1) + '</td>' +
+      '<td style="font-weight:600;color:var(--white);">' + escHtml(r.name) + '</td>' +
+      '<td style="font-size:0.7rem;color:var(--muted);">' + (r.email ? escHtml(r.email) : '—') + '</td>' +
+      '<td style="font-family:\'Inter\',sans-serif;font-size:1.2rem;font-weight:700;color:var(--gold);">' +
+        (!isNaN(r.hcp) ? r.hcp.toFixed(1) : '—') + '</td>' +
+      '<td style="font-size:0.72rem;">' + genderIcon(r.gender) + ' ' + (r.gender || 'M') + '</td>' +
+      '<td style="font-size:0.75rem;color:var(--cream);">' + (r.team ? escHtml(r.team) : '<span style="color:var(--muted);">—</span>') + '</td>' +
+      '<td>' + sourceLabel(r.source) + '</td>' +
+      '<td>' + statusLabel(r) + '</td>' +
+      '<td style="font-size:0.65rem;color:var(--muted);white-space:nowrap;">' + formatDate(r.submittedAt) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ─── CSV EXPORT (AUDIT) ───
+function exportAuditCSV() {
+  var rows = buildAuditRows();
+  if (!rows.length) { alert('No data to export yet.'); return; }
+
+  var eventName = document.getElementById('eventName')?.value.trim() || 'Event';
+  var header = 'Name,Email,Handicap Index,Gender,Team,Source,Status,Submitted At\n';
+  var body = rows.map(function(r) {
+    return [
+      '"' + (r.name  || '').replace(/"/g,'""') + '"',
+      '"' + (r.email || '').replace(/"/g,'""') + '"',
+      !isNaN(r.hcp) ? r.hcp.toFixed(1) : '',
+      r.gender || 'M',
+      '"' + (r.team  || '').replace(/"/g,'""') + '"',
+      r.source,
+      r.status,
+      '"' + (r.submittedAt || '').replace(/"/g,'""') + '"'
+    ].join(',');
+  }).join('\n');
+
+  var blob = new Blob([header + body], { type:'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = eventName.replace(/\s+/g,'-') + '-player-audit.csv';
+  a.click();
+}
+
+// ─── XLSX EXPORT ───
+function exportXLSX() {
+  if (typeof XLSX === 'undefined') {
+    alert('XLSX library not loaded. Please check your internet connection and try again.');
+    return;
+  }
+
+  var rows = buildAuditRows();
+  if (!rows.length) { alert('No data to export yet.'); return; }
+
+  var eventName = document.getElementById('eventName')?.value.trim() || 'Event';
+  var eventDate = document.getElementById('eventDate')?.value.trim()  || '';
+
+  // ── Sheet 1: All Players ──
+  var allData = [
+    ['Parmate — Player Roster Export'],
+    ['Event: ' + eventName + (eventDate ? '  |  Date: ' + eventDate : '')],
+    ['Generated: ' + new Date().toLocaleString('en-GB')],
+    [],
+    ['#', 'Name', 'Email', 'Handicap Index', 'Gender', 'Team', 'Source', 'Status', 'Submitted At', 'Notes']
+  ];
+
+  rows.forEach(function(r, i) {
+    allData.push([
+      i + 1,
+      r.name  || '',
+      r.email || '',
+      !isNaN(r.hcp) ? r.hcp : '',
+      r.gender === 'F' ? 'Female' : r.gender === 'M' ? 'Male' : r.gender || '',
+      r.team  || '',
+      r.source === 'form' ? 'Online Form' : 'Manual / CSV',
+      r.status === 'pending' ? 'Pending' : r.team ? 'Assigned' : 'Unassigned',
+      r.submittedAt || '',
+      r.notes || ''
+    ]);
+  });
+
+  // ── Sheet 2: Unassigned / Pending ──
+  var unassignedRows = rows.filter(function(r) { return r.status === 'pending' || !r.team; });
+  var unassignedData = [
+    ['Parmate — Unassigned Players'],
+    ['Event: ' + eventName],
+    ['Generated: ' + new Date().toLocaleString('en-GB')],
+    [],
+    ['#', 'Name', 'Email', 'Handicap Index', 'Gender', 'Requested Team', 'Source', 'Submitted At', 'Notes']
+  ];
+
+  if (unassignedRows.length === 0) {
+    unassignedData.push(['', '✓ All players have been assigned to a team.']);
+  } else {
+    unassignedRows.forEach(function(r, i) {
+      unassignedData.push([
+        i + 1,
+        r.name  || '',
+        r.email || '',
+        !isNaN(r.hcp) ? r.hcp : '',
+        r.gender === 'F' ? 'Female' : r.gender === 'M' ? 'Male' : r.gender || '',
+        r.team  || 'TBD',
+        r.source === 'form' ? 'Online Form' : 'Manual / CSV',
+        r.submittedAt || '',
+        r.notes || ''
+      ]);
+    });
+  }
+
+  // ── Sheet 3: Teams Summary ──
+  var teamData = [
+    ['Parmate — Teams Summary'],
+    ['Event: ' + eventName],
+    ['Generated: ' + new Date().toLocaleString('en-GB')],
+    [],
+    ['Team', 'Player', 'Handicap Index', 'Gender', 'Tee']
+  ];
+
+  teams.forEach(function(t) {
+    var activePlayers = t.players.filter(function(p) { return p.hcp !== '' && !isNaN(parseFloat(p.hcp)); });
+    if (activePlayers.length === 0) {
+      teamData.push([t.name, '(no players)', '', '', '']);
+    } else {
+      activePlayers.forEach(function(p, pi) {
+        var teeName = p.tee === 'tee1' ? 'Championship/White' : p.tee === 'tee3' ? 'Forward/Red' : 'Medal/Yellow';
+        teamData.push([pi === 0 ? t.name : '', p.name || 'Player ' + (pi+1), parseFloat(p.hcp), p.gender || 'M', teeName]);
+      });
+    }
+    teamData.push([]); // blank row between teams
+  });
+
+  // ── Build workbook ──
+  var wb = XLSX.utils.book_new();
+
+  var ws1 = XLSX.utils.aoa_to_sheet(allData);
+  var ws2 = XLSX.utils.aoa_to_sheet(unassignedData);
+  var ws3 = XLSX.utils.aoa_to_sheet(teamData);
+
+  // Column widths
+  var setColWidths = function(ws, widths) {
+    ws['!cols'] = widths.map(function(w) { return { wch: w }; });
+  };
+
+  setColWidths(ws1, [4, 24, 28, 14, 8, 22, 14, 12, 22, 30]);
+  setColWidths(ws2, [4, 24, 28, 14, 8, 22, 14, 22, 30]);
+  setColWidths(ws3, [24, 24, 14, 8, 20]);
+
+  XLSX.utils.book_append_sheet(wb, ws1, 'All Players');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Unassigned');
+  XLSX.utils.book_append_sheet(wb, ws3, 'Teams');
+
+  var fileName = eventName.replace(/\s+/g,'-') + '-parmate-export.xlsx';
+  XLSX.writeFile(wb, fileName);
+}
+
 </script>
 </body>
 </html>
