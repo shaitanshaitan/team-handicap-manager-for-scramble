@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <!-- PWA core -->
-<meta name="application-name" content="TRG Team HCP">
+<meta name="application-name" content="Parmate Team HCP">
 <meta name="theme-color" content="#0a1a10">
 <link rel="manifest" href="/manifest.json">
 
 <!-- iOS PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TRG Team HCP">
+<meta name="apple-mobile-web-app-title" content="Parmate">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
 <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png">
@@ -26,15 +26,15 @@
 <meta name="msapplication-TileImage" content="/icons/icon-144.png">
 
 <!-- SEO / share -->
-<title>TRG Team HCP · Scramble Handicap Calculator</title>
-<meta name="description" content="Calculate WHS scramble team handicaps instantly. Free tool for golfers by The Rookie Golfer.">
-<meta property="og:title" content="TRG Team HCP">
+<title>Parmate · Scramble Team Handicap Calculator</title>
+<meta name="description" content="Calculate WHS scramble team handicaps instantly. Free tool for golfers by Parmate.">
+<meta property="og:title" content="Parmate Team HCP">
 <meta property="og:description" content="Free WHS scramble handicap calculator for 2-player teams.">
 <meta property="og:url" content="https://teamhcp.therookiegolfer.com/">
 <meta property="og:type" content="website">
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -92,7 +92,7 @@ html { scroll-behavior:smooth; }
 body {
   background: var(--bg);
   color: var(--cream);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 14px;
   min-height: 100vh;
   min-height: 100dvh;
@@ -131,7 +131,7 @@ body::before {
 }
 
 .header h1 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 2.2rem;
   font-weight: 700;
   color: var(--white);
@@ -208,7 +208,7 @@ input[type=number] {
   border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
   color: var(--white);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 1rem;
   padding: 13px 14px;
   outline: none;
@@ -286,7 +286,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 .player-card-num {
   position: absolute;
   top: 10px; right: 14px;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 2.2rem; font-weight:700;
   color: rgba(255,255,255,0.04);
   line-height: 1;
@@ -302,7 +302,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   margin-bottom: 14px;
 }
 .team-label-num {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 2.5rem; font-weight:700;
   color: var(--gold);
   opacity: 0.25;
@@ -314,7 +314,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   border-bottom: 1px solid var(--border2);
   border-radius: 0;
   padding: 4px 2px;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--white);
@@ -375,7 +375,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   background: var(--gold);
   border: none;
   border-radius: var(--radius);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -416,7 +416,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
   color: var(--muted);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -434,7 +434,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 }
 .results-hero-flag { font-size:2rem; margin-bottom:10px; display:block; }
 .results-event {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.8rem; font-weight:700;
   color: var(--white);
   margin-bottom: 6px;
@@ -472,7 +472,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 }
 
 .result-team-name {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.5rem; font-weight:700;
   color: var(--white);
   line-height: 1;
@@ -485,7 +485,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 }
 
 .result-hcp-num {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 3rem; font-weight:700;
   color: var(--gold);
   line-height: 1;
@@ -572,7 +572,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   letter-spacing: 0.08em;
 }
 .result-vs-diff {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.5rem; font-weight:700;
   color: var(--cream);
 }
@@ -604,7 +604,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 }
 .btn-reset {
   background: none; border:none;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -693,7 +693,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 
 .auth-sheet-icon { text-align: center; font-size: 1.8rem; margin-bottom: 10px; }
 .auth-sheet-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.6rem; font-weight: 700;
   color: var(--white); text-align: center; margin-bottom: 4px;
 }
@@ -706,7 +706,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 .btn-google {
   width: 100%; padding: 14px 16px;
   background: #fff; border: none; border-radius: var(--radius-sm);
-  font-family: 'DM Mono', monospace; font-size: 0.72rem;
+  font-family: 'Roboto', sans-serif; font-size: 0.72rem;
   letter-spacing: 0.04em; color: #3c4043;
   cursor: pointer; transition: all 0.18s;
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -730,7 +730,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 .btn-auth {
   width: 100%; padding: 15px;
   background: var(--gold); border: none; border-radius: var(--radius-sm);
-  font-family: 'DM Mono', monospace; font-size: 0.72rem;
+  font-family: 'Roboto', sans-serif; font-size: 0.72rem;
   font-weight: 500; letter-spacing: 0.12em;
   text-transform: uppercase; color: #0a1a10;
   cursor: pointer; transition: all 0.18s;
@@ -744,7 +744,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 }
 .auth-switch button {
   background: none; border: none;
-  font-family: 'DM Mono', monospace; font-size: 0.62rem;
+  font-family: 'Roboto', sans-serif; font-size: 0.62rem;
   color: var(--gold); cursor: pointer;
   text-decoration: underline; text-underline-offset: 3px; padding: 0;
 }
@@ -770,7 +770,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   border: 1px solid var(--border2);
   border-radius: 20px;
   padding: 8px 20px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.62rem; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--gold);
   cursor: pointer; transition: all 0.2s;
@@ -798,7 +798,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 }
 .btn-signout {
   background: none; border: none;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.58rem; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--muted);
   cursor: pointer; text-decoration: underline;
@@ -819,7 +819,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   <div class="auth-sheet">
     <div class="auth-sheet-icon">⛳</div>
     <div class="auth-sheet-title" id="authModalTitle">Welcome back</div>
-    <div class="auth-sheet-sub" id="authModalSub">Team HCP · The Rookie Golfer</div>
+    <div class="auth-sheet-sub" id="authModalSub">Parmate · Team HCP</div>
 
     <!-- Google -->
     <button class="btn-google" onclick="doGoogleSignIn()">
@@ -887,7 +887,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   <!-- HEADER -->
   <header class="header">
     <span class="header-flag">⛳</span>
-    <h1>Team <em>HCP</em></h1>
+    <h1><em>Parmate</em></h1>
     <div class="header-sub">Scramble Handicap Calculator · WHS</div>
     <div class="header-auth">
       <button class="btn-signin" id="btnSignInHeader" onclick="openAuthModal()">Sign In</button>
@@ -1026,15 +1026,15 @@ input::placeholder { color: rgba(255,255,255,0.18); }
           <div class="tee-pills">
             <div class="tee-pill t1">
               <input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ">
-              <label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+              <label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
             </div>
             <div class="tee-pill t2">
               <input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked>
-              <label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+              <label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
             </div>
             <div class="tee-pill t3">
               <input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd">
-              <label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+              <label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
             </div>
           </div>
         </div>
@@ -1070,15 +1070,15 @@ input::placeholder { color: rgba(255,255,255,0.18); }
           <div class="tee-pills">
             <div class="tee-pill t1">
               <input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ">
-              <label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+              <label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
             </div>
             <div class="tee-pill t2">
               <input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked>
-              <label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+              <label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
             </div>
             <div class="tee-pill t3">
               <input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd">
-              <label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+              <label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
             </div>
           </div>
         </div>
@@ -1128,15 +1128,15 @@ input::placeholder { color: rgba(255,255,255,0.18); }
           <div class="tee-pills">
             <div class="tee-pill t1">
               <input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ">
-              <label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+              <label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
             </div>
             <div class="tee-pill t2">
               <input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked>
-              <label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+              <label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
             </div>
             <div class="tee-pill t3">
               <input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd">
-              <label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+              <label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
             </div>
           </div>
         </div>
@@ -1172,15 +1172,15 @@ input::placeholder { color: rgba(255,255,255,0.18); }
           <div class="tee-pills">
             <div class="tee-pill t1">
               <input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ">
-              <label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label>
+              <label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
             </div>
             <div class="tee-pill t2">
               <input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked>
-              <label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label>
+              <label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
             </div>
             <div class="tee-pill t3">
               <input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd">
-              <label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label>
+              <label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
             </div>
           </div>
         </div>
@@ -1261,7 +1261,6 @@ function getTee(teeKey) {
     if (!isNaN(r) && !isNaN(s)) return { rating:r, slope:s, par:p, key:'fwd' };
   }
   // 'main' or 'champ' both use the main tee for this simplified app
-  // (championship tee is same as standard in the simplified version)
   const r = numVal('course_rating');
   const s = numVal('course_slope');
   const p = numVal('course_par') || 72;
@@ -1599,13 +1598,11 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(reg => {
-        // Check for updates every time the app loads
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — could show an update banner here
-              console.log('TRG Team HCP: new version available.');
+              console.log('Parmate Team HCP: new version available.');
             }
           });
         });

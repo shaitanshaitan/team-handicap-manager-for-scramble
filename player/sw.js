@@ -1,5 +1,5 @@
-// ─── TRG Team HCP · Service Worker ───
-const APP_VERSION = 'trg-team-hcp-v1';
+// ─── Parmate Team HCP · Service Worker ───
+const APP_VERSION = 'parmate-team-hcp-v1';
 
 // App shell files to cache on install
 const APP_SHELL = [

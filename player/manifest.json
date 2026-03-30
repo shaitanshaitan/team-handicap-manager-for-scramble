@@ -1,7 +1,7 @@
 {
-  "name": "TRG Team HCP",
-  "short_name": "TRG Team HCP",
-  "description": "Scramble team handicap calculator. Built on the World Handicap System. Free tool by The Rookie Golfer.",
+  "name": "Parmate Team HCP",
+  "short_name": "Parmate",
+  "description": "Scramble team handicap calculator. Built on the World Handicap System. Free tool by Parmate.",
   "start_url": "/player/",
   "scope": "/player/",
   "display": "standalone",
@@ -66,7 +66,7 @@
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "TRG Team HCP — Handicap Calculator"
+      "label": "Parmate Team HCP — Handicap Calculator"
     }
   ],
   "shortcuts": [
