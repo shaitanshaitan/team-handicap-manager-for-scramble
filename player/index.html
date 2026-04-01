@@ -16,11 +16,6 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
 <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png">
-
-<!-- iOS splash screens (portrait iPhone sizes) -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- Android / general -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="msapplication-TileColor" content="#0a1a10">
 <meta name="msapplication-TileImage" content="/icons/icon-144.png">
@@ -116,34 +111,118 @@ body::before {
   padding:0 0 120px;
 }
 
+/* ─── GATE: hide app content until logged in ─── */
+.app-content { display: none; }
+.app-content.unlocked { display: block; }
+
+/* ─── LOCKED HERO ─── */
+.locked-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  padding: 40px 24px;
+  gap: 16px;
+}
+.locked-hero-flag {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 16px rgba(200,168,75,0.3));
+  margin-bottom: 4px;
+}
+.locked-hero h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.locked-hero h1 em { color: var(--gold); font-style: italic; }
+.locked-hero-sub {
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.locked-hero-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 280px;
+}
+.locked-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+  text-align: left;
+  width: 100%;
+  max-width: 280px;
+}
+.locked-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.72rem;
+  color: var(--cream);
+}
+.locked-feature-icon {
+  width: 28px; height: 28px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.btn-locked-signin {
+  width: 100%; max-width: 280px;
+  padding: 16px;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0a1a10;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 32px rgba(200,168,75,0.25);
+  margin-top: 8px;
+}
+.btn-locked-signin:active { transform:scale(0.98); background:var(--gold2); }
+.locked-terms {
+  font-size: 0.58rem;
+  color: var(--muted);
+  opacity: 0.7;
+  line-height: 1.6;
+}
+
 /* ─── HEADER ─── */
 .header {
   padding: 52px 20px 24px;
   text-align: center;
   position: relative;
 }
-
 .header-flag {
   font-size: 2rem;
   margin-bottom: 12px;
   display: block;
   filter: drop-shadow(0 0 12px rgba(200,168,75,0.3));
 }
-
 .header h1 {
   font-family: 'Inter', sans-serif;
-  font-size: 2.2rem;
-  font-weight: 700;
+  font-size: 2.2rem; font-weight: 700;
   color: var(--white);
   line-height: 1;
   letter-spacing: -0.02em;
 }
-
-.header h1 em {
-  color: var(--gold);
-  font-style: italic;
-}
-
+.header h1 em { color: var(--gold); font-style: italic; }
 .header-sub {
   margin-top: 8px;
   font-size: 0.6rem;
@@ -160,7 +239,6 @@ body::before {
   border-radius: var(--radius);
   overflow: hidden;
 }
-
 .section-header {
   padding: 14px 18px 12px;
   border-bottom: 1px solid var(--border);
@@ -168,12 +246,7 @@ body::before {
   align-items: center;
   gap: 10px;
 }
-
-.section-icon {
-  font-size: 0.9rem;
-  opacity: 0.7;
-}
-
+.section-icon { font-size: 0.9rem; opacity: 0.7; }
 .section-title {
   font-size: 0.58rem;
   letter-spacing: 0.2em;
@@ -182,9 +255,29 @@ body::before {
   flex: 1;
 }
 
-.section-body {
-  padding: 18px;
+/* ─── SAVE BUTTON (inline in section header) ─── */
+.btn-save-inline {
+  background: none;
+  border: 1px solid rgba(200,168,75,0.3);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0;
 }
+.btn-save-inline:active { background: var(--gold-dim); transform: scale(0.97); }
+.btn-save-inline.saved {
+  color: var(--green);
+  border-color: rgba(74,158,106,0.3);
+}
+
+.section-body { padding: 18px; }
 
 /* ─── FIELD ─── */
 .field {
@@ -194,7 +287,6 @@ body::before {
   margin-bottom: 14px;
 }
 .field:last-child { margin-bottom: 0; }
-
 .field label {
   font-size: 0.58rem;
   letter-spacing: 0.14em;
@@ -241,11 +333,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   transition: all 0.18s;
   white-space: nowrap;
 }
-.gender-pill input:checked + label {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: var(--gold-dim);
-}
+.gender-pill input:checked + label { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
 .gender-pill label:active { transform:scale(0.97); }
 
 /* ─── TEE PILLS ─── */
@@ -263,9 +351,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   transition: all 0.18s;
   white-space: nowrap;
 }
-.tee-pill label .dot {
-  width: 8px; height: 8px; border-radius: 50%;
-}
+.tee-pill label .dot { width:8px; height:8px; border-radius:50%; }
 .tee-pill input:checked + label { border-color: currentColor; }
 .tee-pill.t1 input:checked + label { color:var(--tee1); background:rgba(74,130,216,0.1); }
 .tee-pill.t2 input:checked + label { color:var(--tee2); background:rgba(200,168,75,0.1); }
@@ -282,7 +368,6 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   position: relative;
 }
 .player-card:last-child { margin-bottom: 0; }
-
 .player-card-num {
   position: absolute;
   top: 10px; right: 14px;
@@ -315,8 +400,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   border-radius: 0;
   padding: 4px 2px;
   font-family: 'Inter', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.3rem; font-weight: 600;
   color: var(--white);
   width: 100%;
   transition: border-color 0.2s;
@@ -340,20 +424,12 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   line-height: 1.5;
 }
 .fmt-pill label strong { display:block; color:var(--cream); font-size:0.75rem; margin-bottom:2px; }
-.fmt-pill input:checked + label {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: var(--gold-dim);
-}
+.fmt-pill input:checked + label { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
 .fmt-pill input:checked + label strong { color:var(--gold2); }
 .fmt-pill label:active { transform:scale(0.98); }
 
 /* ─── DIVIDER ─── */
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 0 16px 16px;
-}
+.divider { height:1px; background:var(--border); margin:0 16px 16px; }
 
 /* ─── CALC BUTTON ─── */
 .calc-wrap {
@@ -368,7 +444,6 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   transform: translateX(-50%);
   width: 100%;
 }
-
 .btn-calc {
   width: 100%;
   padding: 18px;
@@ -376,8 +451,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   border: none;
   border-radius: var(--radius);
   font-family: 'Roboto', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.8rem; font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #0a1a10;
@@ -397,14 +471,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   transition: transform 0.4s cubic-bezier(0.32,0,0,1);
 }
 .results-overlay.open { transform: translateY(0); }
-
-.results-inner {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 0 0 80px;
-}
-
-/* Close button */
+.results-inner { max-width:480px; margin:0 auto; padding:0 0 80px; }
 .results-back {
   position: sticky; top:0;
   background: linear-gradient(to bottom, var(--bg) 80%, transparent);
@@ -425,164 +492,35 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   display: flex; align-items:center; gap:8px;
   transition: all 0.2s;
 }
-.btn-back:hover, .btn-back:active { color:var(--cream); border-color:var(--border2); }
-
-/* Results header */
-.results-hero {
-  padding: 16px 20px 28px;
-  text-align: center;
-}
+.btn-back:hover, .btn-back:active { color:var(--cream); }
+.results-hero { padding:16px 20px 28px; text-align:center; }
 .results-hero-flag { font-size:2rem; margin-bottom:10px; display:block; }
-.results-event {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.8rem; font-weight:700;
-  color: var(--white);
-  margin-bottom: 6px;
-}
-.results-meta {
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-/* Team result card */
-.result-card {
-  margin: 0 16px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  animation: slideUp 0.4s ease both;
-}
+.results-event { font-family:'Inter',sans-serif; font-size:1.8rem; font-weight:700; color:var(--white); margin-bottom:6px; }
+.results-meta { font-size:0.6rem; letter-spacing:0.1em; color:var(--muted); line-height:1.8; }
+.result-card { margin:0 16px 12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; animation:slideUp 0.4s ease both; }
 .result-card:nth-child(2) { animation-delay:0.05s; }
 .result-card:nth-child(3) { animation-delay:0.10s; }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.result-card-top { padding:18px 20px 14px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.result-team-name { font-family:'Inter',sans-serif; font-size:1.5rem; font-weight:700; color:var(--white); line-height:1; flex:1; }
+.result-hcp-block { text-align:right; flex-shrink:0; }
+.result-hcp-num { font-family:'Inter',sans-serif; font-size:3rem; font-weight:700; color:var(--gold); line-height:1; }
+.result-hcp-label { font-size:0.55rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+.result-strokes { display:inline-flex; align-items:center; background:rgba(255,255,255,0.05); border-radius:20px; padding:3px 10px; font-size:0.65rem; color:var(--muted); margin-top:6px; }
+.result-players { padding:0 20px 18px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px; padding-top:12px; }
+.result-player-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.result-player-name { font-size:0.82rem; color:var(--cream); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.result-player-meta { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.result-player-hcp { font-size:0.85rem; color:var(--gold); }
+.tee-dot-sm { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.result-pct { font-size:0.6rem; color:var(--muted); min-width:36px; text-align:right; }
+.result-vs-badge { display:flex; align-items:center; justify-content:center; padding:10px; background:var(--surface2); border-left:1px solid var(--border); border-right:1px solid var(--border); margin:0 16px 12px; border-radius:var(--radius-sm); gap:10px; font-size:0.65rem; color:var(--muted); letter-spacing:0.08em; }
+.result-vs-diff { font-family:'Inter',sans-serif; font-size:1.5rem; font-weight:700; color:var(--cream); }
 
-@keyframes slideUp {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-.result-card-top {
-  padding: 18px 20px 14px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.result-team-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.5rem; font-weight:700;
-  color: var(--white);
-  line-height: 1;
-  flex: 1;
-}
-
-.result-hcp-block {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.result-hcp-num {
-  font-family: 'Inter', sans-serif;
-  font-size: 3rem; font-weight:700;
-  color: var(--gold);
-  line-height: 1;
-}
-
-.result-hcp-label {
-  font-size: 0.55rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.result-strokes {
-  display: inline-flex; align-items:center;
-  background: rgba(255,255,255,0.05);
-  border-radius: 20px;
-  padding: 3px 10px;
-  font-size: 0.65rem;
-  color: var(--muted);
-  margin-top: 6px;
-}
-
-.result-players {
-  padding: 0 20px 18px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 12px;
-}
-
-.result-player-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.result-player-name {
-  font-size: 0.82rem;
-  color: var(--cream);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.result-player-meta {
-  display: flex; align-items:center; gap:6px;
-  flex-shrink: 0;
-}
-
-.result-player-hcp {
-  font-size: 0.85rem;
-  color: var(--gold);
-}
-
-.tee-dot-sm {
-  width: 7px; height:7px; border-radius:50%; flex-shrink:0;
-}
-
-.result-pct {
-  font-size: 0.6rem;
-  color: var(--muted);
-  min-width: 36px;
-  text-align: right;
-}
-
-/* Stroke difference badge on second team */
-.result-vs-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  background: var(--surface2);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  margin: 0 16px 12px;
-  border-radius: var(--radius-sm);
-  gap: 10px;
-  font-size: 0.65rem;
-  color: var(--muted);
-  letter-spacing: 0.08em;
-}
-.result-vs-diff {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.5rem; font-weight:700;
-  color: var(--cream);
-}
-
-/* Error toast */
+/* ─── TOAST ─── */
 .toast {
   position: fixed;
   bottom: 110px; left:50%; transform:translateX(-50%) translateY(20px);
-  background: rgba(200,90,74,0.95);
-  color: #fff;
   padding: 12px 20px;
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
@@ -596,38 +534,133 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   backdrop-filter: blur(8px);
 }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.error { background:rgba(200,90,74,0.95); color:#fff; }
+.toast.success { background:rgba(74,158,106,0.95); color:#fff; }
 
-/* Reset link */
-.reset-row {
-  text-align: center;
-  padding: 6px 0 0;
-}
+/* ─── RESET LINK ─── */
+.reset-row { text-align:center; padding:6px 0 0; }
 .btn-reset {
-  background: none; border:none;
+  background:none; border:none;
+  font-family:'Roboto',sans-serif; font-size:0.62rem;
+  letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--muted); cursor:pointer;
+  text-decoration:underline; text-underline-offset:3px;
+  padding:8px; opacity:0.6; transition:opacity 0.2s;
+}
+.btn-reset:active { opacity:1; }
+
+/* ─── INFO NOTE ─── */
+.info-note {
+  margin:0 16px 16px;
+  padding:12px 14px;
+  background:rgba(74,142,200,0.07);
+  border:1px solid rgba(74,142,200,0.18);
+  border-radius:var(--radius-sm);
+  font-size:0.65rem; color:#7aace0; line-height:1.7;
+}
+
+/* ─── RESTORE BANNER ─── */
+.restore-banner {
+  margin: 0 16px 16px;
+  background: rgba(200,168,75,0.07);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: none;
+}
+.restore-banner.visible { display: block; }
+.restore-banner-title {
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.restore-banner-body {
+  font-size: 0.72rem;
+  color: var(--cream);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.restore-banner-actions { display:flex; gap:8px; }
+.btn-restore {
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0a1a10;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-restore:active { background: var(--gold2); }
+.btn-restore-dismiss {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
   font-family: 'Roboto', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 8px;
-  opacity: 0.6;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
-.btn-reset:active { opacity: 1; }
+.btn-restore-dismiss:active { color: var(--cream); }
 
-/* Info note */
-.info-note {
-  margin: 0 16px 16px;
-  padding: 12px 14px;
-  background: rgba(74,142,200,0.07);
-  border: 1px solid rgba(74,142,200,0.18);
+/* ─── HOLES TOGGLE ─── */
+.holes-toggle {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.holes-toggle-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  line-height: 1;
+}
+.holes-toggle-btn.active {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 500;
+}
+.holes-toggle-btn:active { transform: scale(0.96); }
+
+/* 9-hole info note under course fields */
+.holes-note {
+  display: none;
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: rgba(200,168,75,0.06);
+  border: 1px solid rgba(200,168,75,0.18);
   border-radius: var(--radius-sm);
-  font-size: 0.65rem;
-  color: #7aace0;
-  line-height: 1.7;
+  font-size: 0.62rem;
+  color: var(--gold);
+  line-height: 1.6;
+}
+.holes-note.visible { display: block; }
+
+/* Par field hint text */
+.par-hint {
+  font-size: 0.55rem;
+  color: var(--muted);
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 /* ─── AUTH LOADING OVERLAY ─── */
@@ -645,23 +678,20 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.auth-spinner-text {
-  font-size: 0.58rem; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--muted);
-}
+@keyframes spin { to { transform:rotate(360deg); } }
+.auth-spinner-text { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
 
 /* ─── AUTH MODAL SHEET ─── */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(5, 15, 8, 0.88);
+  background: rgba(5,15,8,0.88);
   backdrop-filter: blur(8px);
   z-index: 200;
   display: flex; align-items: flex-end; justify-content: center;
   animation: fadeIn 0.2s ease both;
 }
 .modal-overlay.hidden { display: none; }
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
 .auth-sheet {
   background: var(--surface);
@@ -671,157 +701,80 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   width: 100%; max-width: 480px;
   padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
   position: relative;
-  animation: sheetUp 0.32s cubic-bezier(0.32, 0, 0, 1) both;
+  animation: sheetUp 0.32s cubic-bezier(0.32,0,0,1) both;
+  max-height: 90vh;
+  overflow-y: auto;
 }
-@keyframes sheetUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
+@keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
 .auth-sheet::before {
-  content: '';
-  position: absolute; top: 10px; left: 50%;
-  transform: translateX(-50%);
-  width: 36px; height: 4px;
-  background: var(--border2); border-radius: 2px;
+  content:'';
+  position:absolute; top:10px; left:50%;
+  transform:translateX(-50%);
+  width:36px; height:4px;
+  background:var(--border2); border-radius:2px;
 }
 .auth-sheet::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--gold), transparent 70%);
-  border-radius: var(--radius) var(--radius) 0 0;
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent 70%);
+  border-radius:var(--radius) var(--radius) 0 0;
 }
-
-.auth-sheet-icon { text-align: center; font-size: 1.8rem; margin-bottom: 10px; }
-.auth-sheet-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.6rem; font-weight: 700;
-  color: var(--white); text-align: center; margin-bottom: 4px;
-}
-.auth-sheet-sub {
-  font-size: 0.58rem; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--muted);
-  text-align: center; margin-bottom: 24px;
-}
-
+.auth-sheet-icon { text-align:center; font-size:1.8rem; margin-bottom:10px; }
+.auth-sheet-title { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:700; color:var(--white); text-align:center; margin-bottom:4px; }
+.auth-sheet-sub { font-size:0.58rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:24px; }
 .btn-google {
-  width: 100%; padding: 14px 16px;
-  background: #fff; border: none; border-radius: var(--radius-sm);
-  font-family: 'Roboto', sans-serif; font-size: 0.72rem;
-  letter-spacing: 0.04em; color: #3c4043;
-  cursor: pointer; transition: all 0.18s;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-bottom: 14px;
+  width:100%; padding:14px 16px;
+  background:#fff; border:none; border-radius:var(--radius-sm);
+  font-family:'Roboto',sans-serif; font-size:0.72rem;
+  letter-spacing:0.04em; color:#3c4043;
+  cursor:pointer; transition:all 0.18s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin-bottom:14px;
 }
-.btn-google:active { background: #f0f0f0; transform: scale(0.98); }
-
-.auth-divider {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-}
-.auth-divider::before, .auth-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--border2);
-}
-.auth-divider span {
-  font-size: 0.58rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--muted);
-}
-
-.auth-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
-
+.btn-google:active { background:#f0f0f0; transform:scale(0.98); }
+.auth-divider { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border2); }
+.auth-divider span { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+.auth-fields { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
 .btn-auth {
-  width: 100%; padding: 15px;
-  background: var(--gold); border: none; border-radius: var(--radius-sm);
-  font-family: 'Roboto', sans-serif; font-size: 0.72rem;
-  font-weight: 500; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #0a1a10;
-  cursor: pointer; transition: all 0.18s;
+  width:100%; padding:15px;
+  background:var(--gold); border:none; border-radius:var(--radius-sm);
+  font-family:'Roboto',sans-serif; font-size:0.72rem; font-weight:500;
+  letter-spacing:0.12em; text-transform:uppercase; color:#0a1a10;
+  cursor:pointer; transition:all 0.18s;
 }
-.btn-auth:active { transform: scale(0.98); background: var(--gold2); }
-.btn-auth:disabled { opacity: 0.5; pointer-events: none; }
-
-.auth-switch {
-  text-align: center; margin-top: 14px;
-  font-size: 0.62rem; color: var(--muted);
-}
-.auth-switch button {
-  background: none; border: none;
-  font-family: 'Roboto', sans-serif; font-size: 0.62rem;
-  color: var(--gold); cursor: pointer;
-  text-decoration: underline; text-underline-offset: 3px; padding: 0;
-}
-
-.auth-error {
-  background: rgba(200,90,74,0.12);
-  border: 1px solid rgba(200,90,74,0.28);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 0.65rem; color: #e08878;
-  display: none; margin-bottom: 12px; line-height: 1.5;
-}
-.auth-error.visible { display: block; }
+.btn-auth:active { transform:scale(0.98); background:var(--gold2); }
+.btn-auth:disabled { opacity:0.5; pointer-events:none; }
+.auth-switch { text-align:center; margin-top:14px; font-size:0.62rem; color:var(--muted); }
+.auth-switch button { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.62rem; color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; }
+.auth-error { background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.28); border-radius:var(--radius-sm); padding:10px 12px; font-size:0.65rem; color:#e08878; display:none; margin-bottom:12px; line-height:1.5; }
+.auth-error.visible { display:block; }
 
 /* ─── HEADER AUTH PILL ─── */
-.header-auth {
-  margin-top: 14px;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  min-height: 36px;
-}
-.btn-signin {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 8px 20px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.62rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--gold);
-  cursor: pointer; transition: all 0.2s;
-}
-.btn-signin:active { border-color: var(--gold); background: var(--gold-dim); }
-.user-pill {
-  display: none;
-  align-items: center; gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 6px 14px 6px 8px;
-}
-.user-pill.visible { display: flex; }
-.user-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px rgba(74,158,106,0.6);
-  flex-shrink: 0;
-}
-.user-name {
-  font-size: 0.65rem; color: var(--cream);
-  max-width: 160px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
-.btn-signout {
-  background: none; border: none;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.58rem; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--muted);
-  cursor: pointer; text-decoration: underline;
-  text-underline-offset: 3px; padding: 0; transition: color 0.2s;
-}
-.btn-signout:active { color: var(--red); }
+.header-auth { margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; min-height:36px; }
+.user-pill { display:none; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:6px 14px 6px 8px; }
+.user-pill.visible { display:flex; }
+.user-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(74,158,106,0.6); flex-shrink:0; }
+.user-name { font-size:0.65rem; color:var(--cream); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.btn-signout { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color 0.2s; }
+.btn-signout:active { color:var(--red); }
 </style>
 </head>
 <body>
+
 <!-- AUTH LOADING OVERLAY -->
 <div id="authLoadingOverlay">
   <div class="auth-spinner"></div>
   <div class="auth-spinner-text">Connecting…</div>
 </div>
 
-<!-- AUTH MODAL -->
+<!-- AUTH MODAL — cannot be dismissed without signing in -->
 <div class="modal-overlay hidden" id="authModal">
   <div class="auth-sheet">
     <div class="auth-sheet-icon">⛳</div>
     <div class="auth-sheet-title" id="authModalTitle">Welcome back</div>
     <div class="auth-sheet-sub" id="authModalSub">Parmate · Team HCP</div>
 
-    <!-- Google -->
     <button class="btn-google" onclick="doGoogleSignIn()">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.075 17.64 11.768 17.64 9.2z" fill="#4285F4"/>
@@ -875,332 +828,322 @@ input::placeholder { color: rgba(255,255,255,0.18); }
       <button class="btn-auth" id="btnRegister" onclick="doRegister()">Create Account →</button>
       <div class="auth-switch">Already have an account? <button onclick="switchToSignIn()">Sign in</button></div>
     </div>
-
-    <div style="text-align:center;margin-top:18px;">
-      <button onclick="closeAuthModal()" style="background:none;border:none;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:6px;">Cancel</button>
-    </div>
+    <!-- No cancel button — login is required -->
   </div>
 </div>
 
 <div class="app">
 
-  <!-- HEADER -->
-  <header class="header">
-    <span class="header-flag">⛳</span>
+  <!-- ─── LOCKED HERO (shown when not logged in) ─── -->
+  <div id="lockedHero" class="locked-hero">
+    <span class="locked-hero-flag">⛳</span>
     <h1><em>Parmate</em></h1>
-    <div class="header-sub">Scramble Handicap Calculator · WHS</div>
-    <div class="header-auth">
-      <button class="btn-signin" id="btnSignInHeader" onclick="openAuthModal()">Sign In</button>
-      <div class="user-pill" id="userPill">
-        <span class="user-dot"></span>
-        <span class="user-name" id="userPillName">Player</span>
-        <button class="btn-signout" onclick="doSignOut()">sign out</button>
+    <div class="locked-hero-sub">Scramble Handicap Calculator · WHS</div>
+    <div class="locked-hero-desc">Sign in to calculate your team handicaps and save your favourite courses.</div>
+    <div class="locked-features">
+      <div class="locked-feature">
+        <div class="locked-feature-icon">🏌️</div>
+        WHS scramble handicap calculator
+      </div>
+      <div class="locked-feature">
+        <div class="locked-feature-icon">💾</div>
+        Save your team & partner details
+      </div>
+      <div class="locked-feature">
+        <div class="locked-feature-icon">📍</div>
+        Save courses with rating & slope
       </div>
     </div>
-  </header>
+    <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
+    <div class="locked-terms">Free to use · No payment required</div>
+  </div>
 
-  <!-- COURSE DETAILS -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">📍</span>
-      <span class="section-title">Course Details</span>
-    </div>
-    <div class="section-body">
-      <div class="grid-3">
-        <div class="field">
-          <label>Rating</label>
-          <input type="number" id="course_rating" placeholder="70.5" step="0.1" min="55" max="85" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label>Slope</label>
-          <input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Par</label>
-          <input type="number" id="course_par" placeholder="72" step="1" min="60" max="80" value="72" inputmode="numeric">
+  <!-- ─── APP CONTENT (hidden until logged in) ─── -->
+  <div class="app-content" id="appContent">
+
+    <!-- HEADER -->
+    <header class="header">
+      <span class="header-flag">⛳</span>
+      <h1><em>Parmate</em></h1>
+      <div class="header-sub">Scramble Handicap Calculator · WHS</div>
+      <div class="header-auth">
+        <div class="user-pill" id="userPill">
+          <span class="user-dot"></span>
+          <span class="user-name" id="userPillName">Player</span>
+          <button class="btn-signout" onclick="doSignOut()">sign out</button>
         </div>
       </div>
+    </header>
 
-      <!-- Optional: Forward Tee -->
-      <div style="margin-top:4px;">
-        <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
-          Forward Tee <span style="opacity:0.5;font-size:0.55rem;">(optional)</span>
+    <!-- RESTORE BANNERS -->
+    <div class="restore-banner" id="restoreCourseBanner">
+      <div class="restore-banner-title">📍 Saved Course Found</div>
+      <div class="restore-banner-body" id="restoreCourseBannerBody">Load your last saved course?</div>
+      <div class="restore-banner-actions">
+        <button class="btn-restore" onclick="restoreCourse()">Load Course</button>
+        <button class="btn-restore-dismiss" onclick="dismissRestoreCourse()">Dismiss</button>
+      </div>
+    </div>
+
+    <div class="restore-banner" id="restoreTeamBanner">
+      <div class="restore-banner-title">🏌️ Saved Team Found</div>
+      <div class="restore-banner-body" id="restoreTeamBannerBody">Load your saved team details?</div>
+      <div class="restore-banner-actions">
+        <button class="btn-restore" onclick="restoreTeam()">Load Team</button>
+        <button class="btn-restore-dismiss" onclick="dismissRestoreTeam()">Dismiss</button>
+      </div>
+    </div>
+
+    <!-- COURSE DETAILS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">📍</span>
+        <span class="section-title">Course Details</span>
+        <!-- 9 / 18 holes toggle -->
+        <div class="holes-toggle">
+          <button class="holes-toggle-btn" id="btn9holes" onclick="setHoles(9)">9</button>
+          <button class="holes-toggle-btn active" id="btn18holes" onclick="setHoles(18)">18</button>
         </div>
+        <button class="btn-save-inline" id="saveCourseBtn" onclick="saveCourse()">💾 Save</button>
+      </div>
+      <div class="section-body">
+        <!-- Course name -->
+        <div class="field">
+          <label>Course Name</label>
+          <input type="text" id="course_name" placeholder="e.g. Royal Amsterdam Golf Club">
+        </div>
+
+        <!-- 9-hole notice -->
+        <div class="holes-note" id="holesNote">
+          ⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard. The handicap calculation scales automatically.
+        </div>
+
         <div class="grid-3">
           <div class="field">
             <label>Rating</label>
-            <input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="55" max="85" inputmode="decimal">
+            <input type="number" id="course_rating" placeholder="70.5" step="0.1" min="30" max="85" inputmode="decimal">
           </div>
           <div class="field">
             <label>Slope</label>
-            <input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric">
+            <input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric">
           </div>
           <div class="field">
             <label>Par</label>
-            <input type="number" id="tee3_par" placeholder="72" step="1" min="60" max="80" value="72" inputmode="numeric">
+            <input type="number" id="course_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric">
+            <div class="par-hint" id="parHint"></div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- FORMAT -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">⚙️</span>
-      <span class="section-title">Scramble Format</span>
-    </div>
-    <div class="section-body">
-      <div class="fmt-grid">
-        <div class="fmt-pill">
-          <input type="radio" name="fmt" id="fA" value="35_15" checked>
-          <label for="fA">
-            <strong>35% / 15%</strong>
-            2-player scramble
-          </label>
-        </div>
-        <div class="fmt-pill">
-          <input type="radio" name="fmt" id="fB" value="25_20">
-          <label for="fB">
-            <strong>25% / 20%</strong>
-            Higher allowance
-          </label>
-        </div>
-        <div class="fmt-pill">
-          <input type="radio" name="fmt" id="fC" value="20_15">
-          <label for="fC">
-            <strong>20% / 15%</strong>
-            Lower allowance
-          </label>
-        </div>
-        <div class="fmt-pill">
-          <input type="radio" name="fmt" id="fD" value="50_50">
-          <label for="fD">
-            <strong>50% / 50%</strong>
-            Equal / casual
-          </label>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TEAM 1 -->
-  <div class="section" id="team1-section">
-    <div class="section-header">
-      <span class="section-icon">🏌️</span>
-      <span class="section-title">Team 1</span>
-    </div>
-    <div class="section-body">
-      <div class="team-label">
-        <div class="team-label-num">1</div>
-        <input class="team-name-input" type="text" id="team1_name" placeholder="Team name…" value="Team Eagles">
-      </div>
-      <!-- Player 1 -->
-      <div class="player-card">
-        <div class="player-card-num">1</div>
-        <div class="field">
-          <label>Player 1 Name</label>
-          <input type="text" id="t1p1_name" placeholder="Optional">
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Handicap Index</label>
-            <input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+        <!-- Forward Tee -->
+        <div style="margin-top:4px;">
+          <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
+            Forward Tee <span style="opacity:0.5;font-size:0.55rem;">(optional)</span>
           </div>
-          <div class="field">
-            <label>Gender</label>
-            <div class="gender-pills">
-              <div class="gender-pill">
-                <input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked>
-                <label for="t1p1_gM">♂ M</label>
-              </div>
-              <div class="gender-pill">
-                <input type="radio" name="t1p1_g" id="t1p1_gF" value="F">
-                <label for="t1p1_gF">♀ F</label>
-              </div>
+          <div class="grid-3">
+            <div class="field">
+              <label>Rating</label>
+              <input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="30" max="85" inputmode="decimal">
             </div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Tee</label>
-          <div class="tee-pills">
-            <div class="tee-pill t1">
-              <input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ">
-              <label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
+            <div class="field">
+              <label>Slope</label>
+              <input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric">
             </div>
-            <div class="tee-pill t2">
-              <input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked>
-              <label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
-            </div>
-            <div class="tee-pill t3">
-              <input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd">
-              <label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Player 2 -->
-      <div class="player-card">
-        <div class="player-card-num">2</div>
-        <div class="field">
-          <label>Player 2 Name</label>
-          <input type="text" id="t1p2_name" placeholder="Optional">
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Handicap Index</label>
-            <input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
-          </div>
-          <div class="field">
-            <label>Gender</label>
-            <div class="gender-pills">
-              <div class="gender-pill">
-                <input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked>
-                <label for="t1p2_gM">♂ M</label>
-              </div>
-              <div class="gender-pill">
-                <input type="radio" name="t1p2_g" id="t1p2_gF" value="F">
-                <label for="t1p2_gF">♀ F</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Tee</label>
-          <div class="tee-pills">
-            <div class="tee-pill t1">
-              <input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ">
-              <label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
-            </div>
-            <div class="tee-pill t2">
-              <input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked>
-              <label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
-            </div>
-            <div class="tee-pill t3">
-              <input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd">
-              <label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
+            <div class="field">
+              <label>Par</label>
+              <input type="number" id="tee3_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric">
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- TEAM 2 -->
-  <div class="section" id="team2-section">
-    <div class="section-header">
-      <span class="section-icon">🏌️</span>
-      <span class="section-title">Team 2</span>
-    </div>
-    <div class="section-body">
-      <div class="team-label">
-        <div class="team-label-num">2</div>
-        <input class="team-name-input" type="text" id="team2_name" placeholder="Team name…" value="Team Birdies">
+    <!-- FORMAT -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">⚙️</span>
+        <span class="section-title">Scramble Format</span>
       </div>
-      <!-- Player 1 -->
-      <div class="player-card">
-        <div class="player-card-num">1</div>
-        <div class="field">
-          <label>Player 1 Name</label>
-          <input type="text" id="t2p1_name" placeholder="Optional">
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Handicap Index</label>
-            <input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+      <div class="section-body">
+        <div class="fmt-grid">
+          <div class="fmt-pill">
+            <input type="radio" name="fmt" id="fA" value="35_15" checked>
+            <label for="fA"><strong>35% / 15%</strong>2-player scramble</label>
           </div>
-          <div class="field">
-            <label>Gender</label>
-            <div class="gender-pills">
-              <div class="gender-pill">
-                <input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked>
-                <label for="t2p1_gM">♂ M</label>
-              </div>
-              <div class="gender-pill">
-                <input type="radio" name="t2p1_g" id="t2p1_gF" value="F">
-                <label for="t2p1_gF">♀ F</label>
-              </div>
-            </div>
+          <div class="fmt-pill">
+            <input type="radio" name="fmt" id="fB" value="25_20">
+            <label for="fB"><strong>25% / 20%</strong>Higher allowance</label>
           </div>
-        </div>
-        <div class="field">
-          <label>Tee</label>
-          <div class="tee-pills">
-            <div class="tee-pill t1">
-              <input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ">
-              <label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
-            </div>
-            <div class="tee-pill t2">
-              <input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked>
-              <label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
-            </div>
-            <div class="tee-pill t3">
-              <input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd">
-              <label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
-            </div>
+          <div class="fmt-pill">
+            <input type="radio" name="fmt" id="fC" value="20_15">
+            <label for="fC"><strong>20% / 15%</strong>Lower allowance</label>
           </div>
-        </div>
-      </div>
-      <!-- Player 2 -->
-      <div class="player-card">
-        <div class="player-card-num">2</div>
-        <div class="field">
-          <label>Player 2 Name</label>
-          <input type="text" id="t2p2_name" placeholder="Optional">
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Handicap Index</label>
-            <input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
-          </div>
-          <div class="field">
-            <label>Gender</label>
-            <div class="gender-pills">
-              <div class="gender-pill">
-                <input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked>
-                <label for="t2p2_gM">♂ M</label>
-              </div>
-              <div class="gender-pill">
-                <input type="radio" name="t2p2_g" id="t2p2_gF" value="F">
-                <label for="t2p2_gF">♀ F</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Tee</label>
-          <div class="tee-pills">
-            <div class="tee-pill t1">
-              <input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ">
-              <label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship/White</label>
-            </div>
-            <div class="tee-pill t2">
-              <input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked>
-              <label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard/Yellow</label>
-            </div>
-            <div class="tee-pill t3">
-              <input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd">
-              <label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward/Red</label>
-            </div>
+          <div class="fmt-pill">
+            <input type="radio" name="fmt" id="fD" value="50_50">
+            <label for="fD"><strong>50% / 50%</strong>Equal / casual</label>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="info-note">
-    ℹ️ Course Handicap is calculated per WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH is multiplied by their format %, then summed and rounded to the nearest whole number.
-  </div>
+    <!-- TEAM 1 -->
+    <div class="section" id="team1-section">
+      <div class="section-header">
+        <span class="section-icon">🏌️</span>
+        <span class="section-title">My Team</span>
+        <button class="btn-save-inline" id="saveTeamBtn" onclick="saveTeam()">💾 Save</button>
+      </div>
+      <div class="section-body">
+        <div class="team-label">
+          <div class="team-label-num">1</div>
+          <input class="team-name-input" type="text" id="team1_name" placeholder="Team name…" value="Team Eagles">
+        </div>
+        <!-- Player 1 -->
+        <div class="player-card">
+          <div class="player-card-num">1</div>
+          <div class="field">
+            <label>Your Name</label>
+            <input type="text" id="t1p1_name" placeholder="Optional">
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Handicap Index</label>
+              <input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label>Gender</label>
+              <div class="gender-pills">
+                <div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div>
+                <div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tee</label>
+            <div class="tee-pills">
+              <div class="tee-pill t1"><input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ"><label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
+              <div class="tee-pill t2"><input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked><label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
+              <div class="tee-pill t3"><input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd"><label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+            </div>
+          </div>
+        </div>
+        <!-- Player 2 -->
+        <div class="player-card">
+          <div class="player-card-num">2</div>
+          <div class="field">
+            <label>Partner Name</label>
+            <input type="text" id="t1p2_name" placeholder="Optional">
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Handicap Index</label>
+              <input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label>Gender</label>
+              <div class="gender-pills">
+                <div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div>
+                <div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tee</label>
+            <div class="tee-pills">
+              <div class="tee-pill t1"><input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ"><label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
+              <div class="tee-pill t2"><input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked><label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
+              <div class="tee-pill t3"><input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd"><label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="reset-row">
-    <button class="btn-reset" onclick="resetAll()">↺ Reset all fields</button>
-  </div>
+    <!-- TEAM 2 -->
+    <div class="section" id="team2-section">
+      <div class="section-header">
+        <span class="section-icon">🏌️</span>
+        <span class="section-title">Opponent Team</span>
+      </div>
+      <div class="section-body">
+        <div class="team-label">
+          <div class="team-label-num">2</div>
+          <input class="team-name-input" type="text" id="team2_name" placeholder="Team name…" value="Team Birdies">
+        </div>
+        <!-- Player 1 -->
+        <div class="player-card">
+          <div class="player-card-num">1</div>
+          <div class="field">
+            <label>Player 1 Name</label>
+            <input type="text" id="t2p1_name" placeholder="Optional">
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Handicap Index</label>
+              <input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label>Gender</label>
+              <div class="gender-pills">
+                <div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div>
+                <div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tee</label>
+            <div class="tee-pills">
+              <div class="tee-pill t1"><input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ"><label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
+              <div class="tee-pill t2"><input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked><label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
+              <div class="tee-pill t3"><input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd"><label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+            </div>
+          </div>
+        </div>
+        <!-- Player 2 -->
+        <div class="player-card">
+          <div class="player-card-num">2</div>
+          <div class="field">
+            <label>Player 2 Name</label>
+            <input type="text" id="t2p2_name" placeholder="Optional">
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Handicap Index</label>
+              <input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label>Gender</label>
+              <div class="gender-pills">
+                <div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div>
+                <div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tee</label>
+            <div class="tee-pills">
+              <div class="tee-pill t1"><input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ"><label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
+              <div class="tee-pill t2"><input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked><label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
+              <div class="tee-pill t3"><input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd"><label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <!-- STICKY CALCULATE BUTTON -->
-  <div class="calc-wrap">
-    <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
-  </div>
+    <div class="info-note">
+      ℹ️ Course Handicap is calculated per WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH is multiplied by their format %, then summed and rounded to the nearest whole number.
+    </div>
 
+    <div class="reset-row">
+      <button class="btn-reset" onclick="resetAll()">↺ Reset all fields</button>
+    </div>
+
+    <!-- STICKY CALCULATE BUTTON -->
+    <div class="calc-wrap">
+      <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
+    </div>
+
+  </div><!-- /appContent -->
 </div><!-- /app -->
 
 <!-- RESULTS OVERLAY -->
@@ -1218,7 +1161,7 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   </div>
 </div>
 
-<!-- ERROR TOAST -->
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1230,67 +1173,90 @@ const FORMATS = {
   '50_50': [0.50, 0.50],
 };
 
+// ─── SAVED DATA (loaded from Firestore on sign-in) ───
+let _savedCourse = null;
+let _savedTeam   = null;
+
+// ─── HOLES STATE ───
+let _holes = 18; // 9 or 18
+
+function setHoles(n) {
+  _holes = n;
+  // Toggle button styles
+  document.getElementById('btn9holes').classList.toggle('active',  n === 9);
+  document.getElementById('btn18holes').classList.toggle('active', n === 18);
+  // Show/hide 9-hole note
+  document.getElementById('holesNote').classList.toggle('visible', n === 9);
+  // Update par placeholder and hint
+  const parEl   = document.getElementById('course_par');
+  const hintEl  = document.getElementById('parHint');
+  const tee3Par = document.getElementById('tee3_par');
+  if (n === 9) {
+    parEl.placeholder  = '36';
+    tee3Par.placeholder = '36';
+    hintEl.textContent  = 'Typical 9-hole par: 35 or 36';
+  } else {
+    parEl.placeholder  = '72';
+    tee3Par.placeholder = '72';
+    hintEl.textContent  = '';
+  }
+}
+
 // ─── HELPERS ───
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3200);
+  t.className = 'toast show ' + (type || 'error');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-function val(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function val(id)    { return document.getElementById(id)?.value?.trim() || ''; }
 function numVal(id) { return parseFloat(document.getElementById(id)?.value); }
-function radio(name) { return document.querySelector(`input[name="${name}"]:checked`)?.value; }
+function radio(name){ return document.querySelector(`input[name="${name}"]:checked`)?.value; }
+function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ''; }
+function setRadio(name, v) { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; }
 
 // ─── COURSE HANDICAP (WHS) ───
 function getCH(index, slope, rating, par) {
   return index * (slope / 113) + (rating - par);
 }
 
-// Resolve tee values: 'main', 'champ', 'fwd'
 function getTee(teeKey) {
   if (teeKey === 'fwd') {
     const r = numVal('tee3_rating');
     const s = numVal('tee3_slope');
     const p = numVal('tee3_par') || 72;
-    // If forward tee not filled in, fall back to main
     if (!isNaN(r) && !isNaN(s)) return { rating:r, slope:s, par:p, key:'fwd' };
   }
-  // 'main' or 'champ' both use the main tee for this simplified app
   const r = numVal('course_rating');
   const s = numVal('course_slope');
   const p = numVal('course_par') || 72;
   return { rating:r, slope:s, par:p, key: teeKey === 'champ' ? 'champ' : 'main' };
 }
 
-// ─── BUILD PLAYER ───
 function getPlayer(teamIdx, playerIdx) {
   const prefix = `t${teamIdx}p${playerIdx}_`;
-  const hcp = parseFloat(document.getElementById(prefix + 'hcp')?.value);
-  const name = val(prefix + 'name') || `Player ${playerIdx}`;
+  const hcp    = parseFloat(document.getElementById(prefix + 'hcp')?.value);
+  const name   = val(prefix + 'name') || `Player ${playerIdx}`;
   const gender = radio(prefix + 'g') || 'M';
   const teeKey = radio(prefix + 'tee') || 'main';
   return { name, hcp, gender, teeKey };
 }
 
-// ─── CALCULATE TEAM ───
 function calcTeam(players, pcts) {
   const active = players.filter(p => !isNaN(p.hcp) && p.hcp >= 0 && p.hcp <= 54);
   if (active.length === 0) return null;
-
   active.forEach(p => {
     const tee = getTee(p.teeKey);
     p.ch = getCH(p.hcp, tee.slope, tee.rating, tee.par);
     p.teeUsed = tee.key;
   });
-
-  // Sort lowest CH first (best player gets highest %)
   active.sort((a, b) => a.ch - b.ch);
-
   let total = 0;
   active.forEach((p, i) => {
     const pct = pcts[Math.min(i, pcts.length - 1)] || 0;
@@ -1298,66 +1264,42 @@ function calcTeam(players, pcts) {
     p.contrib = p.ch * pct;
     total += p.contrib;
   });
-
   return { players: active, hcp: Math.round(total) };
 }
 
-// ─── MAIN CALCULATE ───
 function calculate() {
   const rating = numVal('course_rating');
   const slope  = numVal('course_slope');
   if (isNaN(rating) || isNaN(slope)) {
-    showToast('Please fill in the Course Rating and Slope first.');
+    showToast('Please fill in the Course Rating and Slope first.', 'error');
     return;
   }
-
   const fmtKey = radio('fmt') || '35_15';
-  const pcts = FORMATS[fmtKey];
-
-  const teams = [
-    {
-      name: val('team1_name') || 'Team 1',
-      players: [getPlayer(1,1), getPlayer(1,2)]
-    },
-    {
-      name: val('team2_name') || 'Team 2',
-      players: [getPlayer(2,1), getPlayer(2,2)]
-    }
+  const pcts   = FORMATS[fmtKey];
+  const teams  = [
+    { name: val('team1_name') || 'My Team',       players: [getPlayer(1,1), getPlayer(1,2)] },
+    { name: val('team2_name') || 'Opponent Team', players: [getPlayer(2,1), getPlayer(2,2)] }
   ];
-
-  // Check at least one player per team has a handicap
   const results = [];
   let hasAnyPlayer = false;
-
   for (const team of teams) {
     const res = calcTeam(team.players, pcts);
-    if (res) {
-      hasAnyPlayer = true;
-      results.push({ name: team.name, ...res });
-    } else {
-      results.push({ name: team.name, hcp: null, players: [] });
-    }
+    if (res) { hasAnyPlayer = true; results.push({ name: team.name, ...res }); }
+    else      { results.push({ name: team.name, hcp: null, players: [] }); }
   }
-
-  if (!hasAnyPlayer) {
-    showToast('Enter at least one player\'s handicap to calculate.');
-    return;
-  }
-
+  if (!hasAnyPlayer) { showToast("Enter at least one player's handicap to calculate.", 'error'); return; }
   renderResults(results, rating, slope, numVal('course_par') || 72, pcts);
   document.getElementById('resultsOverlay').classList.add('open');
   document.getElementById('resultsOverlay').scrollTop = 0;
 }
 
-// ─── RENDER RESULTS ───
 function renderResults(results, rating, slope, par, pcts) {
-  const fmtLabel = pcts.map(p => Math.round(p*100)+'%').join(' / ');
-
-  document.getElementById('res_event').textContent = 'Scramble Results';
+  const fmtLabel  = pcts.map(p => Math.round(p*100)+'%').join(' / ');
+  const courseName = val('course_name');
+  document.getElementById('res_event').textContent = courseName || 'Scramble Results';
   document.getElementById('res_meta').innerHTML =
-    `Course Rating ${rating} · Slope ${slope} · Par ${par}<br>Format: ${fmtLabel} scramble allowance`;
+    `${_holes} holes · Course Rating ${rating} · Slope ${slope} · Par ${par}<br>Format: ${fmtLabel} scramble allowance`;
 
-  // Sort by hcp ascending (nulls last)
   const sorted = [...results].sort((a,b) => {
     if (a.hcp === null) return 1;
     if (b.hcp === null) return -1;
@@ -1366,35 +1308,18 @@ function renderResults(results, rating, slope, par, pcts) {
 
   const teeColors = { main:'var(--tee2)', champ:'var(--tee1)', fwd:'var(--tee3)' };
   const teeNames  = { main:'Std', champ:'Champ', fwd:'Fwd' };
-
   let html = '';
 
   sorted.forEach((team, idx) => {
     if (team.hcp === null) {
-      html += `
-        <div class="result-card">
-          <div class="result-card-top">
-            <div class="result-team-name">${esc(team.name)}</div>
-            <div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">No players entered</div>
-          </div>
-        </div>`;
+      html += `<div class="result-card"><div class="result-card-top"><div class="result-team-name">${esc(team.name)}</div><div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">No players entered</div></div></div>`;
       return;
     }
-
     const playerRows = team.players.map(p => {
       const tColor = teeColors[p.teeUsed] || teeColors.main;
       const tName  = teeNames[p.teeUsed]  || 'Std';
-      return `
-        <div class="result-player-row">
-          <div class="result-player-name">${esc(p.name)}</div>
-          <div class="result-player-meta">
-            <span class="result-player-hcp">${p.hcp.toFixed(1)}</span>
-            <span class="tee-dot-sm" style="background:${tColor}"></span>
-            <span class="result-pct">${Math.round(p.pct*100)}%</span>
-          </div>
-        </div>`;
+      return `<div class="result-player-row"><div class="result-player-name">${esc(p.name)}</div><div class="result-player-meta"><span class="result-player-hcp">${p.hcp.toFixed(1)}</span><span class="tee-dot-sm" style="background:${tColor}"></span><span class="result-pct">${Math.round(p.pct*100)}%</span></div></div>`;
     }).join('');
-
     html += `
       <div class="result-card">
         <div class="result-card-top">
@@ -1409,19 +1334,11 @@ function renderResults(results, rating, slope, par, pcts) {
         </div>
         <div class="result-players">${playerRows}</div>
       </div>`;
-
-    // Stroke difference between teams
     if (idx === 0 && sorted.length === 2 && sorted[1].hcp !== null) {
       const diff = Math.abs(sorted[1].hcp - sorted[0].hcp);
-      html += `
-        <div class="result-vs-badge">
-          <span>${esc(sorted[0].name)}</span>
-          <span class="result-vs-diff">${diff === 0 ? 'Even' : diff + ' stroke' + (diff !== 1 ? 's' : '')}</span>
-          <span>${esc(sorted[1].name)}</span>
-        </div>`;
+      html += `<div class="result-vs-badge"><span>${esc(sorted[0].name)}</span><span class="result-vs-diff">${diff === 0 ? 'Even' : diff + ' stroke' + (diff !== 1 ? 's' : '')}</span><span>${esc(sorted[1].name)}</span></div>`;
     }
   });
-
   document.getElementById('resultsContent').innerHTML = html;
 }
 
@@ -1431,34 +1348,152 @@ function closeResults() {
 
 function resetAll() {
   if (!confirm('Reset all fields?')) return;
-  ['course_rating','course_slope','tee3_rating','tee3_slope',
+  ['course_name','course_rating','course_slope','tee3_rating','tee3_slope',
    't1p1_name','t1p1_hcp','t1p2_name','t1p2_hcp',
    't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   document.getElementById('course_par').value = '72';
-  document.getElementById('tee3_par').value = '72';
+  document.getElementById('tee3_par').value   = '72';
   document.getElementById('team1_name').value = 'Team Eagles';
   document.getElementById('team2_name').value = 'Team Birdies';
-  // Reset radios to defaults
-  ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(name => {
-    const el = document.querySelector(`input[name="${name}"][value="M"]`);
-    if (el) el.checked = true;
-  });
-  ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(name => {
-    const el = document.querySelector(`input[name="${name}"][value="main"]`);
-    if (el) el.checked = true;
-  });
+  ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(n => setRadio(n, 'M'));
+  ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(n => setRadio(n, 'main'));
   document.getElementById('fA').checked = true;
+  setHoles(18); // reset to 18 holes
 }
 
-// Close results on back button / swipe
-window.addEventListener('popstate', () => {
-  if (document.getElementById('resultsOverlay').classList.contains('open')) {
-    closeResults();
+// ─── SAVE COURSE ───
+async function saveCourse() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  const data = {
+    name:        val('course_name'),
+    rating:      numVal('course_rating'),
+    slope:       numVal('course_slope'),
+    par:         numVal('course_par') || (_holes === 9 ? 36 : 72),
+    holes:       _holes,
+    tee3_rating: numVal('tee3_rating'),
+    tee3_slope:  numVal('tee3_slope'),
+    tee3_par:    numVal('tee3_par') || (_holes === 9 ? 36 : 72),
+    savedAt:     new Date().toISOString(),
+  };
+  if (isNaN(data.rating) || isNaN(data.slope)) {
+    showToast('Please fill in Rating and Slope before saving.', 'error');
+    return;
   }
-});
+  const btn = document.getElementById('saveCourseBtn');
+  btn.textContent = '⏳ Saving…';
+  try {
+    await window._fbDb.collection('users').doc(uid).collection('saved').doc('course').set(data);
+    _savedCourse = data;
+    btn.textContent = '✓ Saved';
+    btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2500);
+    showToast('Course saved!', 'success');
+  } catch(e) {
+    btn.textContent = '💾 Save';
+    showToast('Could not save: ' + e.message, 'error');
+  }
+}
+
+// ─── SAVE TEAM ───
+async function saveTeam() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  const data = {
+    team1Name: val('team1_name'),
+    p1Name:    val('t1p1_name'),
+    p1Hcp:     numVal('t1p1_hcp'),
+    p1Gender:  radio('t1p1_g') || 'M',
+    p1Tee:     radio('t1p1_tee') || 'main',
+    p2Name:    val('t1p2_name'),
+    p2Hcp:     numVal('t1p2_hcp'),
+    p2Gender:  radio('t1p2_g') || 'M',
+    p2Tee:     radio('t1p2_tee') || 'main',
+    savedAt:   new Date().toISOString(),
+  };
+  const btn = document.getElementById('saveTeamBtn');
+  btn.textContent = '⏳ Saving…';
+  try {
+    await window._fbDb.collection('users').doc(uid).collection('saved').doc('team').set(data);
+    _savedTeam = data;
+    btn.textContent = '✓ Saved';
+    btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2500);
+    showToast('Team saved!', 'success');
+  } catch(e) {
+    btn.textContent = '💾 Save';
+    showToast('Could not save: ' + e.message, 'error');
+  }
+}
+
+// ─── RESTORE COURSE ───
+async function loadSavedData(uid) {
+  try {
+    const snap = await window._fbDb.collection('users').doc(uid).collection('saved').doc('course').get();
+    if (snap.exists) {
+      _savedCourse = snap.data();
+      const name  = _savedCourse.name || 'your last course';
+      const holes = _savedCourse.holes === 9 ? '9-hole' : '18-hole';
+      document.getElementById('restoreCourseBannerBody').textContent =
+        `Load "${name}" (${holes} · Rating ${_savedCourse.rating}, Slope ${_savedCourse.slope})?`;
+      document.getElementById('restoreCourseBanner').classList.add('visible');
+    }
+  } catch(e) { console.warn('Could not load saved course:', e); }
+
+  try {
+    const snap = await window._fbDb.collection('users').doc(uid).collection('saved').doc('team').get();
+    if (snap.exists) {
+      _savedTeam = snap.data();
+      const tname = _savedTeam.team1Name || 'your saved team';
+      const p1    = _savedTeam.p1Name || 'Player 1';
+      const p2    = _savedTeam.p2Name || 'Player 2';
+      document.getElementById('restoreTeamBannerBody').textContent =
+        `Load "${tname}" (${p1} & ${p2})?`;
+      document.getElementById('restoreTeamBanner').classList.add('visible');
+    }
+  } catch(e) { console.warn('Could not load saved team:', e); }
+}
+
+function restoreCourse() {
+  if (!_savedCourse) return;
+  setVal('course_name',   _savedCourse.name);
+  setVal('course_rating', _savedCourse.rating);
+  setVal('course_slope',  _savedCourse.slope);
+  setVal('course_par',    _savedCourse.par || (_savedCourse.holes === 9 ? 36 : 72));
+  if (!isNaN(_savedCourse.tee3_rating)) setVal('tee3_rating', _savedCourse.tee3_rating);
+  if (!isNaN(_savedCourse.tee3_slope))  setVal('tee3_slope',  _savedCourse.tee3_slope);
+  if (!isNaN(_savedCourse.tee3_par))    setVal('tee3_par',    _savedCourse.tee3_par);
+  // Restore holes toggle
+  setHoles(_savedCourse.holes === 9 ? 9 : 18);
+  dismissRestoreCourse();
+  showToast('Course loaded!', 'success');
+}
+
+function dismissRestoreCourse() {
+  document.getElementById('restoreCourseBanner').classList.remove('visible');
+}
+
+function restoreTeam() {
+  if (!_savedTeam) return;
+  setVal('team1_name', _savedTeam.team1Name);
+  setVal('t1p1_name',  _savedTeam.p1Name);
+  setVal('t1p1_hcp',   isNaN(_savedTeam.p1Hcp) ? '' : _savedTeam.p1Hcp);
+  setRadio('t1p1_g',   _savedTeam.p1Gender || 'M');
+  setRadio('t1p1_tee', _savedTeam.p1Tee    || 'main');
+  setVal('t1p2_name',  _savedTeam.p2Name);
+  setVal('t1p2_hcp',   isNaN(_savedTeam.p2Hcp) ? '' : _savedTeam.p2Hcp);
+  setRadio('t1p2_g',   _savedTeam.p2Gender || 'M');
+  setRadio('t1p2_tee', _savedTeam.p2Tee    || 'main');
+  dismissRestoreTeam();
+  showToast('Team loaded!', 'success');
+}
+
+function dismissRestoreTeam() {
+  document.getElementById('restoreTeamBanner').classList.remove('visible');
+}
 
 // ─── AUTH ───
 function openAuthModal() {
@@ -1466,6 +1501,8 @@ function openAuthModal() {
   document.getElementById('authModal').classList.remove('hidden');
 }
 
+// Note: closeAuthModal is intentionally NOT wired to a Cancel button.
+// Users must sign in to access the app. Only called programmatically after success.
 function closeAuthModal() {
   document.getElementById('authModal').classList.add('hidden');
   clearAuthForms();
@@ -1476,20 +1513,22 @@ function clearAuthForms() {
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   setAuthError('signInError', '');
   setAuthError('registerError', '');
-  setAuthBtnLoading('btnSignIn', false, 'Sign In →');
+  setAuthBtnLoading('btnSignIn',   false, 'Sign In →');
   setAuthBtnLoading('btnRegister', false, 'Create Account →');
 }
 
 function switchToSignIn() {
-  document.getElementById('formSignIn').style.display = 'block';
-  document.getElementById('formRegister').style.display = 'none';
-  document.getElementById('authModalTitle').textContent = 'Welcome back';
+  document.getElementById('formSignIn').style.display    = 'block';
+  document.getElementById('formRegister').style.display  = 'none';
+  document.getElementById('authModalTitle').textContent  = 'Welcome back';
+  document.getElementById('authModalSub').textContent    = 'Parmate · Team HCP';
 }
 
 function switchToRegister() {
-  document.getElementById('formSignIn').style.display = 'none';
-  document.getElementById('formRegister').style.display = 'block';
-  document.getElementById('authModalTitle').textContent = 'Create account';
+  document.getElementById('formSignIn').style.display    = 'none';
+  document.getElementById('formRegister').style.display  = 'block';
+  document.getElementById('authModalTitle').textContent  = 'Create account';
+  document.getElementById('authModalSub').textContent    = 'Parmate · Team HCP';
 }
 
 function setAuthError(elId, msg) {
@@ -1503,7 +1542,7 @@ function setAuthBtnLoading(btnId, loading, defaultText) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
   btn.textContent = loading ? 'Please wait…' : defaultText;
-  btn.disabled = loading;
+  btn.disabled    = loading;
 }
 
 async function doGoogleSignIn() {
@@ -1513,8 +1552,8 @@ async function doGoogleSignIn() {
     await window._fbAuth.signInWithPopup(window._fbGoogleProvider);
     closeAuthModal();
   } catch(e) {
-    const msg = e.code === 'auth/popup-closed-by-user'   ? 'Sign-in cancelled.' :
-                e.code === 'auth/popup-blocked'          ? 'Popup blocked — allow popups for this site.' :
+    const msg = e.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.' :
+                e.code === 'auth/popup-blocked'        ? 'Popup blocked — allow popups for this site.' :
                 'Google sign-in failed. Please try again.';
     setAuthError('signInError', msg);
   }
@@ -1534,8 +1573,8 @@ async function doEmailSignIn() {
   } catch(e) {
     const msg = (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
       ? 'Incorrect email or password.'
-      : e.code === 'auth/invalid-email'      ? 'Please enter a valid email address.'
-      : e.code === 'auth/too-many-requests'  ? 'Too many attempts — try again later.'
+      : e.code === 'auth/invalid-email'     ? 'Please enter a valid email address.'
+      : e.code === 'auth/too-many-requests' ? 'Too many attempts — try again later.'
       : 'Sign-in failed: ' + e.message;
     setAuthError('signInError', msg);
     document.getElementById('signInPass').value = '';
@@ -1551,10 +1590,10 @@ async function doRegister() {
   const pass    = document.getElementById('regPass').value;
   const confirm = document.getElementById('regPassConfirm').value;
   setAuthError('registerError', '');
-  if (!name)             { setAuthError('registerError', 'Please enter your name.'); return; }
-  if (!email)            { setAuthError('registerError', 'Please enter your email.'); return; }
-  if (pass.length < 6)   { setAuthError('registerError', 'Password must be at least 6 characters.'); return; }
-  if (pass !== confirm)  { setAuthError('registerError', 'Passwords do not match.'); return; }
+  if (!name)            { setAuthError('registerError', 'Please enter your name.'); return; }
+  if (!email)           { setAuthError('registerError', 'Please enter your email.'); return; }
+  if (pass.length < 6)  { setAuthError('registerError', 'Password must be at least 6 characters.'); return; }
+  if (pass !== confirm) { setAuthError('registerError', 'Passwords do not match.'); return; }
   setAuthBtnLoading('btnRegister', true, 'Create Account →');
   try {
     const cred = await window._fbAuth.createUserWithEmailAndPassword(email, pass);
@@ -1562,8 +1601,8 @@ async function doRegister() {
     closeAuthModal();
   } catch(e) {
     const msg = e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.'
-      : e.code === 'auth/invalid-email'   ? 'Please enter a valid email address.'
-      : e.code === 'auth/weak-password'   ? 'Password too weak — use at least 6 characters.'
+      : e.code === 'auth/invalid-email'  ? 'Please enter a valid email address.'
+      : e.code === 'auth/weak-password'  ? 'Password too weak — use at least 6 characters.'
       : 'Registration failed: ' + e.message;
     setAuthError('registerError', msg);
   } finally {
@@ -1580,17 +1619,30 @@ function onSignedIn(user) {
   const name = user.displayName || user.email.split('@')[0];
   document.getElementById('userPillName').textContent = name;
   document.getElementById('userPill').classList.add('visible');
-  document.getElementById('btnSignInHeader').style.display = 'none';
+  // Show app, hide locked hero
+  document.getElementById('lockedHero').style.display  = 'none';
+  document.getElementById('appContent').classList.add('unlocked');
+  // Load saved data from Firestore
+  loadSavedData(user.uid);
 }
 
 function onSignedOut() {
   document.getElementById('userPill').classList.remove('visible');
-  document.getElementById('btnSignInHeader').style.display = '';
+  // Hide app, show locked hero
+  document.getElementById('lockedHero').style.display = '';
+  document.getElementById('appContent').classList.remove('unlocked');
+  // Open auth modal automatically
+  openAuthModal();
+  // Clear any loaded data
+  _savedCourse = null;
+  _savedTeam   = null;
+  document.getElementById('restoreCourseBanner').classList.remove('visible');
+  document.getElementById('restoreTeamBanner').classList.remove('visible');
 }
 
-// Tap backdrop to close modal
-document.getElementById('authModal').addEventListener('click', function(e) {
-  if (e.target === this) closeAuthModal();
+// Back button closes results overlay
+window.addEventListener('popstate', () => {
+  if (document.getElementById('resultsOverlay').classList.contains('open')) closeResults();
 });
 
 // ─── SERVICE WORKER ───
