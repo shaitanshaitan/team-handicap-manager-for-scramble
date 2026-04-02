@@ -3,13 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<!-- PWA core -->
 <meta name="application-name" content="Parmate Team HCP">
 <meta name="theme-color" content="#0a1a10">
 <link rel="manifest" href="/manifest.json">
-
-<!-- iOS PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Parmate">
@@ -19,15 +15,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="msapplication-TileColor" content="#0a1a10">
 <meta name="msapplication-TileImage" content="/icons/icon-144.png">
-
-<!-- SEO / share -->
 <title>Parmate · Scramble Team Handicap Calculator</title>
 <meta name="description" content="Calculate WHS scramble team handicaps instantly. Free tool for golfers by Parmate.">
 <meta property="og:title" content="Parmate Team HCP">
 <meta property="og:description" content="Free WHS scramble handicap calculator for 2-player teams.">
 <meta property="og:url" content="https://teamhcp.therookiegolfer.com/">
 <meta property="og:type" content="website">
-
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -46,19 +39,13 @@
   window._fbAuth = firebase.auth();
   window._fbDb   = firebase.firestore();
   window._fbGoogleProvider = new firebase.auth.GoogleAuthProvider();
-
   window._fbAuth.onAuthStateChanged(function(user) {
     const overlay = document.getElementById('authLoadingOverlay');
     if (overlay) overlay.style.display = 'none';
-    if (user) {
-      onSignedIn(user);
-    } else {
-      onSignedOut();
-    }
+    if (user) { onSignedIn(user); } else { onSignedOut(); }
   });
 </script>
 <style>
-/* ─── TOKENS ─── */
 :root {
   --bg:       #0a1a10;
   --surface:  #111f17;
@@ -73,15 +60,16 @@
   --cream:    #ede8dc;
   --white:    #f8f5ee;
   --red:      #c85a4a;
+  --red-dim:  rgba(200,90,74,0.12);
   --tee1:     #4a82d8;
   --tee2:     #c8a84b;
   --tee3:     #e08080;
   --radius:   12px;
   --radius-sm:8px;
+  --tab-h:    64px;
 }
 
-/* ─── RESET ─── */
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html { scroll-behavior:smooth; }
 
 body {
@@ -89,417 +77,388 @@ body {
   color: var(--cream);
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow-x: hidden;
+  min-height: 100vh; min-height:100dvh;
+  overflow: hidden; /* tabs handle scroll */
 }
 
-/* Fairway texture */
 body::before {
-  content:'';
-  position:fixed; inset:0; pointer-events:none; z-index:0;
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
     radial-gradient(ellipse 80% 50% at 50% -10%, rgba(74,158,106,0.08) 0%, transparent 60%),
     repeating-linear-gradient(175deg, transparent, transparent 60px, rgba(255,255,255,0.005) 60px, rgba(255,255,255,0.005) 120px);
 }
 
-/* ─── LAYOUT ─── */
-.app {
-  position:relative; z-index:1;
-  max-width:480px;
-  margin:0 auto;
-  padding:0 0 120px;
+/* ═══════════════════════════════════
+   TAB SYSTEM
+═══════════════════════════════════ */
+.tab-pages {
+  display: flex;
+  width: 200%;
+  height: 100vh; height: 100dvh;
+  transition: transform 0.35s cubic-bezier(0.32,0,0.2,1);
+  position: relative; z-index: 1;
+}
+.tab-pages.show-mydata { transform: translateX(-50%); }
+
+.tab-page {
+  width: 50%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom));
 }
 
-/* ─── GATE: hide app content until logged in ─── */
-.app-content { display: none; }
-.app-content.unlocked { display: block; }
+/* ── Bottom Tab Bar ── */
+.bottom-tabs {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--tab-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--border2);
+  display: none; /* hidden until logged in */
+  align-items: stretch;
+  z-index: 90;
+  backdrop-filter: blur(12px);
+}
+.bottom-tabs.visible { display: flex; }
 
-/* ─── LOCKED HERO ─── */
-.locked-hero {
+.tab-btn-bar {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 80vh;
-  text-align: center;
-  padding: 40px 24px;
-  gap: 16px;
-}
-.locked-hero-flag {
-  font-size: 3rem;
-  filter: drop-shadow(0 0 16px rgba(200,168,75,0.3));
-  margin-bottom: 4px;
-}
-.locked-hero h1 {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.4rem;
-  font-weight: 700;
-  color: var(--white);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.locked-hero h1 em { color: var(--gold); font-style: italic; }
-.locked-hero-sub {
-  font-size: 0.6rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.locked-hero-desc {
-  font-size: 0.78rem;
-  color: var(--muted);
-  line-height: 1.8;
-  max-width: 280px;
-}
-.locked-features {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 8px 0;
-  text-align: left;
-  width: 100%;
-  max-width: 280px;
-}
-.locked-feature {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.72rem;
-  color: var(--cream);
-}
-.locked-feature-icon {
-  width: 28px; height: 28px;
-  background: var(--gold-dim);
-  border: 1px solid rgba(200,168,75,0.2);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-.btn-locked-signin {
-  width: 100%; max-width: 280px;
-  padding: 16px;
-  background: var(--gold);
+  gap: 4px;
+  background: none;
   border: none;
-  border-radius: var(--radius);
+  cursor: pointer;
+  padding: 8px 0 4px;
+  transition: all 0.18s;
+  position: relative;
+}
+.tab-btn-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 0 0 2px 2px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.tab-btn-bar.active::after { opacity: 1; }
+
+.tab-btn-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  filter: grayscale(1) opacity(0.45);
+  transition: filter 0.18s;
+}
+.tab-btn-bar.active .tab-btn-icon { filter: none; }
+
+.tab-btn-label {
   font-family: 'Roboto', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 500;
+  font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #0a1a10;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 8px 32px rgba(200,168,75,0.25);
-  margin-top: 8px;
-}
-.btn-locked-signin:active { transform:scale(0.98); background:var(--gold2); }
-.locked-terms {
-  font-size: 0.58rem;
   color: var(--muted);
-  opacity: 0.7;
-  line-height: 1.6;
+  transition: color 0.18s;
+}
+.tab-btn-bar.active .tab-btn-label { color: var(--gold); }
+
+/* ═══════════════════════════════════
+   SHARED LAYOUT
+═══════════════════════════════════ */
+.page-inner {
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-/* ─── HEADER ─── */
 .header {
   padding: 52px 20px 24px;
   text-align: center;
-  position: relative;
 }
-.header-flag {
-  font-size: 2rem;
-  margin-bottom: 12px;
-  display: block;
-  filter: drop-shadow(0 0 12px rgba(200,168,75,0.3));
-}
-.header h1 {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.2rem; font-weight: 700;
-  color: var(--white);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.header h1 em { color: var(--gold); font-style: italic; }
-.header-sub {
-  margin-top: 8px;
-  font-size: 0.6rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+.header-flag { font-size:2rem; margin-bottom:12px; display:block; filter:drop-shadow(0 0 12px rgba(200,168,75,0.3)); }
+.header h1 { font-family:'Inter',sans-serif; font-size:2.2rem; font-weight:700; color:var(--white); line-height:1; letter-spacing:-0.02em; }
+.header h1 em { color:var(--gold); font-style:italic; }
+.header-sub { margin-top:8px; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); }
+.header-auth { margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; min-height:36px; }
+.user-pill { display:none; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:6px 14px 6px 8px; }
+.user-pill.visible { display:flex; }
+.user-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(74,158,106,0.6); flex-shrink:0; }
+.user-name { font-size:0.65rem; color:var(--cream); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.btn-signout { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color 0.2s; }
+.btn-signout:active { color:var(--red); }
 
-/* ─── SECTION ─── */
-.section {
-  margin: 0 16px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.section-header {
-  padding: 14px 18px 12px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.section-icon { font-size: 0.9rem; opacity: 0.7; }
-.section-title {
-  font-size: 0.58rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold);
-  flex: 1;
-}
+/* ═══════════════════════════════════
+   LOCKED HERO
+═══════════════════════════════════ */
+.locked-hero { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:80vh; text-align:center; padding:40px 24px; gap:16px; }
+.locked-hero-flag { font-size:3rem; filter:drop-shadow(0 0 16px rgba(200,168,75,0.3)); margin-bottom:4px; }
+.locked-hero h1 { font-family:'Inter',sans-serif; font-size:2.4rem; font-weight:700; color:var(--white); line-height:1; letter-spacing:-0.02em; }
+.locked-hero h1 em { color:var(--gold); font-style:italic; }
+.locked-hero-sub { font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); }
+.locked-hero-desc { font-size:0.78rem; color:var(--muted); line-height:1.8; max-width:280px; }
+.locked-features { display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left; width:100%; max-width:280px; }
+.locked-feature { display:flex; align-items:center; gap:10px; font-size:0.72rem; color:var(--cream); }
+.locked-feature-icon { width:28px; height:28px; background:var(--gold-dim); border:1px solid rgba(200,168,75,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
+.btn-locked-signin { width:100%; max-width:280px; padding:16px; background:var(--gold); border:none; border-radius:var(--radius); font-family:'Roboto',sans-serif; font-size:0.78rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:#0a1a10; cursor:pointer; transition:all 0.2s; box-shadow:0 8px 32px rgba(200,168,75,0.25); margin-top:8px; }
+.btn-locked-signin:active { transform:scale(0.98); background:var(--gold2); }
+.locked-terms { font-size:0.58rem; color:var(--muted); opacity:0.7; line-height:1.6; }
 
-/* ─── SAVE BUTTON (inline in section header) ─── */
+/* ═══════════════════════════════════
+   CALCULATOR TAB
+═══════════════════════════════════ */
+.app-content { display:none; }
+.app-content.unlocked { display:block; }
+
+.section { margin:0 16px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.section-header { padding:14px 18px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.section-icon { font-size:0.9rem; opacity:0.7; }
+.section-title { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); flex:1; }
+.section-body { padding:18px; }
+
 .btn-save-inline {
-  background: none;
-  border: 1px solid rgba(200,168,75,0.3);
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.55rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gold);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex; align-items: center; gap: 5px;
-  flex-shrink: 0;
+  background:none; border:1px solid rgba(200,168,75,0.3); border-radius:20px;
+  padding:5px 12px; font-family:'Roboto',sans-serif; font-size:0.55rem;
+  letter-spacing:0.08em; text-transform:uppercase; color:var(--gold);
+  cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:5px; flex-shrink:0;
 }
-.btn-save-inline:active { background: var(--gold-dim); transform: scale(0.97); }
-.btn-save-inline.saved {
-  color: var(--green);
-  border-color: rgba(74,158,106,0.3);
-}
+.btn-save-inline:active { background:var(--gold-dim); transform:scale(0.97); }
+.btn-save-inline.saved { color:var(--green); border-color:rgba(74,158,106,0.3); }
 
-.section-body { padding: 18px; }
+.field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.field:last-child { margin-bottom:0; }
+.field label { font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); }
 
-/* ─── FIELD ─── */
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
+input[type=text], input[type=number] {
+  background:rgba(0,0,0,0.3); border:1px solid var(--border2); border-radius:var(--radius-sm);
+  color:var(--white); font-family:'Roboto',sans-serif; font-size:1rem; padding:13px 14px;
+  outline:none; width:100%; transition:border-color 0.2s, background 0.2s;
+  -moz-appearance:textfield; appearance:textfield;
 }
-.field:last-child { margin-bottom: 0; }
-.field label {
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance:none; }
+input:focus { border-color:var(--gold); background:rgba(0,0,0,0.45); }
+input::placeholder { color:rgba(255,255,255,0.18); }
 
-input[type=text],
-input[type=number] {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  color: var(--white);
-  font-family: 'Roboto', sans-serif;
-  font-size: 1rem;
-  padding: 13px 14px;
-  outline: none;
-  width: 100%;
-  transition: border-color 0.2s, background 0.2s;
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button { -webkit-appearance:none; }
-input:focus { border-color: var(--gold); background: rgba(0,0,0,0.45); }
-input::placeholder { color: rgba(255,255,255,0.18); }
-
-/* ─── GRID ─── */
 .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-/* ─── GENDER PILLS ─── */
 .gender-pills { display:flex; gap:8px; }
 .gender-pill { position:relative; flex:1; }
 .gender-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
-.gender-pill label {
-  display:flex; align-items:center; justify-content:center; gap:6px;
-  padding: 11px 10px;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  white-space: nowrap;
-}
+.gender-pill label { display:flex; align-items:center; justify-content:center; gap:6px; padding:11px 10px; border:1px solid var(--border2); border-radius:var(--radius-sm); font-size:0.75rem; color:var(--muted); cursor:pointer; transition:all 0.18s; white-space:nowrap; }
 .gender-pill input:checked + label { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
 .gender-pill label:active { transform:scale(0.97); }
 
-/* ─── TEE PILLS ─── */
 .tee-pills { display:flex; gap:8px; flex-wrap:wrap; }
 .tee-pill { position:relative; }
 .tee-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
-.tee-pill label {
-  display:flex; align-items:center; gap:6px;
-  padding: 9px 14px;
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  font-size: 0.68rem;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  white-space: nowrap;
-}
+.tee-pill label { display:flex; align-items:center; gap:6px; padding:9px 14px; border:1px solid var(--border2); border-radius:20px; font-size:0.68rem; color:var(--muted); cursor:pointer; transition:all 0.18s; white-space:nowrap; }
 .tee-pill label .dot { width:8px; height:8px; border-radius:50%; }
-.tee-pill input:checked + label { border-color: currentColor; }
+.tee-pill input:checked + label { border-color:currentColor; }
 .tee-pill.t1 input:checked + label { color:var(--tee1); background:rgba(74,130,216,0.1); }
 .tee-pill.t2 input:checked + label { color:var(--tee2); background:rgba(200,168,75,0.1); }
 .tee-pill.t3 input:checked + label { color:var(--tee3); background:rgba(224,128,128,0.1); }
 .tee-pill label:active { transform:scale(0.97); }
 
-/* ─── PLAYER CARD ─── */
-.player-card {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin-bottom: 10px;
-  position: relative;
-}
-.player-card:last-child { margin-bottom: 0; }
-.player-card-num {
-  position: absolute;
-  top: 10px; right: 14px;
-  font-family: 'Inter', sans-serif;
-  font-size: 2.2rem; font-weight:700;
-  color: rgba(255,255,255,0.04);
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-}
+.player-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin-bottom:10px; position:relative; }
+.player-card:last-child { margin-bottom:0; }
+.player-card-num { position:absolute; top:10px; right:14px; font-family:'Inter',sans-serif; font-size:2.2rem; font-weight:700; color:rgba(255,255,255,0.04); line-height:1; pointer-events:none; user-select:none; }
 
-/* ─── TEAM HEADER ─── */
-.team-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.team-label-num {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.5rem; font-weight:700;
-  color: var(--gold);
-  opacity: 0.25;
-  line-height: 1;
-}
-.team-name-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border2);
-  border-radius: 0;
-  padding: 4px 2px;
-  font-family: 'Inter', sans-serif;
-  font-size: 1.3rem; font-weight: 600;
-  color: var(--white);
-  width: 100%;
-  transition: border-color 0.2s;
-}
-.team-name-input:focus { border-bottom-color: var(--gold); outline: none; }
-.team-name-input::placeholder { color: rgba(255,255,255,0.2); }
+.team-label { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.team-label-num { font-family:'Inter',sans-serif; font-size:2.5rem; font-weight:700; color:var(--gold); opacity:0.25; line-height:1; }
+.team-name-input { background:transparent; border:none; border-bottom:1px solid var(--border2); border-radius:0; padding:4px 2px; font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:600; color:var(--white); width:100%; transition:border-color 0.2s; }
+.team-name-input:focus { border-bottom-color:var(--gold); outline:none; }
+.team-name-input::placeholder { color:rgba(255,255,255,0.2); }
 
-/* ─── FORMAT TOGGLE ─── */
 .fmt-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .fmt-pill { position:relative; }
 .fmt-pill input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
-.fmt-pill label {
-  display:block;
-  padding: 10px 14px;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  font-size: 0.65rem;
-  color: var(--muted);
-  cursor:pointer;
-  transition: all 0.18s;
-  line-height: 1.5;
-}
+.fmt-pill label { display:block; padding:10px 14px; border:1px solid var(--border2); border-radius:var(--radius-sm); font-size:0.65rem; color:var(--muted); cursor:pointer; transition:all 0.18s; line-height:1.5; }
 .fmt-pill label strong { display:block; color:var(--cream); font-size:0.75rem; margin-bottom:2px; }
 .fmt-pill input:checked + label { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
 .fmt-pill input:checked + label strong { color:var(--gold2); }
 .fmt-pill label:active { transform:scale(0.98); }
 
-/* ─── DIVIDER ─── */
-.divider { height:1px; background:var(--border); margin:0 16px 16px; }
+/* Holes toggle */
+.holes-toggle { display:flex; gap:6px; align-items:center; }
+.holes-toggle-btn { background:none; border:1px solid var(--border2); border-radius:20px; padding:5px 14px; font-family:'Roboto',sans-serif; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); cursor:pointer; transition:all 0.18s; line-height:1; }
+.holes-toggle-btn.active { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); font-weight:500; }
+.holes-toggle-btn:active { transform:scale(0.96); }
+.holes-note { display:none; margin-top:10px; padding:9px 12px; background:rgba(200,168,75,0.06); border:1px solid rgba(200,168,75,0.18); border-radius:var(--radius-sm); font-size:0.62rem; color:var(--gold); line-height:1.6; }
+.holes-note.visible { display:block; }
+.par-hint { font-size:0.55rem; color:var(--muted); opacity:0.8; margin-top:2px; }
 
-/* ─── CALC BUTTON ─── */
+/* Calc bar */
 .calc-wrap {
-  position: fixed;
-  bottom: 0; left:0; right:0;
-  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--bg) 60%, transparent);
-  z-index: 50;
-  max-width: 480px;
-  margin: 0 auto;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
+  position: fixed; bottom:0; left:0; right:0;
+  padding: 12px 16px calc(var(--tab-h) + env(safe-area-inset-bottom) + 8px);
+  background: linear-gradient(to top, var(--bg) 50%, transparent);
+  z-index: 50; max-width:480px; margin:0 auto; left:50%; transform:translateX(-50%); width:100%;
+  pointer-events: none;
 }
 .btn-calc {
-  width: 100%;
-  padding: 18px;
-  background: var(--gold);
-  border: none;
-  border-radius: var(--radius);
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.8rem; font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #0a1a10;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 8px 32px rgba(200,168,75,0.25);
+  width:100%; padding:18px; background:var(--gold); border:none; border-radius:var(--radius);
+  font-family:'Roboto',sans-serif; font-size:0.8rem; font-weight:500;
+  letter-spacing:0.12em; text-transform:uppercase; color:#0a1a10; cursor:pointer;
+  transition:all 0.2s; box-shadow:0 8px 32px rgba(200,168,75,0.25);
+  pointer-events: all;
 }
 .btn-calc:active { transform:scale(0.98); background:var(--gold2); }
 
-/* ─── RESULTS OVERLAY ─── */
-.results-overlay {
-  position: fixed; inset:0;
-  background: var(--bg);
-  z-index: 100;
-  overflow-y: auto;
-  transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.32,0,0,1);
+.info-note { margin:0 16px 16px; padding:12px 14px; background:rgba(74,142,200,0.07); border:1px solid rgba(74,142,200,0.18); border-radius:var(--radius-sm); font-size:0.65rem; color:#7aace0; line-height:1.7; }
+.reset-row { text-align:center; padding:6px 0 0; }
+.btn-reset { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:8px; opacity:0.6; transition:opacity 0.2s; }
+.btn-reset:active { opacity:1; }
+
+/* ═══════════════════════════════════
+   MY DATA TAB
+═══════════════════════════════════ */
+.mydata-header {
+  padding: 52px 20px 20px;
+  text-align: center;
 }
-.results-overlay.open { transform: translateY(0); }
-.results-inner { max-width:480px; margin:0 auto; padding:0 0 80px; }
-.results-back {
-  position: sticky; top:0;
-  background: linear-gradient(to bottom, var(--bg) 80%, transparent);
-  padding: 16px 16px 12px;
-  z-index: 10;
+.mydata-header h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--white); line-height: 1;
+  letter-spacing: -0.01em;
 }
-.btn-back {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
+.mydata-header h2 em { color: var(--gold); font-style: normal; }
+.mydata-sub { font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+
+.mydata-section-label {
+  margin: 0 16px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mydata-section-label-text {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  padding: 10px 16px;
-  cursor: pointer;
-  display: flex; align-items:center; gap:8px;
-  transition: all 0.2s;
+  color: var(--gold);
 }
-.btn-back:hover, .btn-back:active { color:var(--cream); }
+.mydata-section-label-count {
+  font-size: 0.55rem;
+  color: var(--muted);
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+.mydata-section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* Saved card */
+.saved-card {
+  margin: 0 16px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fadeCardIn 0.3s ease both;
+}
+@keyframes fadeCardIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.saved-card-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.saved-card-body { flex: 1; min-width: 0; }
+.saved-card-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem; font-weight: 600;
+  color: var(--white);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.saved-card-meta {
+  font-size: 0.6rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.saved-card-meta strong { color: var(--cream); }
+.saved-card-actions { display:flex; gap:6px; flex-shrink:0; }
+
+.btn-card-load {
+  background: var(--gold-dim);
+  border: 1px solid rgba(200,168,75,0.3);
+  border-radius: var(--radius-sm);
+  padding: 7px 13px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.btn-card-load:active { background: rgba(200,168,75,0.2); transform:scale(0.97); }
+
+.btn-card-delete {
+  background: none;
+  border: 1px solid rgba(200,90,74,0.25);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  font-size: 0.75rem;
+  color: var(--red);
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center;
+}
+.btn-card-delete:active { background: var(--red-dim); transform:scale(0.97); }
+
+/* Empty state */
+.saved-empty {
+  margin: 0 16px 10px;
+  padding: 20px;
+  text-align: center;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.7;
+}
+.saved-empty-icon { font-size: 1.6rem; opacity: 0.3; margin-bottom: 8px; display: block; }
+
+/* Full slots note */
+.slots-full-note {
+  margin: 0 16px 10px;
+  padding: 9px 12px;
+  background: rgba(200,168,75,0.06);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: var(--radius-sm);
+  font-size: 0.62rem;
+  color: var(--gold);
+  line-height: 1.6;
+  display: none;
+}
+.slots-full-note.visible { display: block; }
+
+.mydata-spacer { height: 24px; }
+
+/* ═══════════════════════════════════
+   RESULTS OVERLAY
+═══════════════════════════════════ */
+.results-overlay { position:fixed; inset:0; background:var(--bg); z-index:100; overflow-y:auto; transform:translateY(100%); transition:transform 0.4s cubic-bezier(0.32,0,0,1); }
+.results-overlay.open { transform:translateY(0); }
+.results-inner { max-width:480px; margin:0 auto; padding:0 0 80px; }
+.results-back { position:sticky; top:0; background:linear-gradient(to bottom, var(--bg) 80%, transparent); padding:16px 16px 12px; z-index:10; }
+.btn-back { background:none; border:1px solid var(--border2); border-radius:var(--radius-sm); color:var(--muted); font-family:'Roboto',sans-serif; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
+.btn-back:active { color:var(--cream); }
 .results-hero { padding:16px 20px 28px; text-align:center; }
 .results-hero-flag { font-size:2rem; margin-bottom:10px; display:block; }
 .results-event { font-family:'Inter',sans-serif; font-size:1.8rem; font-weight:700; color:var(--white); margin-bottom:6px; }
 .results-meta { font-size:0.6rem; letter-spacing:0.1em; color:var(--muted); line-height:1.8; }
 .result-card { margin:0 16px 12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; animation:slideUp 0.4s ease both; }
 .result-card:nth-child(2) { animation-delay:0.05s; }
-.result-card:nth-child(3) { animation-delay:0.10s; }
 @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 .result-card-top { padding:18px 20px 14px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .result-team-name { font-family:'Inter',sans-serif; font-size:1.5rem; font-weight:700; color:var(--white); line-height:1; flex:1; }
@@ -517,247 +476,46 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 .result-vs-badge { display:flex; align-items:center; justify-content:center; padding:10px; background:var(--surface2); border-left:1px solid var(--border); border-right:1px solid var(--border); margin:0 16px 12px; border-radius:var(--radius-sm); gap:10px; font-size:0.65rem; color:var(--muted); letter-spacing:0.08em; }
 .result-vs-diff { font-family:'Inter',sans-serif; font-size:1.5rem; font-weight:700; color:var(--cream); }
 
-/* ─── TOAST ─── */
-.toast {
-  position: fixed;
-  bottom: 110px; left:50%; transform:translateX(-50%) translateY(20px);
-  padding: 12px 20px;
-  border-radius: var(--radius-sm);
-  font-size: 0.72rem;
-  z-index: 200;
-  max-width: 340px;
-  text-align: center;
-  line-height: 1.5;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s;
-  backdrop-filter: blur(8px);
-}
+/* ═══════════════════════════════════
+   TOAST
+═══════════════════════════════════ */
+.toast { position:fixed; bottom:calc(var(--tab-h) + env(safe-area-inset-bottom) + 12px); left:50%; transform:translateX(-50%) translateY(20px); padding:12px 20px; border-radius:var(--radius-sm); font-size:0.72rem; z-index:200; max-width:340px; text-align:center; line-height:1.5; opacity:0; pointer-events:none; transition:all 0.25s; backdrop-filter:blur(8px); }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 .toast.error { background:rgba(200,90,74,0.95); color:#fff; }
 .toast.success { background:rgba(74,158,106,0.95); color:#fff; }
 
-/* ─── RESET LINK ─── */
-.reset-row { text-align:center; padding:6px 0 0; }
-.btn-reset {
-  background:none; border:none;
-  font-family:'Roboto',sans-serif; font-size:0.62rem;
-  letter-spacing:0.08em; text-transform:uppercase;
-  color:var(--muted); cursor:pointer;
-  text-decoration:underline; text-underline-offset:3px;
-  padding:8px; opacity:0.6; transition:opacity 0.2s;
-}
-.btn-reset:active { opacity:1; }
-
-/* ─── INFO NOTE ─── */
-.info-note {
-  margin:0 16px 16px;
-  padding:12px 14px;
-  background:rgba(74,142,200,0.07);
-  border:1px solid rgba(74,142,200,0.18);
-  border-radius:var(--radius-sm);
-  font-size:0.65rem; color:#7aace0; line-height:1.7;
-}
-
-/* ─── RESTORE BANNER ─── */
-.restore-banner {
-  margin: 0 16px 16px;
-  background: rgba(200,168,75,0.07);
-  border: 1px solid rgba(200,168,75,0.2);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  display: none;
-}
-.restore-banner.visible { display: block; }
-.restore-banner-title {
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 8px;
-}
-.restore-banner-body {
-  font-size: 0.72rem;
-  color: var(--cream);
-  margin-bottom: 12px;
-  line-height: 1.6;
-}
-.restore-banner-actions { display:flex; gap:8px; }
-.btn-restore {
-  background: var(--gold);
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 9px 16px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #0a1a10;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-.btn-restore:active { background: var(--gold2); }
-.btn-restore-dismiss {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  padding: 9px 14px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-restore-dismiss:active { color: var(--cream); }
-
-/* ─── HOLES TOGGLE ─── */
-.holes-toggle {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.holes-toggle-btn {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 5px 14px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  line-height: 1;
-}
-.holes-toggle-btn.active {
-  background: var(--gold-dim);
-  border-color: var(--gold);
-  color: var(--gold);
-  font-weight: 500;
-}
-.holes-toggle-btn:active { transform: scale(0.96); }
-
-/* 9-hole info note under course fields */
-.holes-note {
-  display: none;
-  margin-top: 10px;
-  padding: 9px 12px;
-  background: rgba(200,168,75,0.06);
-  border: 1px solid rgba(200,168,75,0.18);
-  border-radius: var(--radius-sm);
-  font-size: 0.62rem;
-  color: var(--gold);
-  line-height: 1.6;
-}
-.holes-note.visible { display: block; }
-
-/* Par field hint text */
-.par-hint {
-  font-size: 0.55rem;
-  color: var(--muted);
-  opacity: 0.8;
-  margin-top: 2px;
-}
-
-/* ─── AUTH LOADING OVERLAY ─── */
-#authLoadingOverlay {
-  position: fixed; inset: 0;
-  background: var(--bg);
-  z-index: 300;
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 14px;
-}
-.auth-spinner {
-  width: 30px; height: 30px;
-  border: 2px solid var(--border2);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
+/* ═══════════════════════════════════
+   AUTH OVERLAYS
+═══════════════════════════════════ */
+#authLoadingOverlay { position:fixed; inset:0; background:var(--bg); z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
+.auth-spinner { width:30px; height:30px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.7s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .auth-spinner-text { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
 
-/* ─── AUTH MODAL SHEET ─── */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(5,15,8,0.88);
-  backdrop-filter: blur(8px);
-  z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
-  animation: fadeIn 0.2s ease both;
-}
-.modal-overlay.hidden { display: none; }
+.modal-overlay { position:fixed; inset:0; background:rgba(5,15,8,0.88); backdrop-filter:blur(8px); z-index:200; display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.2s ease both; }
+.modal-overlay.hidden { display:none; }
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
-.auth-sheet {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-bottom: none;
-  border-radius: var(--radius) var(--radius) 0 0;
-  width: 100%; max-width: 480px;
-  padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
-  position: relative;
-  animation: sheetUp 0.32s cubic-bezier(0.32,0,0,1) both;
-  max-height: 90vh;
-  overflow-y: auto;
-}
+.auth-sheet { background:var(--surface); border:1px solid var(--border2); border-bottom:none; border-radius:var(--radius) var(--radius) 0 0; width:100%; max-width:480px; padding:32px 24px calc(32px + env(safe-area-inset-bottom)); position:relative; animation:sheetUp 0.32s cubic-bezier(0.32,0,0,1) both; max-height:90vh; overflow-y:auto; }
 @keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-.auth-sheet::before {
-  content:'';
-  position:absolute; top:10px; left:50%;
-  transform:translateX(-50%);
-  width:36px; height:4px;
-  background:var(--border2); border-radius:2px;
-}
-.auth-sheet::after {
-  content:'';
-  position:absolute; top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg,var(--gold),transparent 70%);
-  border-radius:var(--radius) var(--radius) 0 0;
-}
+.auth-sheet::before { content:''; position:absolute; top:10px; left:50%; transform:translateX(-50%); width:36px; height:4px; background:var(--border2); border-radius:2px; }
+.auth-sheet::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--gold),transparent 70%); border-radius:var(--radius) var(--radius) 0 0; }
 .auth-sheet-icon { text-align:center; font-size:1.8rem; margin-bottom:10px; }
 .auth-sheet-title { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:700; color:var(--white); text-align:center; margin-bottom:4px; }
 .auth-sheet-sub { font-size:0.58rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:24px; }
-.btn-google {
-  width:100%; padding:14px 16px;
-  background:#fff; border:none; border-radius:var(--radius-sm);
-  font-family:'Roboto',sans-serif; font-size:0.72rem;
-  letter-spacing:0.04em; color:#3c4043;
-  cursor:pointer; transition:all 0.18s;
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  margin-bottom:14px;
-}
+.btn-google { width:100%; padding:14px 16px; background:#fff; border:none; border-radius:var(--radius-sm); font-family:'Roboto',sans-serif; font-size:0.72rem; letter-spacing:0.04em; color:#3c4043; cursor:pointer; transition:all 0.18s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
 .btn-google:active { background:#f0f0f0; transform:scale(0.98); }
 .auth-divider { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border2); }
+.auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border2); }
 .auth-divider span { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
 .auth-fields { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
-.btn-auth {
-  width:100%; padding:15px;
-  background:var(--gold); border:none; border-radius:var(--radius-sm);
-  font-family:'Roboto',sans-serif; font-size:0.72rem; font-weight:500;
-  letter-spacing:0.12em; text-transform:uppercase; color:#0a1a10;
-  cursor:pointer; transition:all 0.18s;
-}
+.btn-auth { width:100%; padding:15px; background:var(--gold); border:none; border-radius:var(--radius-sm); font-family:'Roboto',sans-serif; font-size:0.72rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:#0a1a10; cursor:pointer; transition:all 0.18s; }
 .btn-auth:active { transform:scale(0.98); background:var(--gold2); }
 .btn-auth:disabled { opacity:0.5; pointer-events:none; }
 .auth-switch { text-align:center; margin-top:14px; font-size:0.62rem; color:var(--muted); }
 .auth-switch button { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.62rem; color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; }
 .auth-error { background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.28); border-radius:var(--radius-sm); padding:10px 12px; font-size:0.65rem; color:#e08878; display:none; margin-bottom:12px; line-height:1.5; }
 .auth-error.visible { display:block; }
-
-/* ─── HEADER AUTH PILL ─── */
-.header-auth { margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; min-height:36px; }
-.user-pill { display:none; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:6px 14px 6px 8px; }
-.user-pill.visible { display:flex; }
-.user-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(74,158,106,0.6); flex-shrink:0; }
-.user-name { font-size:0.65rem; color:var(--cream); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.btn-signout { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color 0.2s; }
-.btn-signout:active { color:var(--red); }
 </style>
 </head>
 <body>
@@ -768,13 +526,12 @@ input::placeholder { color: rgba(255,255,255,0.18); }
   <div class="auth-spinner-text">Connecting…</div>
 </div>
 
-<!-- AUTH MODAL — cannot be dismissed without signing in -->
+<!-- AUTH MODAL -->
 <div class="modal-overlay hidden" id="authModal">
   <div class="auth-sheet">
     <div class="auth-sheet-icon">⛳</div>
     <div class="auth-sheet-title" id="authModalTitle">Welcome back</div>
-    <div class="auth-sheet-sub" id="authModalSub">Parmate · Team HCP</div>
-
+    <div class="auth-sheet-sub">Parmate · Team HCP</div>
     <button class="btn-google" onclick="doGoogleSignIn()">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.075 17.64 11.768 17.64 9.2z" fill="#4285F4"/>
@@ -784,374 +541,262 @@ input::placeholder { color: rgba(255,255,255,0.18); }
       </svg>
       Continue with Google
     </button>
-
     <div class="auth-divider"><span>or</span></div>
-
-    <!-- Sign In form -->
     <div id="formSignIn">
       <div class="auth-error" id="signInError"></div>
       <div class="auth-fields">
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="signInEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="signInPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()">
-        </div>
+        <div class="field"><label>Email</label><input type="email" id="signInEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
+        <div class="field"><label>Password</label><input type="password" id="signInPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
       </div>
       <button class="btn-auth" id="btnSignIn" onclick="doEmailSignIn()">Sign In →</button>
       <div class="auth-switch">No account? <button onclick="switchToRegister()">Create one</button></div>
     </div>
-
-    <!-- Register form -->
     <div id="formRegister" style="display:none;">
       <div class="auth-error" id="registerError"></div>
       <div class="auth-fields">
-        <div class="field">
-          <label>Name</label>
-          <input type="text" id="regName" placeholder="Your name" autocomplete="name">
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" inputmode="email">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="regPass" placeholder="Min. 6 characters" autocomplete="new-password">
-        </div>
-        <div class="field">
-          <label>Confirm Password</label>
-          <input type="password" id="regPassConfirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
-        </div>
+        <div class="field"><label>Name</label><input type="text" id="regName" placeholder="Your name" autocomplete="name"></div>
+        <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" inputmode="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="regPass" placeholder="Min. 6 characters" autocomplete="new-password"></div>
+        <div class="field"><label>Confirm Password</label><input type="password" id="regPassConfirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
       </div>
       <button class="btn-auth" id="btnRegister" onclick="doRegister()">Create Account →</button>
       <div class="auth-switch">Already have an account? <button onclick="switchToSignIn()">Sign in</button></div>
     </div>
-    <!-- No cancel button — login is required -->
   </div>
 </div>
 
-<div class="app">
+<!-- ═══ MAIN APP SHELL ═══ -->
 
-  <!-- ─── LOCKED HERO (shown when not logged in) ─── -->
-  <div id="lockedHero" class="locked-hero">
-    <span class="locked-hero-flag">⛳</span>
-    <h1><em>Parmate</em></h1>
-    <div class="locked-hero-sub">Scramble Handicap Calculator · WHS</div>
-    <div class="locked-hero-desc">Sign in to calculate your team handicaps and save your favourite courses.</div>
-    <div class="locked-features">
-      <div class="locked-feature">
-        <div class="locked-feature-icon">🏌️</div>
-        WHS scramble handicap calculator
-      </div>
-      <div class="locked-feature">
-        <div class="locked-feature-icon">💾</div>
-        Save your team & partner details
-      </div>
-      <div class="locked-feature">
-        <div class="locked-feature-icon">📍</div>
-        Save courses with rating & slope
-      </div>
-    </div>
-    <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
-    <div class="locked-terms">Free to use · No payment required</div>
-  </div>
+<!-- Tab Pages (side-by-side, translated by CSS) -->
+<div class="tab-pages" id="tabPages">
 
-  <!-- ─── APP CONTENT (hidden until logged in) ─── -->
-  <div class="app-content" id="appContent">
+  <!-- ── PAGE 1: CALCULATOR ── -->
+  <div class="tab-page" id="pageCalc">
+    <div class="page-inner">
 
-    <!-- HEADER -->
-    <header class="header">
-      <span class="header-flag">⛳</span>
-      <h1><em>Parmate</em></h1>
-      <div class="header-sub">Scramble Handicap Calculator · WHS</div>
-      <div class="header-auth">
-        <div class="user-pill" id="userPill">
-          <span class="user-dot"></span>
-          <span class="user-name" id="userPillName">Player</span>
-          <button class="btn-signout" onclick="doSignOut()">sign out</button>
+      <!-- Locked hero -->
+      <div id="lockedHero" class="locked-hero">
+        <span class="locked-hero-flag">⛳</span>
+        <h1><em>Parmate</em></h1>
+        <div class="locked-hero-sub">Scramble Handicap Calculator · WHS</div>
+        <div class="locked-hero-desc">Sign in to calculate team handicaps and save your courses & teams.</div>
+        <div class="locked-features">
+          <div class="locked-feature"><div class="locked-feature-icon">🏌️</div>WHS scramble handicap calculator</div>
+          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save up to 5 courses & 2 teams</div>
+          <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 or 18 hole support</div>
         </div>
+        <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
+        <div class="locked-terms">Free to use · No payment required</div>
       </div>
-    </header>
 
-    <!-- RESTORE BANNERS -->
-    <div class="restore-banner" id="restoreCourseBanner">
-      <div class="restore-banner-title">📍 Saved Course Found</div>
-      <div class="restore-banner-body" id="restoreCourseBannerBody">Load your last saved course?</div>
-      <div class="restore-banner-actions">
-        <button class="btn-restore" onclick="restoreCourse()">Load Course</button>
-        <button class="btn-restore-dismiss" onclick="dismissRestoreCourse()">Dismiss</button>
-      </div>
-    </div>
+      <!-- App content (revealed on login) -->
+      <div class="app-content" id="appContent">
 
-    <div class="restore-banner" id="restoreTeamBanner">
-      <div class="restore-banner-title">🏌️ Saved Team Found</div>
-      <div class="restore-banner-body" id="restoreTeamBannerBody">Load your saved team details?</div>
-      <div class="restore-banner-actions">
-        <button class="btn-restore" onclick="restoreTeam()">Load Team</button>
-        <button class="btn-restore-dismiss" onclick="dismissRestoreTeam()">Dismiss</button>
-      </div>
-    </div>
-
-    <!-- COURSE DETAILS -->
-    <div class="section">
-      <div class="section-header">
-        <span class="section-icon">📍</span>
-        <span class="section-title">Course Details</span>
-        <!-- 9 / 18 holes toggle -->
-        <div class="holes-toggle">
-          <button class="holes-toggle-btn" id="btn9holes" onclick="setHoles(9)">9</button>
-          <button class="holes-toggle-btn active" id="btn18holes" onclick="setHoles(18)">18</button>
-        </div>
-        <button class="btn-save-inline" id="saveCourseBtn" onclick="saveCourse()">💾 Save</button>
-      </div>
-      <div class="section-body">
-        <!-- Course name -->
-        <div class="field">
-          <label>Course Name</label>
-          <input type="text" id="course_name" placeholder="e.g. Royal Amsterdam Golf Club">
-        </div>
-
-        <!-- 9-hole notice -->
-        <div class="holes-note" id="holesNote">
-          ⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard. The handicap calculation scales automatically.
-        </div>
-
-        <div class="grid-3">
-          <div class="field">
-            <label>Rating</label>
-            <input type="number" id="course_rating" placeholder="70.5" step="0.1" min="30" max="85" inputmode="decimal">
-          </div>
-          <div class="field">
-            <label>Slope</label>
-            <input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric">
-          </div>
-          <div class="field">
-            <label>Par</label>
-            <input type="number" id="course_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric">
-            <div class="par-hint" id="parHint"></div>
-          </div>
-        </div>
-
-        <!-- Forward Tee -->
-        <div style="margin-top:4px;">
-          <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
-            Forward Tee <span style="opacity:0.5;font-size:0.55rem;">(optional)</span>
-          </div>
-          <div class="grid-3">
-            <div class="field">
-              <label>Rating</label>
-              <input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="30" max="85" inputmode="decimal">
-            </div>
-            <div class="field">
-              <label>Slope</label>
-              <input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric">
-            </div>
-            <div class="field">
-              <label>Par</label>
-              <input type="number" id="tee3_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric">
+        <header class="header">
+          <span class="header-flag">⛳</span>
+          <h1><em>Parmate</em></h1>
+          <div class="header-sub">Scramble Handicap Calculator · WHS</div>
+          <div class="header-auth">
+            <div class="user-pill" id="userPill">
+              <span class="user-dot"></span>
+              <span class="user-name" id="userPillName">Player</span>
+              <button class="btn-signout" onclick="doSignOut()">sign out</button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </header>
 
-    <!-- FORMAT -->
-    <div class="section">
-      <div class="section-header">
-        <span class="section-icon">⚙️</span>
-        <span class="section-title">Scramble Format</span>
-      </div>
-      <div class="section-body">
-        <div class="fmt-grid">
-          <div class="fmt-pill">
-            <input type="radio" name="fmt" id="fA" value="35_15" checked>
-            <label for="fA"><strong>35% / 15%</strong>2-player scramble</label>
-          </div>
-          <div class="fmt-pill">
-            <input type="radio" name="fmt" id="fB" value="25_20">
-            <label for="fB"><strong>25% / 20%</strong>Higher allowance</label>
-          </div>
-          <div class="fmt-pill">
-            <input type="radio" name="fmt" id="fC" value="20_15">
-            <label for="fC"><strong>20% / 15%</strong>Lower allowance</label>
-          </div>
-          <div class="fmt-pill">
-            <input type="radio" name="fmt" id="fD" value="50_50">
-            <label for="fD"><strong>50% / 50%</strong>Equal / casual</label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TEAM 1 -->
-    <div class="section" id="team1-section">
-      <div class="section-header">
-        <span class="section-icon">🏌️</span>
-        <span class="section-title">My Team</span>
-        <button class="btn-save-inline" id="saveTeamBtn" onclick="saveTeam()">💾 Save</button>
-      </div>
-      <div class="section-body">
-        <div class="team-label">
-          <div class="team-label-num">1</div>
-          <input class="team-name-input" type="text" id="team1_name" placeholder="Team name…" value="Team Eagles">
-        </div>
-        <!-- Player 1 -->
-        <div class="player-card">
-          <div class="player-card-num">1</div>
-          <div class="field">
-            <label>Your Name</label>
-            <input type="text" id="t1p1_name" placeholder="Optional">
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label>Handicap Index</label>
-              <input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+        <!-- COURSE DETAILS -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">📍</span>
+            <span class="section-title">Course Details</span>
+            <div class="holes-toggle">
+              <button class="holes-toggle-btn" id="btn9holes" onclick="setHoles(9)">9</button>
+              <button class="holes-toggle-btn active" id="btn18holes" onclick="setHoles(18)">18</button>
             </div>
+            <button class="btn-save-inline" id="saveCourseBtn" onclick="saveCourse()">💾 Save</button>
+          </div>
+          <div class="section-body">
             <div class="field">
-              <label>Gender</label>
-              <div class="gender-pills">
-                <div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div>
-                <div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div>
+              <label>Course Name</label>
+              <input type="text" id="course_name" placeholder="e.g. Royal Amsterdam Golf Club">
+            </div>
+            <div class="holes-note" id="holesNote">
+              ⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard.
+            </div>
+            <div class="grid-3">
+              <div class="field"><label>Rating</label><input type="number" id="course_rating" placeholder="70.5" step="0.1" min="30" max="85" inputmode="decimal"></div>
+              <div class="field"><label>Slope</label><input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric"></div>
+              <div class="field">
+                <label>Par</label>
+                <input type="number" id="course_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric">
+                <div class="par-hint" id="parHint"></div>
+              </div>
+            </div>
+            <div style="margin-top:4px;">
+              <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Forward Tee <span style="opacity:0.5;font-size:0.55rem;">(optional)</span></div>
+              <div class="grid-3">
+                <div class="field"><label>Rating</label><input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="30" max="85" inputmode="decimal"></div>
+                <div class="field"><label>Slope</label><input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric"></div>
+                <div class="field"><label>Par</label><input type="number" id="tee3_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric"></div>
               </div>
             </div>
           </div>
-          <div class="field">
-            <label>Tee</label>
-            <div class="tee-pills">
-              <div class="tee-pill t1"><input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ"><label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
-              <div class="tee-pill t2"><input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked><label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
-              <div class="tee-pill t3"><input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd"><label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+        </div>
+
+        <!-- FORMAT -->
+        <div class="section">
+          <div class="section-header"><span class="section-icon">⚙️</span><span class="section-title">Scramble Format</span></div>
+          <div class="section-body">
+            <div class="fmt-grid">
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong>2-player WHS-standard</label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fB" value="25_20"><label for="fB"><strong>25% / 20%</strong>Higher allowance</label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fC" value="20_15"><label for="fC"><strong>20% / 15%</strong>Lower allowance</label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fD" value="50_50"><label for="fD"><strong>50% / 50%</strong>Equal / casual</label></div>
             </div>
           </div>
         </div>
-        <!-- Player 2 -->
-        <div class="player-card">
-          <div class="player-card-num">2</div>
-          <div class="field">
-            <label>Partner Name</label>
-            <input type="text" id="t1p2_name" placeholder="Optional">
+
+        <!-- MY TEAM -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">🏌️</span>
+            <span class="section-title">My Team</span>
+            <button class="btn-save-inline" id="saveTeamBtn" onclick="saveTeam()">💾 Save</button>
           </div>
-          <div class="grid-2">
-            <div class="field">
-              <label>Handicap Index</label>
-              <input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+          <div class="section-body">
+            <div class="team-label">
+              <div class="team-label-num">1</div>
+              <input class="team-name-input" type="text" id="team1_name" placeholder="Team name…" value="Add your team name">
             </div>
-            <div class="field">
-              <label>Gender</label>
-              <div class="gender-pills">
-                <div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div>
-                <div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div>
+            <div class="player-card">
+              <div class="player-card-num">1</div>
+              <div class="field"><label>Your Name</label><input type="text" id="t1p1_name" placeholder="Optional"></div>
+              <div class="grid-2">
+                <div class="field"><label>Handicap Index</label><input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div></div></div>
               </div>
+              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ"><label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked><label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd"><label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+            </div>
+            <div class="player-card">
+              <div class="player-card-num">2</div>
+              <div class="field"><label>Partner Name</label><input type="text" id="t1p2_name" placeholder="Optional"></div>
+              <div class="grid-2">
+                <div class="field"><label>Handicap Index</label><input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div></div></div>
+              </div>
+              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ"><label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked><label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd"><label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
             </div>
           </div>
-          <div class="field">
-            <label>Tee</label>
-            <div class="tee-pills">
-              <div class="tee-pill t1"><input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ"><label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
-              <div class="tee-pill t2"><input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked><label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
-              <div class="tee-pill t3"><input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd"><label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+        </div>
+
+        <!-- OPPONENT TEAM -->
+        <div class="section">
+          <div class="section-header"><span class="section-icon">🏌️</span><span class="section-title">Opponent Team</span></div>
+          <div class="section-body">
+            <div class="team-label">
+              <div class="team-label-num">2</div>
+              <input class="team-name-input" type="text" id="team2_name" placeholder="Team name…" value="Add team name">
+            </div>
+            <div class="player-card">
+              <div class="player-card-num">1</div>
+              <div class="field"><label>Player 1 Name</label><input type="text" id="t2p1_name" placeholder="Optional"></div>
+              <div class="grid-2">
+                <div class="field"><label>Handicap Index</label><input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div></div></div>
+              </div>
+              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ"><label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked><label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd"><label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+            </div>
+            <div class="player-card">
+              <div class="player-card-num">2</div>
+              <div class="field"><label>Player 2 Name</label><input type="text" id="t2p2_name" placeholder="Optional"></div>
+              <div class="grid-2">
+                <div class="field"><label>Handicap Index</label><input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div></div></div>
+              </div>
+              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ"><label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked><label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd"><label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
             </div>
           </div>
+        </div>
+
+        <div class="info-note">
+          ℹ️ WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH × their format %, summed and rounded.
+        </div>
+        <div class="reset-row">
+          <button class="btn-reset" onclick="resetAll()">↺ Reset all fields</button>
+        </div>
+
+        <!-- sticky calc button — sits above bottom tab bar -->
+        <div class="calc-wrap">
+          <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
+        </div>
+
+      </div><!-- /appContent -->
+    </div><!-- /page-inner -->
+  </div><!-- /pageCalc -->
+
+  <!-- ── PAGE 2: MY DATA ── -->
+  <div class="tab-page" id="pageMyData">
+    <div class="page-inner">
+      <div class="mydata-header">
+        <h2>My <em>Scramble</em></h2>
+        <div class="mydata-sub">Saved courses &amp; teams</div>
+      </div>
+
+      <!-- COURSES -->
+      <div class="mydata-section-label">
+        <span class="mydata-section-label-text">📍 Courses</span>
+        <span class="mydata-section-label-count" id="courseCount">0 / 5</span>
+      </div>
+      <div class="slots-full-note" id="coursesFull">
+        You've saved 5 courses — delete one before saving a new course.
+      </div>
+      <div id="coursesList">
+        <div class="saved-empty">
+          <span class="saved-empty-icon">📍</span>
+          No courses saved yet.<br>Fill in course details in the Calculator tab and tap 💾 Save.
         </div>
       </div>
-    </div>
 
-    <!-- TEAM 2 -->
-    <div class="section" id="team2-section">
-      <div class="section-header">
-        <span class="section-icon">🏌️</span>
-        <span class="section-title">Opponent Team</span>
+      <div class="mydata-spacer"></div>
+
+      <!-- TEAMS -->
+      <div class="mydata-section-label">
+        <span class="mydata-section-label-text">🏌️ My Teams</span>
+        <span class="mydata-section-label-count" id="teamCount">0 / 2</span>
       </div>
-      <div class="section-body">
-        <div class="team-label">
-          <div class="team-label-num">2</div>
-          <input class="team-name-input" type="text" id="team2_name" placeholder="Team name…" value="Team Birdies">
-        </div>
-        <!-- Player 1 -->
-        <div class="player-card">
-          <div class="player-card-num">1</div>
-          <div class="field">
-            <label>Player 1 Name</label>
-            <input type="text" id="t2p1_name" placeholder="Optional">
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label>Handicap Index</label>
-              <input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
-            </div>
-            <div class="field">
-              <label>Gender</label>
-              <div class="gender-pills">
-                <div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div>
-                <div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div>
-              </div>
-            </div>
-          </div>
-          <div class="field">
-            <label>Tee</label>
-            <div class="tee-pills">
-              <div class="tee-pill t1"><input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ"><label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
-              <div class="tee-pill t2"><input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked><label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
-              <div class="tee-pill t3"><input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd"><label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
-            </div>
-          </div>
-        </div>
-        <!-- Player 2 -->
-        <div class="player-card">
-          <div class="player-card-num">2</div>
-          <div class="field">
-            <label>Player 2 Name</label>
-            <input type="text" id="t2p2_name" placeholder="Optional">
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label>Handicap Index</label>
-              <input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
-            </div>
-            <div class="field">
-              <label>Gender</label>
-              <div class="gender-pills">
-                <div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div>
-                <div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div>
-              </div>
-            </div>
-          </div>
-          <div class="field">
-            <label>Tee</label>
-            <div class="tee-pills">
-              <div class="tee-pill t1"><input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ"><label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
-              <div class="tee-pill t2"><input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked><label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
-              <div class="tee-pill t3"><input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd"><label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
-            </div>
-          </div>
+      <div class="slots-full-note" id="teamsFull">
+        You've saved 2 teams — delete one before saving a new team.
+      </div>
+      <div id="teamsList">
+        <div class="saved-empty">
+          <span class="saved-empty-icon">🏌️</span>
+          No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.
         </div>
       </div>
-    </div>
 
-    <div class="info-note">
-      ℹ️ Course Handicap is calculated per WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH is multiplied by their format %, then summed and rounded to the nearest whole number.
+      <div class="mydata-spacer"></div>
     </div>
+  </div><!-- /pageMyData -->
 
-    <div class="reset-row">
-      <button class="btn-reset" onclick="resetAll()">↺ Reset all fields</button>
-    </div>
+</div><!-- /tab-pages -->
 
-    <!-- STICKY CALCULATE BUTTON -->
-    <div class="calc-wrap">
-      <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
-    </div>
-
-  </div><!-- /appContent -->
-</div><!-- /app -->
+<!-- BOTTOM TAB BAR -->
+<nav class="bottom-tabs" id="bottomTabs">
+  <button class="tab-btn-bar active" id="tabBtnCalc" onclick="switchTab('calc')">
+    <span class="tab-btn-icon">⛳</span>
+    <span class="tab-btn-label">Calculator</span>
+  </button>
+  <button class="tab-btn-bar" id="tabBtnMyData" onclick="switchTab('mydata')">
+    <span class="tab-btn-icon">📁</span>
+    <span class="tab-btn-label">My Scramble</span>
+  </button>
+</nav>
 
 <!-- RESULTS OVERLAY -->
 <div class="results-overlay" id="resultsOverlay">
   <div class="results-inner">
-    <div class="results-back">
-      <button class="btn-back" onclick="closeResults()">← Back</button>
-    </div>
+    <div class="results-back"><button class="btn-back" onclick="closeResults()">← Back</button></div>
     <div class="results-hero">
       <span class="results-hero-flag">⛳</span>
       <div class="results-event" id="res_event">Results</div>
@@ -1165,213 +810,196 @@ input::placeholder { color: rgba(255,255,255,0.18); }
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── FORMATS ───
-const FORMATS = {
-  '35_15': [0.35, 0.15],
-  '25_20': [0.25, 0.20],
-  '20_15': [0.20, 0.15],
-  '50_50': [0.50, 0.50],
-};
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+const FORMATS = { '35_15':[0.35,0.15], '25_20':[0.25,0.20], '20_15':[0.20,0.15], '50_50':[0.50,0.50] };
+const MAX_COURSES = 5;
+const MAX_TEAMS   = 2;
 
-// ─── SAVED DATA (loaded from Firestore on sign-in) ───
-let _savedCourse = null;
-let _savedTeam   = null;
+let _holes       = 18;
+let _savedCourses = []; // array, max 5
+let _savedTeams   = []; // array, max 2
+let _activeTab   = 'calc';
 
-// ─── HOLES STATE ───
-let _holes = 18; // 9 or 18
+// ═══════════════════════════════════
+// TABS + SWIPE
+// ═══════════════════════════════════
+function switchTab(tab) {
+  _activeTab = tab;
+  const pages = document.getElementById('tabPages');
+  pages.classList.toggle('show-mydata', tab === 'mydata');
+  document.getElementById('tabBtnCalc').classList.toggle('active',   tab === 'calc');
+  document.getElementById('tabBtnMyData').classList.toggle('active', tab === 'mydata');
+  if (tab === 'mydata') renderMyData();
+}
 
+// Swipe detection
+(function() {
+  let sx = 0, sy = 0, moved = false;
+  document.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    moved = false;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (moved) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      // Only swipe if not inside a results overlay
+      if (document.getElementById('resultsOverlay').classList.contains('open')) return;
+      if (dx < 0 && _activeTab === 'calc')   switchTab('mydata');
+      if (dx > 0 && _activeTab === 'mydata') switchTab('calc');
+    }
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    const dx = Math.abs(e.touches[0].clientX - sx);
+    const dy = Math.abs(e.touches[0].clientY - sy);
+    if (dx > 8) moved = true; // suppress accidental swipe on vertical scroll
+  }, { passive: true });
+})();
+
+// ═══════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + (type||'error');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+function val(id)      { return document.getElementById(id)?.value?.trim() || ''; }
+function numVal(id)   { return parseFloat(document.getElementById(id)?.value); }
+function radio(name)  { return document.querySelector(`input[name="${name}"]:checked`)?.value; }
+function setVal(id,v) { const el = document.getElementById(id); if (el) el.value = (v ?? ''); }
+function setRadio(name,v) { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; }
+
+// ═══════════════════════════════════
+// HOLES TOGGLE
+// ═══════════════════════════════════
 function setHoles(n) {
   _holes = n;
-  // Toggle button styles
   document.getElementById('btn9holes').classList.toggle('active',  n === 9);
   document.getElementById('btn18holes').classList.toggle('active', n === 18);
-  // Show/hide 9-hole note
   document.getElementById('holesNote').classList.toggle('visible', n === 9);
-  // Update par placeholder and hint
-  const parEl   = document.getElementById('course_par');
-  const hintEl  = document.getElementById('parHint');
-  const tee3Par = document.getElementById('tee3_par');
+  const parEl  = document.getElementById('course_par');
+  const hintEl = document.getElementById('parHint');
+  const t3par  = document.getElementById('tee3_par');
   if (n === 9) {
-    parEl.placeholder  = '36';
-    tee3Par.placeholder = '36';
-    hintEl.textContent  = 'Typical 9-hole par: 35 or 36';
+    parEl.placeholder = '36'; t3par.placeholder = '36';
+    hintEl.textContent = 'Typical 9-hole par: 35 or 36';
   } else {
-    parEl.placeholder  = '72';
-    tee3Par.placeholder = '72';
-    hintEl.textContent  = '';
+    parEl.placeholder = '72'; t3par.placeholder = '72';
+    hintEl.textContent = '';
   }
 }
 
-// ─── HELPERS ───
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + (type || 'error');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-function val(id)    { return document.getElementById(id)?.value?.trim() || ''; }
-function numVal(id) { return parseFloat(document.getElementById(id)?.value); }
-function radio(name){ return document.querySelector(`input[name="${name}"]:checked`)?.value; }
-function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ''; }
-function setRadio(name, v) { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; }
-
-// ─── COURSE HANDICAP (WHS) ───
-function getCH(index, slope, rating, par) {
-  return index * (slope / 113) + (rating - par);
-}
+// ═══════════════════════════════════
+// CALCULATE
+// ═══════════════════════════════════
+function getCH(index, slope, rating, par) { return index * (slope / 113) + (rating - par); }
 
 function getTee(teeKey) {
   if (teeKey === 'fwd') {
-    const r = numVal('tee3_rating');
-    const s = numVal('tee3_slope');
-    const p = numVal('tee3_par') || 72;
+    const r = numVal('tee3_rating'), s = numVal('tee3_slope'), p = numVal('tee3_par') || 72;
     if (!isNaN(r) && !isNaN(s)) return { rating:r, slope:s, par:p, key:'fwd' };
   }
-  const r = numVal('course_rating');
-  const s = numVal('course_slope');
-  const p = numVal('course_par') || 72;
+  const r = numVal('course_rating'), s = numVal('course_slope'), p = numVal('course_par') || 72;
   return { rating:r, slope:s, par:p, key: teeKey === 'champ' ? 'champ' : 'main' };
 }
 
-function getPlayer(teamIdx, playerIdx) {
-  const prefix = `t${teamIdx}p${playerIdx}_`;
-  const hcp    = parseFloat(document.getElementById(prefix + 'hcp')?.value);
-  const name   = val(prefix + 'name') || `Player ${playerIdx}`;
-  const gender = radio(prefix + 'g') || 'M';
-  const teeKey = radio(prefix + 'tee') || 'main';
-  return { name, hcp, gender, teeKey };
+function getPlayer(ti, pi) {
+  const pfx = `t${ti}p${pi}_`;
+  return {
+    name:   val(pfx+'name') || `Player ${pi}`,
+    hcp:    parseFloat(document.getElementById(pfx+'hcp')?.value),
+    gender: radio(pfx+'g') || 'M',
+    teeKey: radio(pfx+'tee') || 'main'
+  };
 }
 
 function calcTeam(players, pcts) {
   const active = players.filter(p => !isNaN(p.hcp) && p.hcp >= 0 && p.hcp <= 54);
-  if (active.length === 0) return null;
-  active.forEach(p => {
-    const tee = getTee(p.teeKey);
-    p.ch = getCH(p.hcp, tee.slope, tee.rating, tee.par);
-    p.teeUsed = tee.key;
-  });
-  active.sort((a, b) => a.ch - b.ch);
+  if (!active.length) return null;
+  active.forEach(p => { const tee = getTee(p.teeKey); p.ch = getCH(p.hcp, tee.slope, tee.rating, tee.par); p.teeUsed = tee.key; });
+  active.sort((a,b) => a.ch - b.ch);
   let total = 0;
-  active.forEach((p, i) => {
-    const pct = pcts[Math.min(i, pcts.length - 1)] || 0;
-    p.pct = pct;
-    p.contrib = p.ch * pct;
-    total += p.contrib;
-  });
+  active.forEach((p,i) => { p.pct = pcts[Math.min(i, pcts.length-1)] || 0; p.contrib = p.ch * p.pct; total += p.contrib; });
   return { players: active, hcp: Math.round(total) };
 }
 
 function calculate() {
-  const rating = numVal('course_rating');
-  const slope  = numVal('course_slope');
-  if (isNaN(rating) || isNaN(slope)) {
-    showToast('Please fill in the Course Rating and Slope first.', 'error');
-    return;
-  }
-  const fmtKey = radio('fmt') || '35_15';
-  const pcts   = FORMATS[fmtKey];
-  const teams  = [
-    { name: val('team1_name') || 'My Team',       players: [getPlayer(1,1), getPlayer(1,2)] },
-    { name: val('team2_name') || 'Opponent Team', players: [getPlayer(2,1), getPlayer(2,2)] }
+  const rating = numVal('course_rating'), slope = numVal('course_slope');
+  if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Course Rating and Slope first.', 'error'); return; }
+  const pcts = FORMATS[radio('fmt') || '35_15'];
+  const teams = [
+    { name: val('team1_name') || 'My Team',   players: [getPlayer(1,1), getPlayer(1,2)] },
+    { name: val('team2_name') || 'Opponents', players: [getPlayer(2,1), getPlayer(2,2)] }
   ];
-  const results = [];
-  let hasAnyPlayer = false;
+  const results = []; let any = false;
   for (const team of teams) {
     const res = calcTeam(team.players, pcts);
-    if (res) { hasAnyPlayer = true; results.push({ name: team.name, ...res }); }
-    else      { results.push({ name: team.name, hcp: null, players: [] }); }
+    if (res) { any = true; results.push({ name: team.name, ...res }); }
+    else      results.push({ name: team.name, hcp: null, players: [] });
   }
-  if (!hasAnyPlayer) { showToast("Enter at least one player's handicap to calculate.", 'error'); return; }
+  if (!any) { showToast("Enter at least one player's handicap.", 'error'); return; }
   renderResults(results, rating, slope, numVal('course_par') || 72, pcts);
   document.getElementById('resultsOverlay').classList.add('open');
   document.getElementById('resultsOverlay').scrollTop = 0;
 }
 
 function renderResults(results, rating, slope, par, pcts) {
-  const fmtLabel  = pcts.map(p => Math.round(p*100)+'%').join(' / ');
-  const courseName = val('course_name');
-  document.getElementById('res_event').textContent = courseName || 'Scramble Results';
-  document.getElementById('res_meta').innerHTML =
-    `${_holes} holes · Course Rating ${rating} · Slope ${slope} · Par ${par}<br>Format: ${fmtLabel} scramble allowance`;
-
-  const sorted = [...results].sort((a,b) => {
-    if (a.hcp === null) return 1;
-    if (b.hcp === null) return -1;
-    return a.hcp - b.hcp;
-  });
-
-  const teeColors = { main:'var(--tee2)', champ:'var(--tee1)', fwd:'var(--tee3)' };
-  const teeNames  = { main:'Std', champ:'Champ', fwd:'Fwd' };
+  const fmt = pcts.map(p => Math.round(p*100)+'%').join(' / ');
+  document.getElementById('res_event').textContent = val('course_name') || 'Scramble Results';
+  document.getElementById('res_meta').innerHTML = `${_holes} holes · Rating ${rating} · Slope ${slope} · Par ${par}<br>Format: ${fmt} allowance`;
+  const sorted = [...results].sort((a,b) => a.hcp === null ? 1 : b.hcp === null ? -1 : a.hcp - b.hcp);
+  const tC = { main:'var(--tee2)', champ:'var(--tee1)', fwd:'var(--tee3)' };
+  const tN = { main:'Std', champ:'Champ', fwd:'Fwd' };
   let html = '';
-
   sorted.forEach((team, idx) => {
-    if (team.hcp === null) {
-      html += `<div class="result-card"><div class="result-card-top"><div class="result-team-name">${esc(team.name)}</div><div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">No players entered</div></div></div>`;
-      return;
-    }
-    const playerRows = team.players.map(p => {
-      const tColor = teeColors[p.teeUsed] || teeColors.main;
-      const tName  = teeNames[p.teeUsed]  || 'Std';
-      return `<div class="result-player-row"><div class="result-player-name">${esc(p.name)}</div><div class="result-player-meta"><span class="result-player-hcp">${p.hcp.toFixed(1)}</span><span class="tee-dot-sm" style="background:${tColor}"></span><span class="result-pct">${Math.round(p.pct*100)}%</span></div></div>`;
-    }).join('');
-    html += `
-      <div class="result-card">
-        <div class="result-card-top">
-          <div>
-            <div class="result-team-name">${esc(team.name)}</div>
-            <div class="result-strokes">+${team.hcp} stroke${team.hcp !== 1 ? 's' : ''} off scratch</div>
-          </div>
-          <div class="result-hcp-block">
-            <div class="result-hcp-num">${team.hcp}</div>
-            <div class="result-hcp-label">Team HCP</div>
-          </div>
-        </div>
-        <div class="result-players">${playerRows}</div>
-      </div>`;
+    if (team.hcp === null) { html += `<div class="result-card"><div class="result-card-top"><div class="result-team-name">${esc(team.name)}</div><div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">No players entered</div></div></div>`; return; }
+    const rows = team.players.map(p => `<div class="result-player-row"><div class="result-player-name">${esc(p.name)}</div><div class="result-player-meta"><span class="result-player-hcp">${p.hcp.toFixed(1)}</span><span class="tee-dot-sm" style="background:${tC[p.teeUsed]||tC.main}"></span><span class="result-pct">${Math.round(p.pct*100)}%</span></div></div>`).join('');
+    html += `<div class="result-card"><div class="result-card-top"><div><div class="result-team-name">${esc(team.name)}</div><div class="result-strokes">+${team.hcp} stroke${team.hcp!==1?'s':''} off scratch</div></div><div class="result-hcp-block"><div class="result-hcp-num">${team.hcp}</div><div class="result-hcp-label">Team HCP</div></div></div><div class="result-players">${rows}</div></div>`;
     if (idx === 0 && sorted.length === 2 && sorted[1].hcp !== null) {
       const diff = Math.abs(sorted[1].hcp - sorted[0].hcp);
-      html += `<div class="result-vs-badge"><span>${esc(sorted[0].name)}</span><span class="result-vs-diff">${diff === 0 ? 'Even' : diff + ' stroke' + (diff !== 1 ? 's' : '')}</span><span>${esc(sorted[1].name)}</span></div>`;
+      html += `<div class="result-vs-badge"><span>${esc(sorted[0].name)}</span><span class="result-vs-diff">${diff===0?'Even':diff+' stroke'+(diff!==1?'s':'')}</span><span>${esc(sorted[1].name)}</span></div>`;
     }
   });
   document.getElementById('resultsContent').innerHTML = html;
 }
 
-function closeResults() {
-  document.getElementById('resultsOverlay').classList.remove('open');
-}
+function closeResults() { document.getElementById('resultsOverlay').classList.remove('open'); }
 
 function resetAll() {
   if (!confirm('Reset all fields?')) return;
   ['course_name','course_rating','course_slope','tee3_rating','tee3_slope',
    't1p1_name','t1p1_hcp','t1p2_name','t1p2_hcp',
-   't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('course_par').value = '72';
-  document.getElementById('tee3_par').value   = '72';
-  document.getElementById('team1_name').value = 'Team Eagles';
-  document.getElementById('team2_name').value = 'Team Birdies';
-  ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(n => setRadio(n, 'M'));
-  ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(n => setRadio(n, 'main'));
+   't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  setVal('course_par','72'); setVal('tee3_par','72');
+  setVal('team1_name','Team Eagles'); setVal('team2_name','Team Birdies');
+  ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(n => setRadio(n,'M'));
+  ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(n => setRadio(n,'main'));
   document.getElementById('fA').checked = true;
-  setHoles(18); // reset to 18 holes
+  setHoles(18);
 }
 
-// ─── SAVE COURSE ───
+// ═══════════════════════════════════
+// SAVE COURSE (multi-slot)
+// ═══════════════════════════════════
 async function saveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (_savedCourses.length >= MAX_COURSES) {
+    showToast(`Maximum ${MAX_COURSES} courses — delete one in My Scramble first.`, 'error');
+    return;
+  }
+  const rating = numVal('course_rating'), slope = numVal('course_slope');
+  if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Rating and Slope before saving.', 'error'); return; }
   const data = {
-    name:        val('course_name'),
-    rating:      numVal('course_rating'),
-    slope:       numVal('course_slope'),
+    id:          Date.now().toString(),
+    name:        val('course_name') || 'Unnamed Course',
+    rating, slope,
     par:         numVal('course_par') || (_holes === 9 ? 36 : 72),
     holes:       _holes,
     tee3_rating: numVal('tee3_rating'),
@@ -1379,31 +1007,64 @@ async function saveCourse() {
     tee3_par:    numVal('tee3_par') || (_holes === 9 ? 36 : 72),
     savedAt:     new Date().toISOString(),
   };
-  if (isNaN(data.rating) || isNaN(data.slope)) {
-    showToast('Please fill in Rating and Slope before saving.', 'error');
-    return;
-  }
   const btn = document.getElementById('saveCourseBtn');
-  btn.textContent = '⏳ Saving…';
+  btn.textContent = '⏳';
   try {
-    await window._fbDb.collection('users').doc(uid).collection('saved').doc('course').set(data);
-    _savedCourse = data;
-    btn.textContent = '✓ Saved';
-    btn.classList.add('saved');
-    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2500);
+    _savedCourses.push(data);
+    await persistCourses(uid);
+    btn.textContent = '✓ Saved'; btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2200);
     showToast('Course saved!', 'success');
+    renderMyData();
   } catch(e) {
+    _savedCourses.pop();
     btn.textContent = '💾 Save';
     showToast('Could not save: ' + e.message, 'error');
   }
 }
 
-// ─── SAVE TEAM ───
+async function deleteCourse(id) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) return;
+  _savedCourses = _savedCourses.filter(c => c.id !== id);
+  try { await persistCourses(uid); renderMyData(); showToast('Course deleted.', 'success'); }
+  catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function persistCourses(uid) {
+  await window._fbDb.collection('users').doc(uid).collection('saved').doc('courses_v2').set({ list: _savedCourses });
+}
+
+function loadCourseIntoCalc(id) {
+  const c = _savedCourses.find(x => x.id === id);
+  if (!c) return;
+  setVal('course_name',   c.name);
+  setVal('course_rating', c.rating);
+  setVal('course_slope',  c.slope);
+  setVal('course_par',    c.par || (c.holes === 9 ? 36 : 72));
+  if (!isNaN(c.tee3_rating)) setVal('tee3_rating', c.tee3_rating);
+  if (!isNaN(c.tee3_slope))  setVal('tee3_slope',  c.tee3_slope);
+  if (!isNaN(c.tee3_par))    setVal('tee3_par',    c.tee3_par);
+  setHoles(c.holes === 9 ? 9 : 18);
+  switchTab('calc');
+  // Scroll calc page to top
+  document.getElementById('pageCalc').scrollTop = 0;
+  showToast(`"${c.name}" loaded!`, 'success');
+}
+
+// ═══════════════════════════════════
+// SAVE TEAM (multi-slot)
+// ═══════════════════════════════════
 async function saveTeam() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (_savedTeams.length >= MAX_TEAMS) {
+    showToast(`Maximum ${MAX_TEAMS} teams — delete one in My Scramble first.`, 'error');
+    return;
+  }
   const data = {
-    team1Name: val('team1_name'),
+    id:        Date.now().toString(),
+    teamName:  val('team1_name') || 'My Team',
     p1Name:    val('t1p1_name'),
     p1Hcp:     numVal('t1p1_hcp'),
     p1Gender:  radio('t1p1_g') || 'M',
@@ -1415,232 +1076,227 @@ async function saveTeam() {
     savedAt:   new Date().toISOString(),
   };
   const btn = document.getElementById('saveTeamBtn');
-  btn.textContent = '⏳ Saving…';
+  btn.textContent = '⏳';
   try {
-    await window._fbDb.collection('users').doc(uid).collection('saved').doc('team').set(data);
-    _savedTeam = data;
-    btn.textContent = '✓ Saved';
-    btn.classList.add('saved');
-    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2500);
+    _savedTeams.push(data);
+    await persistTeams(uid);
+    btn.textContent = '✓ Saved'; btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2200);
     showToast('Team saved!', 'success');
+    renderMyData();
   } catch(e) {
+    _savedTeams.pop();
     btn.textContent = '💾 Save';
     showToast('Could not save: ' + e.message, 'error');
   }
 }
 
-// ─── RESTORE COURSE ───
+async function deleteTeam(id) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) return;
+  _savedTeams = _savedTeams.filter(t => t.id !== id);
+  try { await persistTeams(uid); renderMyData(); showToast('Team deleted.', 'success'); }
+  catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function persistTeams(uid) {
+  await window._fbDb.collection('users').doc(uid).collection('saved').doc('teams_v2').set({ list: _savedTeams });
+}
+
+function loadTeamIntoCalc(id) {
+  const t = _savedTeams.find(x => x.id === id);
+  if (!t) return;
+  setVal('team1_name', t.teamName);
+  setVal('t1p1_name',  t.p1Name);
+  setVal('t1p1_hcp',   isNaN(t.p1Hcp) ? '' : t.p1Hcp);
+  setRadio('t1p1_g',   t.p1Gender || 'M');
+  setRadio('t1p1_tee', t.p1Tee    || 'main');
+  setVal('t1p2_name',  t.p2Name);
+  setVal('t1p2_hcp',   isNaN(t.p2Hcp) ? '' : t.p2Hcp);
+  setRadio('t1p2_g',   t.p2Gender || 'M');
+  setRadio('t1p2_tee', t.p2Tee    || 'main');
+  switchTab('calc');
+  document.getElementById('pageCalc').scrollTop = 0;
+  showToast(`"${t.teamName}" loaded!`, 'success');
+}
+
+// ═══════════════════════════════════
+// RENDER MY DATA TAB
+// ═══════════════════════════════════
+function renderMyData() {
+  // --- Courses ---
+  document.getElementById('courseCount').textContent = `${_savedCourses.length} / ${MAX_COURSES}`;
+  document.getElementById('coursesFull').classList.toggle('visible', _savedCourses.length >= MAX_COURSES);
+  const cList = document.getElementById('coursesList');
+  if (_savedCourses.length === 0) {
+    cList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📍</span>No courses saved yet.<br>Fill in course details in the Calculator tab and tap 💾 Save.</div>`;
+  } else {
+    cList.innerHTML = _savedCourses.map(c => {
+      const hLabel = c.holes === 9 ? '9 holes' : '18 holes';
+      const fwd    = !isNaN(c.tee3_rating) ? ` · Fwd ${c.tee3_rating}/${c.tee3_slope}` : '';
+      return `
+        <div class="saved-card">
+          <div class="saved-card-icon">📍</div>
+          <div class="saved-card-body">
+            <div class="saved-card-name">${esc(c.name)}</div>
+            <div class="saved-card-meta">
+              <strong>${hLabel}</strong> · Rating ${c.rating} · Slope ${c.slope} · Par ${c.par}${fwd}
+            </div>
+          </div>
+          <div class="saved-card-actions">
+            <button class="btn-card-load" onclick="loadCourseIntoCalc('${c.id}')">Load</button>
+            <button class="btn-card-delete" onclick="deleteCourse('${c.id}')" title="Delete">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // --- Teams ---
+  document.getElementById('teamCount').textContent = `${_savedTeams.length} / ${MAX_TEAMS}`;
+  document.getElementById('teamsFull').classList.toggle('visible', _savedTeams.length >= MAX_TEAMS);
+  const tList = document.getElementById('teamsList');
+  if (_savedTeams.length === 0) {
+    tList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">🏌️</span>No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.</div>`;
+  } else {
+    tList.innerHTML = _savedTeams.map(t => {
+      const p1 = t.p1Name || 'Player 1';
+      const p2 = t.p2Name || 'Player 2';
+      const h1 = isNaN(t.p1Hcp) ? '–' : t.p1Hcp.toFixed(1);
+      const h2 = isNaN(t.p2Hcp) ? '–' : t.p2Hcp.toFixed(1);
+      return `
+        <div class="saved-card">
+          <div class="saved-card-icon">🏌️</div>
+          <div class="saved-card-body">
+            <div class="saved-card-name">${esc(t.teamName)}</div>
+            <div class="saved-card-meta">
+              ${esc(p1)} <strong>${h1}</strong> &nbsp;·&nbsp; ${esc(p2)} <strong>${h2}</strong>
+            </div>
+          </div>
+          <div class="saved-card-actions">
+            <button class="btn-card-load" onclick="loadTeamIntoCalc('${t.id}')">Load</button>
+            <button class="btn-card-delete" onclick="deleteTeam('${t.id}')" title="Delete">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════
+// LOAD SAVED DATA FROM FIRESTORE
+// ═══════════════════════════════════
 async function loadSavedData(uid) {
   try {
-    const snap = await window._fbDb.collection('users').doc(uid).collection('saved').doc('course').get();
-    if (snap.exists) {
-      _savedCourse = snap.data();
-      const name  = _savedCourse.name || 'your last course';
-      const holes = _savedCourse.holes === 9 ? '9-hole' : '18-hole';
-      document.getElementById('restoreCourseBannerBody').textContent =
-        `Load "${name}" (${holes} · Rating ${_savedCourse.rating}, Slope ${_savedCourse.slope})?`;
-      document.getElementById('restoreCourseBanner').classList.add('visible');
+    const snap = await window._fbDb.collection('users').doc(uid).collection('saved').doc('courses_v2').get();
+    if (snap.exists && Array.isArray(snap.data().list)) {
+      _savedCourses = snap.data().list;
     }
-  } catch(e) { console.warn('Could not load saved course:', e); }
+  } catch(e) { console.warn('Could not load courses:', e); }
 
   try {
-    const snap = await window._fbDb.collection('users').doc(uid).collection('saved').doc('team').get();
-    if (snap.exists) {
-      _savedTeam = snap.data();
-      const tname = _savedTeam.team1Name || 'your saved team';
-      const p1    = _savedTeam.p1Name || 'Player 1';
-      const p2    = _savedTeam.p2Name || 'Player 2';
-      document.getElementById('restoreTeamBannerBody').textContent =
-        `Load "${tname}" (${p1} & ${p2})?`;
-      document.getElementById('restoreTeamBanner').classList.add('visible');
+    const snap = await window._fbDb.collection('users').doc(uid).collection('saved').doc('teams_v2').get();
+    if (snap.exists && Array.isArray(snap.data().list)) {
+      _savedTeams = snap.data().list;
     }
-  } catch(e) { console.warn('Could not load saved team:', e); }
+  } catch(e) { console.warn('Could not load teams:', e); }
+
+  renderMyData();
 }
 
-function restoreCourse() {
-  if (!_savedCourse) return;
-  setVal('course_name',   _savedCourse.name);
-  setVal('course_rating', _savedCourse.rating);
-  setVal('course_slope',  _savedCourse.slope);
-  setVal('course_par',    _savedCourse.par || (_savedCourse.holes === 9 ? 36 : 72));
-  if (!isNaN(_savedCourse.tee3_rating)) setVal('tee3_rating', _savedCourse.tee3_rating);
-  if (!isNaN(_savedCourse.tee3_slope))  setVal('tee3_slope',  _savedCourse.tee3_slope);
-  if (!isNaN(_savedCourse.tee3_par))    setVal('tee3_par',    _savedCourse.tee3_par);
-  // Restore holes toggle
-  setHoles(_savedCourse.holes === 9 ? 9 : 18);
-  dismissRestoreCourse();
-  showToast('Course loaded!', 'success');
-}
-
-function dismissRestoreCourse() {
-  document.getElementById('restoreCourseBanner').classList.remove('visible');
-}
-
-function restoreTeam() {
-  if (!_savedTeam) return;
-  setVal('team1_name', _savedTeam.team1Name);
-  setVal('t1p1_name',  _savedTeam.p1Name);
-  setVal('t1p1_hcp',   isNaN(_savedTeam.p1Hcp) ? '' : _savedTeam.p1Hcp);
-  setRadio('t1p1_g',   _savedTeam.p1Gender || 'M');
-  setRadio('t1p1_tee', _savedTeam.p1Tee    || 'main');
-  setVal('t1p2_name',  _savedTeam.p2Name);
-  setVal('t1p2_hcp',   isNaN(_savedTeam.p2Hcp) ? '' : _savedTeam.p2Hcp);
-  setRadio('t1p2_g',   _savedTeam.p2Gender || 'M');
-  setRadio('t1p2_tee', _savedTeam.p2Tee    || 'main');
-  dismissRestoreTeam();
-  showToast('Team loaded!', 'success');
-}
-
-function dismissRestoreTeam() {
-  document.getElementById('restoreTeamBanner').classList.remove('visible');
-}
-
-// ─── AUTH ───
+// ═══════════════════════════════════
+// AUTH
+// ═══════════════════════════════════
 function openAuthModal() {
   switchToSignIn();
   document.getElementById('authModal').classList.remove('hidden');
 }
-
-// Note: closeAuthModal is intentionally NOT wired to a Cancel button.
-// Users must sign in to access the app. Only called programmatically after success.
 function closeAuthModal() {
   document.getElementById('authModal').classList.add('hidden');
   clearAuthForms();
 }
-
 function clearAuthForms() {
-  ['signInEmail','signInPass','regName','regEmail','regPass','regPassConfirm']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  setAuthError('signInError', '');
-  setAuthError('registerError', '');
-  setAuthBtnLoading('btnSignIn',   false, 'Sign In →');
-  setAuthBtnLoading('btnRegister', false, 'Create Account →');
+  ['signInEmail','signInPass','regName','regEmail','regPass','regPassConfirm'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  setAuthError('signInError',''); setAuthError('registerError','');
+  setAuthBtnLoading('btnSignIn',false,'Sign In →'); setAuthBtnLoading('btnRegister',false,'Create Account →');
 }
-
 function switchToSignIn() {
-  document.getElementById('formSignIn').style.display    = 'block';
-  document.getElementById('formRegister').style.display  = 'none';
-  document.getElementById('authModalTitle').textContent  = 'Welcome back';
-  document.getElementById('authModalSub').textContent    = 'Parmate · Team HCP';
+  document.getElementById('formSignIn').style.display = 'block';
+  document.getElementById('formRegister').style.display = 'none';
+  document.getElementById('authModalTitle').textContent = 'Welcome back';
 }
-
 function switchToRegister() {
-  document.getElementById('formSignIn').style.display    = 'none';
-  document.getElementById('formRegister').style.display  = 'block';
-  document.getElementById('authModalTitle').textContent  = 'Create account';
-  document.getElementById('authModalSub').textContent    = 'Parmate · Team HCP';
+  document.getElementById('formSignIn').style.display = 'none';
+  document.getElementById('formRegister').style.display = 'block';
+  document.getElementById('authModalTitle').textContent = 'Create account';
 }
-
-function setAuthError(elId, msg) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.toggle('visible', !!msg);
-}
-
-function setAuthBtnLoading(btnId, loading, defaultText) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.textContent = loading ? 'Please wait…' : defaultText;
-  btn.disabled    = loading;
-}
+function setAuthError(id, msg) { const el = document.getElementById(id); if (!el) return; el.textContent = msg; el.classList.toggle('visible', !!msg); }
+function setAuthBtnLoading(id, loading, def) { const btn = document.getElementById(id); if (!btn) return; btn.textContent = loading ? 'Please wait…' : def; btn.disabled = loading; }
 
 async function doGoogleSignIn() {
   if (!window._fbAuth) return;
-  setAuthError('signInError', '');
-  try {
-    await window._fbAuth.signInWithPopup(window._fbGoogleProvider);
-    closeAuthModal();
-  } catch(e) {
-    const msg = e.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.' :
-                e.code === 'auth/popup-blocked'        ? 'Popup blocked — allow popups for this site.' :
-                'Google sign-in failed. Please try again.';
-    setAuthError('signInError', msg);
-  }
+  setAuthError('signInError','');
+  try { await window._fbAuth.signInWithPopup(window._fbGoogleProvider); closeAuthModal(); }
+  catch(e) { setAuthError('signInError', e.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.' : e.code === 'auth/popup-blocked' ? 'Popup blocked.' : 'Google sign-in failed.'); }
 }
 
 async function doEmailSignIn() {
   if (!window._fbAuth) return;
   const email = document.getElementById('signInEmail').value.trim();
   const pass  = document.getElementById('signInPass').value;
-  setAuthError('signInError', '');
-  if (!email) { setAuthError('signInError', 'Please enter your email.'); return; }
-  if (!pass)  { setAuthError('signInError', 'Please enter your password.'); return; }
-  setAuthBtnLoading('btnSignIn', true, 'Sign In →');
-  try {
-    await window._fbAuth.signInWithEmailAndPassword(email, pass);
-    closeAuthModal();
-  } catch(e) {
-    const msg = (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
-      ? 'Incorrect email or password.'
-      : e.code === 'auth/invalid-email'     ? 'Please enter a valid email address.'
-      : e.code === 'auth/too-many-requests' ? 'Too many attempts — try again later.'
-      : 'Sign-in failed: ' + e.message;
-    setAuthError('signInError', msg);
+  setAuthError('signInError','');
+  if (!email) { setAuthError('signInError','Please enter your email.'); return; }
+  if (!pass)  { setAuthError('signInError','Please enter your password.'); return; }
+  setAuthBtnLoading('btnSignIn',true,'Sign In →');
+  try { await window._fbAuth.signInWithEmailAndPassword(email, pass); closeAuthModal(); }
+  catch(e) {
+    setAuthError('signInError', (e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential') ? 'Incorrect email or password.' : e.code==='auth/too-many-requests' ? 'Too many attempts — try again later.' : 'Sign-in failed: '+e.message);
     document.getElementById('signInPass').value = '';
-  } finally {
-    setAuthBtnLoading('btnSignIn', false, 'Sign In →');
-  }
+  } finally { setAuthBtnLoading('btnSignIn',false,'Sign In →'); }
 }
 
 async function doRegister() {
   if (!window._fbAuth) return;
-  const name    = document.getElementById('regName').value.trim();
-  const email   = document.getElementById('regEmail').value.trim();
-  const pass    = document.getElementById('regPass').value;
-  const confirm = document.getElementById('regPassConfirm').value;
-  setAuthError('registerError', '');
-  if (!name)            { setAuthError('registerError', 'Please enter your name.'); return; }
-  if (!email)           { setAuthError('registerError', 'Please enter your email.'); return; }
-  if (pass.length < 6)  { setAuthError('registerError', 'Password must be at least 6 characters.'); return; }
-  if (pass !== confirm) { setAuthError('registerError', 'Passwords do not match.'); return; }
-  setAuthBtnLoading('btnRegister', true, 'Create Account →');
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const conf  = document.getElementById('regPassConfirm').value;
+  setAuthError('registerError','');
+  if (!name)           { setAuthError('registerError','Please enter your name.'); return; }
+  if (!email)          { setAuthError('registerError','Please enter your email.'); return; }
+  if (pass.length < 6) { setAuthError('registerError','Password must be at least 6 characters.'); return; }
+  if (pass !== conf)   { setAuthError('registerError','Passwords do not match.'); return; }
+  setAuthBtnLoading('btnRegister',true,'Create Account →');
   try {
     const cred = await window._fbAuth.createUserWithEmailAndPassword(email, pass);
     await cred.user.updateProfile({ displayName: name });
     closeAuthModal();
   } catch(e) {
-    const msg = e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.'
-      : e.code === 'auth/invalid-email'  ? 'Please enter a valid email address.'
-      : e.code === 'auth/weak-password'  ? 'Password too weak — use at least 6 characters.'
-      : 'Registration failed: ' + e.message;
-    setAuthError('registerError', msg);
-  } finally {
-    setAuthBtnLoading('btnRegister', false, 'Create Account →');
-  }
+    setAuthError('registerError', e.code==='auth/email-already-in-use' ? 'An account with this email already exists.' : e.code==='auth/weak-password' ? 'Password too weak.' : 'Registration failed: '+e.message);
+  } finally { setAuthBtnLoading('btnRegister',false,'Create Account →'); }
 }
 
-async function doSignOut() {
-  if (window._fbAuth) await window._fbAuth.signOut();
-}
+async function doSignOut() { if (window._fbAuth) await window._fbAuth.signOut(); }
 
-// ─── AUTH STATE ───
 function onSignedIn(user) {
   const name = user.displayName || user.email.split('@')[0];
   document.getElementById('userPillName').textContent = name;
   document.getElementById('userPill').classList.add('visible');
-  // Show app, hide locked hero
   document.getElementById('lockedHero').style.display  = 'none';
   document.getElementById('appContent').classList.add('unlocked');
-  // Load saved data from Firestore
+  document.getElementById('bottomTabs').classList.add('visible');
   loadSavedData(user.uid);
 }
 
 function onSignedOut() {
   document.getElementById('userPill').classList.remove('visible');
-  // Hide app, show locked hero
   document.getElementById('lockedHero').style.display = '';
   document.getElementById('appContent').classList.remove('unlocked');
-  // Open auth modal automatically
+  document.getElementById('bottomTabs').classList.remove('visible');
   openAuthModal();
-  // Clear any loaded data
-  _savedCourse = null;
-  _savedTeam   = null;
-  document.getElementById('restoreCourseBanner').classList.remove('visible');
-  document.getElementById('restoreTeamBanner').classList.remove('visible');
+  _savedCourses = []; _savedTeams = [];
+  switchTab('calc');
 }
 
-// Back button closes results overlay
+// Back button
 window.addEventListener('popstate', () => {
   if (document.getElementById('resultsOverlay').classList.contains('open')) closeResults();
 });
@@ -1648,18 +1304,7 @@ window.addEventListener('popstate', () => {
 // ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('Parmate Team HCP: new version available.');
-            }
-          });
-        });
-      })
-      .catch(err => console.warn('SW registration failed:', err));
+    navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW failed:', err));
   });
 }
 </script>
