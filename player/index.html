@@ -242,6 +242,7 @@ input[type=text], input[type=number] {
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance:none; }
 input:focus { border-color:var(--gold); background:rgba(0,0,0,0.45); }
 input::placeholder { color:rgba(255,255,255,0.18); }
+input { transition:border-color 0.4s, background 0.2s; }
 
 .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -292,6 +293,61 @@ input::placeholder { color:rgba(255,255,255,0.18); }
 .holes-note.visible { display:block; }
 .par-hint { font-size:0.55rem; color:var(--muted); opacity:0.8; margin-top:2px; }
 
+/* Game mode toggle */
+.mode-toggle {
+  display: flex;
+  margin: 0 16px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mode-btn {
+  flex: 1;
+  padding: 14px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+  position: relative;
+}
+.mode-btn + .mode-btn {
+  border-left: 1px solid var(--border);
+}
+.mode-btn.active {
+  background: var(--gold-dim);
+}
+.mode-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px 2px 0 0;
+}
+.mode-btn-icon { font-size: 1.4rem; line-height: 1; }
+.mode-btn-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.mode-btn.active .mode-btn-label { color: var(--gold2); }
+.mode-btn-desc {
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.mode-btn.active .mode-btn-desc { opacity: 1; color: var(--muted); }
+
 /* Calc bar */
 .calc-wrap {
   position: fixed; bottom:0; left:0; right:0;
@@ -299,7 +355,9 @@ input::placeholder { color:rgba(255,255,255,0.18); }
   background: linear-gradient(to top, var(--bg) 50%, transparent);
   z-index: 50; max-width:480px; margin:0 auto; left:50%; transform:translateX(-50%); width:100%;
   pointer-events: none;
+  transition: opacity 0.2s, visibility 0.2s;
 }
+.calc-wrap.hidden { opacity:0; visibility:hidden; }
 .btn-calc {
   width:100%; padding:18px; background:var(--gold); border:none; border-radius:var(--radius);
   font-family:'Roboto',sans-serif; font-size:0.8rem; font-weight:500;
@@ -310,9 +368,22 @@ input::placeholder { color:rgba(255,255,255,0.18); }
 .btn-calc:active { transform:scale(0.98); background:var(--gold2); }
 
 .info-note { margin:0 16px 16px; padding:12px 14px; background:rgba(74,142,200,0.07); border:1px solid rgba(74,142,200,0.18); border-radius:var(--radius-sm); font-size:0.65rem; color:#7aace0; line-height:1.7; }
-.reset-row { text-align:center; padding:6px 0 0; }
-.btn-reset { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:8px; opacity:0.6; transition:opacity 0.2s; }
-.btn-reset:active { opacity:1; }
+
+/* Reset button — lives in course section header */
+.btn-reset-inline {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.btn-reset-inline:active { color: var(--red); border-color: rgba(200,90,74,0.4); transform: scale(0.95); }
 
 /* ═══════════════════════════════════
    MY DATA TAB
@@ -605,6 +676,20 @@ input::placeholder { color:rgba(255,255,255,0.18); }
           </div>
         </header>
 
+        <!-- GAME MODE -->
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeSingle" onclick="setGameMode('single')">
+            <span class="mode-btn-icon">🏌️</span>
+            <span class="mode-btn-label">Single</span>
+            <span class="mode-btn-desc">vs the course</span>
+          </button>
+          <button class="mode-btn" id="modeMatch" onclick="setGameMode('match')">
+            <span class="mode-btn-icon">⚔️</span>
+            <span class="mode-btn-label">Match</span>
+            <span class="mode-btn-desc">2 vs 2 teams</span>
+          </button>
+        </div>
+
         <!-- COURSE DETAILS -->
         <div class="section">
           <div class="section-header">
@@ -614,6 +699,7 @@ input::placeholder { color:rgba(255,255,255,0.18); }
               <button class="holes-toggle-btn" id="btn9holes" onclick="setHoles(9)">9</button>
               <button class="holes-toggle-btn active" id="btn18holes" onclick="setHoles(18)">18</button>
             </div>
+            <button class="btn-reset-inline" onclick="resetAll()" title="Reset all fields">↺</button>
             <button class="btn-save-inline" id="saveCourseBtn" onclick="saveCourse()">💾 Save</button>
           </div>
           <div class="section-body">
@@ -649,7 +735,7 @@ input::placeholder { color:rgba(255,255,255,0.18); }
           <div class="section-header"><span class="section-icon">⚙️</span><span class="section-title">Scramble Format</span></div>
           <div class="section-body">
             <div class="fmt-grid">
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong>2-player WHS-standard</label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong>2-player scramble</label></div>
               <div class="fmt-pill"><input type="radio" name="fmt" id="fB" value="25_20"><label for="fB"><strong>25% / 20%</strong>Higher allowance</label></div>
               <div class="fmt-pill"><input type="radio" name="fmt" id="fC" value="20_15"><label for="fC"><strong>20% / 15%</strong>Lower allowance</label></div>
               <div class="fmt-pill"><input type="radio" name="fmt" id="fD" value="50_50"><label for="fD"><strong>50% / 50%</strong>Equal / casual</label></div>
@@ -667,11 +753,11 @@ input::placeholder { color:rgba(255,255,255,0.18); }
           <div class="section-body">
             <div class="team-label">
               <div class="team-label-num">1</div>
-              <input class="team-name-input" type="text" id="team1_name" placeholder="Team name…" value="Add your team name">
+              <input class="team-name-input" type="text" id="team1_name" placeholder="enter team name…">
             </div>
             <div class="player-card">
               <div class="player-card-num">1</div>
-              <div class="field"><label>Your Name</label><input type="text" id="t1p1_name" placeholder="Optional"></div>
+              <div class="field"><label>Your Name <span style="color:var(--gold)">*</span></label><input type="text" id="t1p1_name" placeholder="Required"></div>
               <div class="grid-2">
                 <div class="field"><label>Handicap Index</label><input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
                 <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div></div></div>
@@ -680,7 +766,7 @@ input::placeholder { color:rgba(255,255,255,0.18); }
             </div>
             <div class="player-card">
               <div class="player-card-num">2</div>
-              <div class="field"><label>Partner Name</label><input type="text" id="t1p2_name" placeholder="Optional"></div>
+              <div class="field"><label>Partner Name <span style="color:var(--gold)">*</span></label><input type="text" id="t1p2_name" placeholder="Required"></div>
               <div class="grid-2">
                 <div class="field"><label>Handicap Index</label><input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
                 <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div></div></div>
@@ -691,16 +777,16 @@ input::placeholder { color:rgba(255,255,255,0.18); }
         </div>
 
         <!-- OPPONENT TEAM -->
-        <div class="section">
+        <div class="section" id="opponentSection">
           <div class="section-header"><span class="section-icon">🏌️</span><span class="section-title">Opponent Team</span></div>
           <div class="section-body">
             <div class="team-label">
               <div class="team-label-num">2</div>
-              <input class="team-name-input" type="text" id="team2_name" placeholder="Team name…" value="Add team name">
+              <input class="team-name-input" type="text" id="team2_name" placeholder="enter team name…">
             </div>
             <div class="player-card">
               <div class="player-card-num">1</div>
-              <div class="field"><label>Player 1 Name</label><input type="text" id="t2p1_name" placeholder="Optional"></div>
+              <div class="field"><label>Player 1 Name <span style="color:var(--gold)">*</span></label><input type="text" id="t2p1_name" placeholder="Required"></div>
               <div class="grid-2">
                 <div class="field"><label>Handicap Index</label><input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
                 <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div></div></div>
@@ -709,7 +795,7 @@ input::placeholder { color:rgba(255,255,255,0.18); }
             </div>
             <div class="player-card">
               <div class="player-card-num">2</div>
-              <div class="field"><label>Player 2 Name</label><input type="text" id="t2p2_name" placeholder="Optional"></div>
+              <div class="field"><label>Player 2 Name <span style="color:var(--gold)">*</span></label><input type="text" id="t2p2_name" placeholder="Required"></div>
               <div class="grid-2">
                 <div class="field"><label>Handicap Index</label><input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
                 <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div></div></div>
@@ -721,9 +807,6 @@ input::placeholder { color:rgba(255,255,255,0.18); }
 
         <div class="info-note">
           ℹ️ WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH × their format %, summed and rounded.
-        </div>
-        <div class="reset-row">
-          <button class="btn-reset" onclick="resetAll()">↺ Reset all fields</button>
         </div>
 
         <!-- sticky calc button — sits above bottom tab bar -->
@@ -739,7 +822,7 @@ input::placeholder { color:rgba(255,255,255,0.18); }
   <div class="tab-page" id="pageMyData">
     <div class="page-inner">
       <div class="mydata-header">
-        <h2>My <em>Scramble</em></h2>
+        <h2>My <em>Data</em></h2>
         <div class="mydata-sub">Saved courses &amp; teams</div>
       </div>
 
@@ -818,6 +901,7 @@ const MAX_COURSES = 5;
 const MAX_TEAMS   = 2;
 
 let _holes       = 18;
+let _gameMode    = 'single'; // 'single' | 'match'
 let _savedCourses = []; // array, max 5
 let _savedTeams   = []; // array, max 2
 let _activeTab   = 'calc';
@@ -831,6 +915,8 @@ function switchTab(tab) {
   pages.classList.toggle('show-mydata', tab === 'mydata');
   document.getElementById('tabBtnCalc').classList.toggle('active',   tab === 'calc');
   document.getElementById('tabBtnMyData').classList.toggle('active', tab === 'mydata');
+  // Hide calculate button on My Data tab
+  document.querySelector('.calc-wrap').classList.toggle('hidden', tab === 'mydata');
   if (tab === 'mydata') renderMyData();
 }
 
@@ -896,8 +982,15 @@ function setHoles(n) {
 }
 
 // ═══════════════════════════════════
-// CALCULATE
+// GAME MODE
 // ═══════════════════════════════════
+function setGameMode(mode) {
+  _gameMode = mode;
+  document.getElementById('modeSingle').classList.toggle('active', mode === 'single');
+  document.getElementById('modeMatch').classList.toggle('active',  mode === 'match');
+  const opp = document.getElementById('opponentSection');
+  if (opp) opp.style.display = mode === 'match' ? '' : 'none';
+}
 function getCH(index, slope, rating, par) { return index * (slope / 113) + (rating - par); }
 
 function getTee(teeKey) {
@@ -932,11 +1025,41 @@ function calcTeam(players, pcts) {
 function calculate() {
   const rating = numVal('course_rating'), slope = numVal('course_slope');
   if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Course Rating and Slope first.', 'error'); return; }
-  const pcts = FORMATS[radio('fmt') || '35_15'];
-  const teams = [
-    { name: val('team1_name') || 'My Team',   players: [getPlayer(1,1), getPlayer(1,2)] },
-    { name: val('team2_name') || 'Opponents', players: [getPlayer(2,1), getPlayer(2,2)] }
+
+  // Validate player names — always require My Team names; require opponent names only in match mode
+  const myTeamFields = [
+    { id: 't1p1_name', label: 'Your Name (My Team, Player 1)' },
+    { id: 't1p2_name', label: 'Partner Name (My Team, Player 2)' },
   ];
+  const oppFields = [
+    { id: 't2p1_name', label: 'Player 1 Name (Opponent Team)' },
+    { id: 't2p2_name', label: 'Player 2 Name (Opponent Team)' },
+  ];
+  const nameFields = _gameMode === 'match'
+    ? [...myTeamFields, ...oppFields]
+    : myTeamFields;
+
+  for (const f of nameFields) {
+    const el = document.getElementById(f.id);
+    if (!el || !el.value.trim()) {
+      el.focus();
+      el.style.borderColor = 'var(--red)';
+      setTimeout(() => { el.style.borderColor = ''; }, 2000);
+      showToast(`Please enter: ${f.label}`, 'error');
+      return;
+    }
+  }
+
+  const pcts = FORMATS[radio('fmt') || '35_15'];
+  const teams = _gameMode === 'match'
+    ? [
+        { name: val('team1_name') || 'My Team',   players: [getPlayer(1,1), getPlayer(1,2)] },
+        { name: val('team2_name') || 'Opponents', players: [getPlayer(2,1), getPlayer(2,2)] }
+      ]
+    : [
+        { name: val('team1_name') || 'My Team', players: [getPlayer(1,1), getPlayer(1,2)] }
+      ];
+
   const results = []; let any = false;
   for (const team of teams) {
     const res = calcTeam(team.players, pcts);
@@ -977,11 +1100,12 @@ function resetAll() {
    't1p1_name','t1p1_hcp','t1p2_name','t1p2_hcp',
    't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   setVal('course_par','72'); setVal('tee3_par','72');
-  setVal('team1_name','Team Eagles'); setVal('team2_name','Team Birdies');
+  setVal('team1_name','add your team name'); setVal('team2_name','add your team name');
   ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(n => setRadio(n,'M'));
   ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(n => setRadio(n,'main'));
   document.getElementById('fA').checked = true;
   setHoles(18);
+  setGameMode('single');
 }
 
 // ═══════════════════════════════════
@@ -1283,6 +1407,7 @@ function onSignedIn(user) {
   document.getElementById('lockedHero').style.display  = 'none';
   document.getElementById('appContent').classList.add('unlocked');
   document.getElementById('bottomTabs').classList.add('visible');
+  setGameMode('single'); // default to single on each login
   loadSavedData(user.uid);
 }
 
