@@ -587,6 +587,322 @@ input { transition:border-color 0.4s, background 0.2s; }
 .auth-switch button { background:none; border:none; font-family:'Roboto',sans-serif; font-size:0.62rem; color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; }
 .auth-error { background:rgba(200,90,74,0.12); border:1px solid rgba(200,90,74,0.28); border-radius:var(--radius-sm); padding:10px 12px; font-size:0.65rem; color:#e08878; display:none; margin-bottom:12px; line-height:1.5; }
 .auth-error.visible { display:block; }
+/* ═══════════════════════════════════
+   SCORECARD OVERLAY
+═══════════════════════════════════ */
+.scorecard-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 110;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.32,0,0,1);
+}
+.scorecard-overlay.open { transform: translateY(0); }
+.scorecard-inner { max-width: 480px; margin: 0 auto; padding: 0 0 100px; }
+
+/* Sticky header bar */
+.sc-header {
+  position: sticky; top: 0;
+  background: var(--bg);
+  padding: 16px 16px 0;
+  z-index: 10;
+}
+.sc-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; gap: 12px;
+}
+.sc-title-block {}
+.sc-course-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--white); line-height: 1.2;
+}
+.sc-meta {
+  font-size: 0.58rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-top: 3px;
+}
+
+/* Live score banner */
+.sc-score-banner {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+.sc-score-item { text-align: center; }
+.sc-score-label {
+  font-size: 0.52rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 2px;
+}
+.sc-score-val {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.4rem; font-weight: 700;
+  color: var(--white); line-height: 1;
+}
+.sc-score-val.under { color: var(--green); }
+.sc-score-val.over  { color: var(--red); }
+.sc-score-val.even  { color: var(--gold); }
+.sc-score-divider { width: 1px; height: 32px; background: var(--border2); }
+.sc-holes-progress {
+  font-size: 0.6rem; color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+/* Hole rows */
+.sc-holes { padding: 0 16px; }
+.sc-hole-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+.sc-hole-row.complete { border-color: rgba(74,158,106,0.25); }
+
+.sc-hole-num {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: rgba(255,255,255,0.2);
+  text-align: center;
+  line-height: 1;
+}
+.sc-hole-row.complete .sc-hole-num { color: var(--muted); }
+
+/* Par selector */
+.sc-par-btns { display: flex; gap: 4px; }
+.sc-par-btn {
+  width: 28px; height: 28px;
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.7rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sc-par-btn.active {
+  background: rgba(200,168,75,0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 700;
+}
+.sc-par-btn:active { transform: scale(0.93); }
+
+/* Score stepper */
+.sc-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.sc-step-btn {
+  width: 36px; height: 36px;
+  background: none; border: none;
+  font-size: 1.1rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sc-step-btn:active { background: rgba(255,255,255,0.06); color: var(--cream); }
+.sc-score-display {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem; font-weight: 600;
+  color: var(--white);
+  min-width: 28px;
+  text-align: center;
+  line-height: 1;
+}
+.sc-score-display.birdie { color: var(--green); }
+.sc-score-display.eagle  { color: var(--gold2); }
+.sc-score-display.bogey  { color: #e0a080; }
+.sc-score-display.double { color: var(--red); }
+
+/* Vs par badge on each hole */
+.sc-vs-par {
+  font-size: 0.55rem; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 28px;
+  text-align: right;
+}
+.sc-vs-par.under { color: var(--green); }
+.sc-vs-par.over  { color: var(--red); }
+
+/* Compact Save Round button (inline, not fixed) */
+.btn-save-round-sm {
+  background: var(--green);
+  border: none; border-radius: var(--radius-sm);
+  padding: 8px 18px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.62rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #fff; cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+}
+.btn-save-round-sm:active { opacity: 0.85; transform: scale(0.97); }
+.btn-save-round-sm:disabled { opacity: 0.4; pointer-events: none; }
+
+/* Bottom save button (inside sc-holes, after last hole) */
+.sc-save-bottom {
+  margin: 12px 16px 8px;
+}
+.btn-save-round-full {
+  width: 100%; padding: 16px;
+  background: var(--green);
+  border: none; border-radius: var(--radius);
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: #fff; cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(74,158,106,0.25);
+}
+.btn-save-round-full:active { opacity: 0.88; transform: scale(0.99); }
+.btn-save-round-full:disabled { opacity: 0.4; pointer-events: none; }
+
+/* Column header row */
+.sc-col-header {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  gap: 12px;
+  padding: 6px 14px 6px;
+  margin: 0 16px 4px;
+}
+.sc-col-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.7;
+}
+.sc-col-label.score-col { min-width: 110px; text-align: center; }
+.sc-col-label.badge-col { min-width: 28px; text-align: right; }
+
+/* Score tap target (replaces stepper) */
+.sc-score-tap {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  min-width: 110px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.sc-score-tap:active { border-color: var(--gold); background: rgba(200,168,75,0.07); }
+.sc-score-tap.active-input { border-color: var(--gold); background: rgba(200,168,75,0.07); }
+.sc-score-tap-hint {
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.06em;
+}
+
+/* Number keyboard overlay */
+.numpad-overlay {
+  position: fixed; inset: 0;
+  z-index: 130;
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.numpad-overlay.open {
+  pointer-events: all;
+  opacity: 1;
+}
+.numpad-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+.numpad-sheet {
+  position: relative; z-index: 1;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  max-width: 480px; width: 100%;
+  margin: 0 auto;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32,0,0,1);
+}
+.numpad-overlay.open .numpad-sheet { transform: translateY(0); }
+
+.numpad-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.numpad-hole-label {
+  font-size: 0.6rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+.numpad-display {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem; font-weight: 700;
+  color: var(--white); min-width: 60px;
+  text-align: center; line-height: 1;
+}
+.numpad-display.has-val { color: var(--gold); }
+.numpad-confirm {
+  background: var(--gold);
+  border: none; border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #0a1a10; cursor: pointer;
+  transition: all 0.18s;
+}
+.numpad-confirm:active { background: var(--gold2); transform: scale(0.97); }
+
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.numpad-key {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  height: 54px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.3rem; font-weight: 600;
+  color: var(--cream);
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.numpad-key:active { background: rgba(200,168,75,0.15); color: var(--gold); transform: scale(0.96); }
+.numpad-key.del { font-size: 1rem; color: var(--muted); }
+.numpad-key.del:active { color: var(--red); background: var(--red-dim); }
+.numpad-key.zero { grid-column: span 2; }
+
 </style>
 </head>
 <body>
@@ -886,6 +1202,95 @@ input { transition:border-color 0.4s, background 0.2s; }
       <div class="results-meta" id="res_meta"></div>
     </div>
     <div id="resultsContent"></div>
+    <!-- Start Scorecard CTA -->
+    <div style="padding:0 16px 8px;">
+      <button class="btn-calc" style="background:var(--green);box-shadow:0 8px 32px rgba(74,158,106,0.25);" onclick="openScorecard()">
+        📋 Start Scorecard →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCORECARD OVERLAY -->
+<div class="scorecard-overlay" id="scorecardOverlay">
+  <div class="scorecard-inner">
+
+    <!-- Sticky header -->
+    <div class="sc-header">
+      <div class="sc-header-top">
+        <div class="sc-title-block">
+          <div class="sc-course-name" id="sc_courseName">Scorecard</div>
+          <div class="sc-meta" id="sc_meta"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-save-round-sm" id="sc_saveBtnTop" onclick="saveRound()">💾 Save</button>
+          <button class="btn-back" onclick="closeScorecard()">← Back</button>
+        </div>
+      </div>
+      <!-- Live score banner -->
+      <div class="sc-score-banner">
+        <div class="sc-score-item">
+          <div class="sc-score-label">Gross</div>
+          <div class="sc-score-val" id="sc_gross">–</div>
+        </div>
+        <div class="sc-score-divider"></div>
+        <div class="sc-score-item">
+          <div class="sc-score-label">Team Par</div>
+          <div class="sc-score-val" id="sc_parTotal">–</div>
+        </div>
+        <div class="sc-score-divider"></div>
+        <div class="sc-score-item">
+          <div class="sc-score-label">vs Par</div>
+          <div class="sc-score-val" id="sc_vsPar">–</div>
+        </div>
+        <div class="sc-score-divider"></div>
+        <div class="sc-score-item">
+          <div class="sc-score-label">Holes</div>
+          <div class="sc-holes-progress" id="sc_holesProgress">0 / 18</div>
+        </div>
+      </div>
+      <!-- Column headers -->
+      <div class="sc-col-header">
+        <div class="sc-col-label">Hole</div>
+        <div class="sc-col-label">Par</div>
+        <div class="sc-col-label score-col">Score</div>
+        <div class="sc-col-label badge-col">Badge</div>
+      </div>
+    </div>
+
+    <!-- Hole rows injected by JS -->
+    <div class="sc-holes" id="sc_holes"></div>
+
+    <!-- Bottom save button (always visible, no overlap) -->
+    <div class="sc-save-bottom">
+      <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()">💾 Save Round</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- NUMBER KEYBOARD OVERLAY -->
+<div class="numpad-overlay" id="numpadOverlay">
+  <div class="numpad-backdrop" onclick="numpadCancel()"></div>
+  <div class="numpad-sheet">
+    <div class="numpad-header">
+      <div class="numpad-hole-label" id="numpad_label">Hole 1 Score</div>
+      <div class="numpad-display" id="numpad_display">–</div>
+      <button class="numpad-confirm" onclick="numpadConfirm()">OK ✓</button>
+    </div>
+    <div class="numpad-grid">
+      <button class="numpad-key" onclick="numpadKey(1)">1</button>
+      <button class="numpad-key" onclick="numpadKey(2)">2</button>
+      <button class="numpad-key" onclick="numpadKey(3)">3</button>
+      <button class="numpad-key" onclick="numpadKey(4)">4</button>
+      <button class="numpad-key" onclick="numpadKey(5)">5</button>
+      <button class="numpad-key" onclick="numpadKey(6)">6</button>
+      <button class="numpad-key" onclick="numpadKey(7)">7</button>
+      <button class="numpad-key" onclick="numpadKey(8)">8</button>
+      <button class="numpad-key" onclick="numpadKey(9)">9</button>
+      <button class="numpad-key zero" onclick="numpadKey(0)">0</button>
+      <button class="numpad-key del" onclick="numpadDelete()">⌫</button>
+    </div>
   </div>
 </div>
 
@@ -933,8 +1338,9 @@ function switchTab(tab) {
     const dx = e.changedTouches[0].clientX - sx;
     const dy = e.changedTouches[0].clientY - sy;
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      // Only swipe if not inside a results overlay
+      // Only swipe if not inside a results or scorecard overlay
       if (document.getElementById('resultsOverlay').classList.contains('open')) return;
+      if (document.getElementById('scorecardOverlay').classList.contains('open')) return;
       if (dx < 0 && _activeTab === 'calc')   switchTab('mydata');
       if (dx > 0 && _activeTab === 'mydata') switchTab('calc');
     }
@@ -1421,8 +1827,245 @@ function onSignedOut() {
   switchTab('calc');
 }
 
-// Back button
+// ═══════════════════════════════════
+// SCORECARD
+// ═══════════════════════════════════
+let _sc = {
+  holes:      18,
+  teamName:   '',
+  teamHcp:    0,
+  courseName: '',
+  par:        [],
+  scores:     [],
+};
+
+// Numpad state
+let _numpad = { holeIdx: -1, buffer: '' };
+
+function openScorecard() {
+  const n = _holes;
+  _sc.holes      = n;
+  _sc.teamName   = val('team1_name') || 'My Team';
+  _sc.courseName = val('course_name') || 'Unnamed Course';
+  const hcpEl    = document.querySelector('.result-hcp-num');
+  _sc.teamHcp    = hcpEl ? parseInt(hcpEl.textContent) || 0 : 0;
+  const totalPar = numVal('course_par') || (n === 9 ? 36 : 72);
+  const basePar  = Math.floor(totalPar / n);
+  _sc.par        = Array(n).fill(basePar);
+  _sc.scores     = Array(n).fill(0);
+
+  document.getElementById('sc_courseName').textContent = _sc.courseName;
+  document.getElementById('sc_meta').textContent       = `${n} holes · Team HCP ${_sc.teamHcp} · ${_sc.teamName}`;
+  document.getElementById('sc_holesProgress').textContent = `0 / ${n}`;
+
+  renderScorecardHoles();
+  updateScorecardTotals();
+  setSaveBtnsState(false);
+  document.getElementById('scorecardOverlay').classList.add('open');
+  document.getElementById('scorecardOverlay').scrollTop = 0;
+}
+
+function closeScorecard() {
+  document.getElementById('scorecardOverlay').classList.remove('open');
+  numpadCancel();
+}
+
+function setSaveBtnsState(disabled) {
+  ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.disabled = disabled; btn.textContent = disabled ? '⏳ Saving…' : (id === 'sc_saveBtnTop' ? '💾 Save' : '💾 Save Round'); }
+  });
+}
+
+function renderScorecardHoles() {
+  const container = document.getElementById('sc_holes');
+  container.innerHTML = _sc.par.map((p, i) => {
+    const h      = i + 1;
+    const score  = _sc.scores[i];
+    const complete = score > 0;
+    const diff   = complete ? score - p : null;
+    const scoreClass = complete
+      ? score <= p - 2 ? 'eagle'
+      : score === p - 1 ? 'birdie'
+      : score === p + 1 ? 'bogey'
+      : score >= p + 2  ? 'double' : ''
+      : '';
+    const vsParLabel = diff === null ? '' : diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+    const vsParClass = diff === null ? '' : diff < 0 ? 'under' : diff > 0 ? 'over' : '';
+
+    return `
+      <div class="sc-hole-row${complete ? ' complete' : ''}" id="sc_row_${i}">
+        <div class="sc-hole-num">${h}</div>
+        <div class="sc-par-btns">
+          ${[3,4,5].map(v => `<button class="sc-par-btn${p===v?' active':''}" onclick="setHolePar(${i},${v})">${v}</button>`).join('')}
+        </div>
+        <div class="sc-score-tap${complete ? '' : ''}" id="sc_tap_${i}" onclick="openNumpad(${i})">
+          <div class="sc-score-display${scoreClass ? ' '+scoreClass : ''}" id="sc_score_${i}">${complete ? score : '–'}</div>
+          ${!complete ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+        </div>
+        <div class="sc-vs-par ${vsParClass}" id="sc_vs_${i}">${vsParLabel}</div>
+      </div>`;
+  }).join('');
+}
+
+function setHolePar(holeIdx, parVal) {
+  _sc.par[holeIdx] = parVal;
+  const row = document.getElementById(`sc_row_${holeIdx}`);
+  row.querySelectorAll('.sc-par-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.textContent) === parVal);
+  });
+  updateHoleDisplay(holeIdx);
+  updateScorecardTotals();
+}
+
+// ─── NUMPAD ───
+function openNumpad(holeIdx) {
+  _numpad.holeIdx = holeIdx;
+  _numpad.buffer  = _sc.scores[holeIdx] > 0 ? String(_sc.scores[holeIdx]) : '';
+  document.getElementById('numpad_label').textContent = `Hole ${holeIdx + 1} — Par ${_sc.par[holeIdx]}`;
+  updateNumpadDisplay();
+  document.getElementById('numpadOverlay').classList.add('open');
+  // Highlight the tapped hole row
+  document.querySelectorAll('.sc-score-tap').forEach(el => el.classList.remove('active-input'));
+  const tap = document.getElementById(`sc_tap_${holeIdx}`);
+  if (tap) tap.classList.add('active-input');
+}
+
+function numpadCancel() {
+  document.getElementById('numpadOverlay').classList.remove('open');
+  document.querySelectorAll('.sc-score-tap').forEach(el => el.classList.remove('active-input'));
+  _numpad.holeIdx = -1;
+  _numpad.buffer  = '';
+}
+
+function numpadKey(digit) {
+  // Max 2 digits (score won't exceed 99)
+  if (_numpad.buffer.length >= 2) _numpad.buffer = _numpad.buffer.slice(1);
+  _numpad.buffer += String(digit);
+  updateNumpadDisplay();
+}
+
+function numpadDelete() {
+  _numpad.buffer = _numpad.buffer.slice(0, -1);
+  updateNumpadDisplay();
+}
+
+function updateNumpadDisplay() {
+  const el = document.getElementById('numpad_display');
+  if (!el) return;
+  const v = _numpad.buffer;
+  el.textContent = v === '' ? '–' : v;
+  el.className   = 'numpad-display' + (v ? ' has-val' : '');
+}
+
+function numpadConfirm() {
+  const v = parseInt(_numpad.buffer);
+  if (!isNaN(v) && v >= 1 && v <= 20) {
+    _sc.scores[_numpad.holeIdx] = v;
+    updateHoleDisplay(_numpad.holeIdx);
+    updateScorecardTotals();
+  }
+  numpadCancel();
+}
+
+function updateHoleDisplay(holeIdx) {
+  const score    = _sc.scores[holeIdx];
+  const par      = _sc.par[holeIdx] || 4;
+  const complete = score > 0;
+  const diff     = complete ? score - par : null;
+
+  const scoreEl = document.getElementById(`sc_score_${holeIdx}`);
+  if (scoreEl) {
+    scoreEl.textContent = complete ? score : '–';
+    scoreEl.className   = 'sc-score-display';
+    if (complete) {
+      if      (score <= par - 2) scoreEl.classList.add('eagle');
+      else if (score === par - 1) scoreEl.classList.add('birdie');
+      else if (score === par + 1) scoreEl.classList.add('bogey');
+      else if (score >= par + 2)  scoreEl.classList.add('double');
+    }
+  }
+
+  // Refresh tap hint visibility
+  const tapEl = document.getElementById(`sc_tap_${holeIdx}`);
+  if (tapEl) {
+    const hintEl = tapEl.querySelector('.sc-score-tap-hint');
+    if (complete && hintEl) hintEl.remove();
+    else if (!complete && !hintEl) {
+      const hint = document.createElement('div');
+      hint.className = 'sc-score-tap-hint';
+      hint.textContent = 'tap';
+      tapEl.appendChild(hint);
+    }
+  }
+
+  const vsEl = document.getElementById(`sc_vs_${holeIdx}`);
+  if (vsEl) {
+    vsEl.textContent = diff === null ? '' : diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+    vsEl.className   = 'sc-vs-par' + (diff === null ? '' : diff < 0 ? ' under' : diff > 0 ? ' over' : '');
+  }
+
+  const row = document.getElementById(`sc_row_${holeIdx}`);
+  if (row) row.classList.toggle('complete', complete);
+}
+
+function updateScorecardTotals() {
+  const played   = _sc.scores.filter(s => s > 0);
+  const gross    = played.reduce((a,b) => a+b, 0);
+  const parSoFar = _sc.par.filter((_,i) => _sc.scores[i] > 0).reduce((a,b) => a+b, 0);
+  const diff     = played.length > 0 ? gross - parSoFar : null;
+
+  document.getElementById('sc_gross').textContent    = played.length > 0 ? gross : '–';
+  document.getElementById('sc_parTotal').textContent = played.length > 0 ? parSoFar : '–';
+  document.getElementById('sc_holesProgress').textContent = `${played.length} / ${_sc.holes}`;
+
+  const vsParEl = document.getElementById('sc_vsPar');
+  if (diff === null) {
+    vsParEl.textContent = '–'; vsParEl.className = 'sc-score-val';
+  } else {
+    vsParEl.textContent = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+    vsParEl.className   = 'sc-score-val ' + (diff < 0 ? 'under' : diff > 0 ? 'over' : 'even');
+  }
+}
+
+async function saveRound() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in to save the round.', 'error'); return; }
+  const played = _sc.scores.filter(s => s > 0).length;
+  if (played === 0) { showToast('Enter at least one hole score before saving.', 'error'); return; }
+
+  const gross     = _sc.scores.reduce((a,b) => a+b, 0);
+  const totalPar  = _sc.par.reduce((a,b) => a+b, 0);
+  const parPlayed = _sc.par.filter((_,i) => _sc.scores[i] > 0).reduce((a,b) => a+b, 0);
+  const vsPar     = gross - parPlayed;
+
+  const round = {
+    id: Date.now().toString(),
+    courseName: _sc.courseName, teamName: _sc.teamName, teamHcp: _sc.teamHcp,
+    holes: _sc.holes, holesPlayed: played,
+    par: _sc.par.slice(), scores: _sc.scores.slice(),
+    totalPar, gross, vsPar,
+    playedAt: new Date().toISOString(),
+  };
+
+  setSaveBtnsState(true);
+  try {
+    await window._fbDb.collection('users').doc(uid).collection('rounds').doc(round.id).set(round);
+    ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.textContent = '✓ Saved!';
+    });
+    showToast(`Round saved — ${vsPar >= 0 ? '+' : ''}${vsPar} vs par`, 'success');
+    setTimeout(() => setSaveBtnsState(false), 3000);
+  } catch(e) {
+    setSaveBtnsState(false);
+    showToast('Could not save: ' + e.message, 'error');
+  }
+}
+
+// Back button also closes scorecard
 window.addEventListener('popstate', () => {
+  if (document.getElementById('scorecardOverlay').classList.contains('open')) { closeScorecard(); return; }
   if (document.getElementById('resultsOverlay').classList.contains('open')) closeResults();
 });
 
