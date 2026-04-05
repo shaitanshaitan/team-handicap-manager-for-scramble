@@ -903,6 +903,126 @@ input { transition:border-color 0.4s, background 0.2s; }
 .numpad-key.del:active { color: var(--red); background: var(--red-dim); }
 .numpad-key.zero { grid-column: span 2; }
 
+/* ═══════════════════════════════════
+   ROUND CARDS (My Data tab)
+═══════════════════════════════════ */
+.round-card {
+  margin: 0 16px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  animation: fadeCardIn 0.3s ease both;
+}
+.round-card:active { border-color: var(--border2); }
+
+.round-card-icon { font-size: 1.4rem; flex-shrink: 0; opacity: 0.7; }
+.round-card-body { flex: 1; min-width: 0; }
+.round-card-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem; font-weight: 600;
+  color: var(--white);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.round-card-meta { font-size: 0.6rem; color: var(--muted); line-height: 1.7; }
+.round-card-meta strong { color: var(--cream); }
+
+.round-score-badge {
+  flex-shrink: 0;
+  text-align: center;
+}
+.round-score-num {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+  line-height: 1;
+}
+.round-score-num.under { color: var(--green); }
+.round-score-num.over  { color: var(--red); }
+.round-score-num.even  { color: var(--gold); }
+.round-score-lbl {
+  font-size: 0.5rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-top: 2px;
+}
+
+.round-card-chevron {
+  font-size: 0.75rem; color: var(--muted);
+  opacity: 0.5; flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════
+   ROUND VIEW OVERLAY (read-only)
+═══════════════════════════════════ */
+.round-view-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 115;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.32,0,0,1);
+}
+.round-view-overlay.open { transform: translateY(0); }
+.round-view-inner { max-width: 480px; margin: 0 auto; padding: 0 0 40px; }
+
+/* reuse sc-header, sc-score-banner, sc-col-header styles */
+/* Read-only hole row */
+.rv-hole-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 0 16px 8px;
+  display: grid;
+  grid-template-columns: 28px 40px 1fr 40px;
+  align-items: center;
+  padding: 11px 14px;
+  gap: 10px;
+}
+.rv-hole-row.complete { border-color: rgba(74,158,106,0.22); }
+
+.rv-hole-num {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--muted); text-align: center;
+}
+.rv-par {
+  font-size: 0.8rem; color: var(--muted);
+  text-align: center;
+}
+.rv-score {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--white); text-align: center;
+}
+.rv-score.birdie { color: var(--green); }
+.rv-score.eagle  { color: var(--gold2); }
+.rv-score.bogey  { color: #e0a080; }
+.rv-score.double { color: var(--red); }
+.rv-score.empty  { color: rgba(255,255,255,0.15); font-size: 0.8rem; }
+
+.rv-badge {
+  font-size: 0.6rem; letter-spacing: 0.06em;
+  text-transform: uppercase; text-align: right;
+  font-weight: 600;
+}
+.rv-badge.under { color: var(--green); }
+.rv-badge.over  { color: var(--red); }
+.rv-badge.even  { color: var(--muted); }
+.rv-badge.empty { color: transparent; }
+
+/* Col header reused inside round view */
+.rv-col-header {
+  display: grid;
+  grid-template-columns: 28px 40px 1fr 40px;
+  gap: 10px;
+  padding: 6px 14px 6px;
+  margin: 0 16px 4px;
+}
 </style>
 </head>
 <body>
@@ -969,7 +1089,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="locked-hero-desc">Sign in to calculate team handicaps and save your courses & teams.</div>
         <div class="locked-features">
           <div class="locked-feature"><div class="locked-feature-icon">🏌️</div>WHS scramble handicap calculator</div>
-          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save up to 5 courses & 2 teams</div>
+          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save up to 5 courses & 2 teams & 10 scorecards</div>
           <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 or 18 hole support</div>
         </div>
         <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
@@ -1138,7 +1258,7 @@ input { transition:border-color 0.4s, background 0.2s; }
   <div class="tab-page" id="pageMyData">
     <div class="page-inner">
       <div class="mydata-header">
-        <h2>My <em>Data</em></h2>
+        <h2>My <em>Scramble</em></h2>
         <div class="mydata-sub">Saved courses &amp; teams</div>
       </div>
 
@@ -1171,6 +1291,20 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="saved-empty">
           <span class="saved-empty-icon">🏌️</span>
           No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.
+        </div>
+      </div>
+
+      <div class="mydata-spacer"></div>
+
+      <!-- ROUNDS -->
+      <div class="mydata-section-label">
+        <span class="mydata-section-label-text">📋 Saved Rounds</span>
+        <span class="mydata-section-label-count" id="roundCount">0</span>
+      </div>
+      <div id="roundsList">
+        <div class="saved-empty">
+          <span class="saved-empty-icon">📋</span>
+          No rounds saved yet.<br>Complete a scorecard and tap 💾 Save Round.
         </div>
       </div>
 
@@ -1235,7 +1369,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Team Par</div>
+          <div class="sc-score-label">Par Played</div>
           <div class="sc-score-val" id="sc_parTotal">–</div>
         </div>
         <div class="sc-score-divider"></div>
@@ -1294,6 +1428,55 @@ input { transition:border-color 0.4s, background 0.2s; }
   </div>
 </div>
 
+<!-- ROUND VIEW OVERLAY (read-only) -->
+<div class="round-view-overlay" id="roundViewOverlay">
+  <div class="round-view-inner">
+
+    <div class="sc-header">
+      <div class="sc-header-top">
+        <div class="sc-title-block">
+          <div class="sc-course-name" id="rv_courseName">Round</div>
+          <div class="sc-meta" id="rv_meta"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-card-delete" id="rv_deleteBtn" onclick="deleteRound()" title="Delete round" style="padding:8px 12px;">🗑</button>
+          <button class="btn-back" onclick="closeRoundView()">← Back</button>
+        </div>
+      </div>
+      <div class="sc-score-banner">
+        <div class="sc-score-item">
+          <div class="sc-score-label">Gross</div>
+          <div class="sc-score-val" id="rv_gross">–</div>
+        </div>
+        <div class="sc-score-divider"></div>
+        <div class="sc-score-item">
+          <div class="sc-score-label">Par Played</div>
+          <div class="sc-score-val" id="rv_par">–</div>
+        </div>
+        <div class="sc-score-divider"></div>
+        <div class="sc-score-item">
+          <div class="sc-score-label">vs Par</div>
+          <div class="sc-score-val" id="rv_vsPar">–</div>
+        </div>
+        <div class="sc-score-divider"></div>
+        <div class="sc-score-item">
+          <div class="sc-score-label">Holes</div>
+          <div class="sc-holes-progress" id="rv_holes">–</div>
+        </div>
+      </div>
+      <div class="rv-col-header">
+        <div class="sc-col-label">Hole</div>
+        <div class="sc-col-label" style="text-align:center;">Par</div>
+        <div class="sc-col-label" style="text-align:center;">Score</div>
+        <div class="sc-col-label" style="text-align:right;">Badge</div>
+      </div>
+    </div>
+
+    <div id="rv_holes_list"></div>
+
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1309,6 +1492,7 @@ let _holes       = 18;
 let _gameMode    = 'single'; // 'single' | 'match'
 let _savedCourses = []; // array, max 5
 let _savedTeams   = []; // array, max 2
+let _savedRounds  = []; // loaded from Firestore, newest first
 let _activeTab   = 'calc';
 
 // ═══════════════════════════════════
@@ -1341,6 +1525,7 @@ function switchTab(tab) {
       // Only swipe if not inside a results or scorecard overlay
       if (document.getElementById('resultsOverlay').classList.contains('open')) return;
       if (document.getElementById('scorecardOverlay').classList.contains('open')) return;
+      if (document.getElementById('roundViewOverlay').classList.contains('open')) return;
       if (dx < 0 && _activeTab === 'calc')   switchTab('mydata');
       if (dx > 0 && _activeTab === 'mydata') switchTab('calc');
     }
@@ -1709,6 +1894,40 @@ function renderMyData() {
         </div>`;
     }).join('');
   }
+
+  // --- Rounds ---
+  document.getElementById('roundCount').textContent = _savedRounds.length;
+  const rList = document.getElementById('roundsList');
+  if (_savedRounds.length === 0) {
+    rList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📋</span>No rounds saved yet.<br>Complete a scorecard and tap 💾 Save Round.</div>`;
+  } else {
+    rList.innerHTML = _savedRounds.map(r => {
+      const vsPar     = r.vsPar ?? (r.gross - (r.parPlayed || r.totalPar));
+      const vsClass   = vsPar < 0 ? 'under' : vsPar > 0 ? 'over' : 'even';
+      const vsLabel   = vsPar === 0 ? 'E' : vsPar > 0 ? `+${vsPar}` : `${vsPar}`;
+      const hLabel    = (r.holes === 9 ? '9' : '18') + ' holes';
+      const playedStr = r.playedAt
+        ? new Date(r.playedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+        : '';
+      const holesNote = r.holesPlayed < r.holes ? ` · ${r.holesPlayed} played` : '';
+      return `
+        <div class="round-card" onclick="openRoundView('${r.id}')">
+          <div class="round-card-icon">📋</div>
+          <div class="round-card-body">
+            <div class="round-card-name">${esc(r.courseName || 'Unnamed Course')}</div>
+            <div class="round-card-meta">
+              <strong>${hLabel}${holesNote}</strong> · ${esc(r.teamName || '')} · HCP ${r.teamHcp}
+              ${playedStr ? '<br>' + playedStr : ''}
+            </div>
+          </div>
+          <div class="round-score-badge">
+            <div class="round-score-num ${vsClass}">${vsLabel}</div>
+            <div class="round-score-lbl">vs par</div>
+          </div>
+          <div class="round-card-chevron">›</div>
+        </div>`;
+    }).join('');
+  }
 }
 
 // ═══════════════════════════════════
@@ -1728,6 +1947,16 @@ async function loadSavedData(uid) {
       _savedTeams = snap.data().list;
     }
   } catch(e) { console.warn('Could not load teams:', e); }
+
+  try {
+    const snap = await window._fbDb
+      .collection('users').doc(uid)
+      .collection('rounds')
+      .orderBy('playedAt', 'desc')
+      .get();
+    _savedRounds = [];
+    snap.forEach(doc => _savedRounds.push(doc.data()));
+  } catch(e) { console.warn('Could not load rounds:', e); }
 
   renderMyData();
 }
@@ -1823,13 +2052,91 @@ function onSignedOut() {
   document.getElementById('appContent').classList.remove('unlocked');
   document.getElementById('bottomTabs').classList.remove('visible');
   // openAuthModal();
-  _savedCourses = []; _savedTeams = [];
+  _savedCourses = []; _savedTeams = []; _savedRounds = [];
   switchTab('calc');
 }
 
 // ═══════════════════════════════════
-// SCORECARD
+// ROUND VIEW (read-only)
 // ═══════════════════════════════════
+let _viewingRoundId = null;
+
+function openRoundView(id) {
+  const r = _savedRounds.find(x => x.id === id);
+  if (!r) return;
+  _viewingRoundId = id;
+
+  // Header
+  document.getElementById('rv_courseName').textContent = r.courseName || 'Round';
+  const playedStr = r.playedAt
+    ? new Date(r.playedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+    : '';
+  document.getElementById('rv_meta').textContent =
+    `${r.holes} holes · Team HCP ${r.teamHcp} · ${r.teamName || ''}${playedStr ? ' · ' + playedStr : ''}`;
+
+  // Totals banner
+  const vsPar   = r.vsPar ?? (r.gross - r.totalPar);
+  const vsClass = vsPar < 0 ? 'under' : vsPar > 0 ? 'over' : 'even';
+  const vsLabel = vsPar === 0 ? 'E' : vsPar > 0 ? `+${vsPar}` : `${vsPar}`;
+
+  document.getElementById('rv_gross').textContent    = r.gross || '–';
+  document.getElementById('rv_par').textContent      = r.totalPar || '–';
+  document.getElementById('rv_holes').textContent    = `${r.holesPlayed} / ${r.holes}`;
+  const vsParEl = document.getElementById('rv_vsPar');
+  vsParEl.textContent = vsLabel;
+  vsParEl.className   = 'sc-score-val ' + vsClass;
+
+  // Hole rows
+  const par    = r.par    || Array(r.holes).fill(4);
+  const scores = r.scores || Array(r.holes).fill(0);
+  document.getElementById('rv_holes_list').innerHTML = par.map((p, i) => {
+    const score    = scores[i];
+    const complete = score > 0;
+    const diff     = complete ? score - p : null;
+
+    let scoreClass = 'empty', badgeClass = 'empty', badgeLabel = '';
+    if (complete) {
+      badgeLabel  = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+      badgeClass  = diff < 0 ? 'under' : diff > 0 ? 'over' : 'even';
+      scoreClass  = score <= p - 2 ? 'eagle'
+                  : score === p - 1 ? 'birdie'
+                  : score === p + 1 ? 'bogey'
+                  : score >= p + 2  ? 'double' : '';
+    }
+
+    return `
+      <div class="rv-hole-row${complete ? ' complete' : ''}">
+        <div class="rv-hole-num">${i + 1}</div>
+        <div class="rv-par">${p}</div>
+        <div class="rv-score ${scoreClass}">${complete ? score : '–'}</div>
+        <div class="rv-badge ${badgeClass}">${badgeLabel}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('roundViewOverlay').classList.add('open');
+  document.getElementById('roundViewOverlay').scrollTop = 0;
+}
+
+function closeRoundView() {
+  document.getElementById('roundViewOverlay').classList.remove('open');
+  _viewingRoundId = null;
+}
+
+async function deleteRound() {
+  if (!_viewingRoundId) return;
+  if (!confirm('Delete this round? This cannot be undone.')) return;
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) return;
+  try {
+    await window._fbDb.collection('users').doc(uid).collection('rounds').doc(_viewingRoundId).delete();
+    _savedRounds = _savedRounds.filter(r => r.id !== _viewingRoundId);
+    closeRoundView();
+    renderMyData();
+    showToast('Round deleted.', 'success');
+  } catch(e) {
+    showToast('Could not delete: ' + e.message, 'error');
+  }
+}
 let _sc = {
   holes:      18,
   teamName:   '',
@@ -2051,6 +2358,9 @@ async function saveRound() {
   setSaveBtnsState(true);
   try {
     await window._fbDb.collection('users').doc(uid).collection('rounds').doc(round.id).set(round);
+    // Add to local list immediately (newest first)
+    _savedRounds.unshift(round);
+    renderMyData();
     ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) btn.textContent = '✓ Saved!';
@@ -2063,8 +2373,9 @@ async function saveRound() {
   }
 }
 
-// Back button also closes scorecard
+// Back button also closes scorecard / round view
 window.addEventListener('popstate', () => {
+  if (document.getElementById('roundViewOverlay').classList.contains('open')) { closeRoundView(); return; }
   if (document.getElementById('scorecardOverlay').classList.contains('open')) { closeScorecard(); return; }
   if (document.getElementById('resultsOverlay').classList.contains('open')) closeResults();
 });
