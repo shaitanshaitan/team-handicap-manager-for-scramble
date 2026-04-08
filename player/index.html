@@ -983,17 +983,30 @@ input { transition:border-color 0.4s, background 0.2s; }
   padding: 11px 14px;
   gap: 10px;
 }
+.rv-hole-row.match {
+  grid-template-columns: 28px 36px 1fr 1fr 40px;
+  gap: 8px;
+}
 .rv-hole-row.complete { border-color: rgba(74,158,106,0.22); }
+
+.rv-col-header {
+  display: grid;
+  grid-template-columns: 28px 40px 1fr 40px;
+  gap: 10px;
+  padding: 6px 14px 6px;
+  margin: 0 16px 4px;
+}
+.rv-col-header.match {
+  grid-template-columns: 28px 36px 1fr 1fr 40px;
+  gap: 8px;
+}
 
 .rv-hole-num {
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem; font-weight: 700;
   color: var(--muted); text-align: center;
 }
-.rv-par {
-  font-size: 0.8rem; color: var(--muted);
-  text-align: center;
-}
+.rv-par { font-size: 0.8rem; color: var(--muted); text-align: center; }
 .rv-score {
   font-family: 'Inter', sans-serif;
   font-size: 1.1rem; font-weight: 700;
@@ -1004,25 +1017,106 @@ input { transition:border-color 0.4s, background 0.2s; }
 .rv-score.bogey  { color: #e0a080; }
 .rv-score.double { color: var(--red); }
 .rv-score.empty  { color: rgba(255,255,255,0.15); font-size: 0.8rem; }
-
-.rv-badge {
-  font-size: 0.6rem; letter-spacing: 0.06em;
-  text-transform: uppercase; text-align: right;
-  font-weight: 600;
-}
+.rv-badge { font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; text-align: right; font-weight: 600; }
 .rv-badge.under { color: var(--green); }
 .rv-badge.over  { color: var(--red); }
 .rv-badge.even  { color: var(--muted); }
 .rv-badge.empty { color: transparent; }
+.rv-badge.win   { color: var(--green); }
+.rv-badge.loss  { color: var(--red); }
+.rv-badge.half  { color: var(--muted); }
+/* ═══════════════════════════════════
+   MATCH SCORECARD ADDITIONS
+═══════════════════════════════════ */
 
-/* Col header reused inside round view */
-.rv-col-header {
-  display: grid;
-  grid-template-columns: 28px 40px 1fr 40px;
-  gap: 10px;
-  padding: 6px 14px 6px;
-  margin: 0 16px 4px;
+/* Match banner — replaces single banner in match mode */
+.sc-match-banner {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
 }
+.sc-match-team {
+  flex: 1;
+  text-align: center;
+  padding: 4px 8px;
+}
+.sc-match-team-name {
+  font-size: 0.52rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sc-match-score {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+  color: var(--white); line-height: 1;
+}
+.sc-match-score.under { color: var(--green); }
+.sc-match-score.over  { color: var(--red); }
+.sc-match-score.even  { color: var(--gold); }
+.sc-match-hcp {
+  font-size: 0.5rem; color: var(--muted);
+  margin-top: 2px; letter-spacing: 0.08em;
+}
+.sc-match-divider {
+  width: 1px; background: var(--border2);
+  margin: 4px 0;
+}
+.sc-match-status {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 4px 12px;
+  min-width: 72px;
+}
+.sc-match-status-label {
+  font-size: 0.5rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 3px;
+}
+.sc-match-status-val {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; font-weight: 700;
+  color: var(--cream); line-height: 1.2;
+  text-align: center;
+}
+.sc-match-status-val.leading { color: var(--green); }
+.sc-match-status-val.trailing { color: var(--red); }
+.sc-match-status-val.square { color: var(--gold); }
+
+/* Match hole row — dual score columns */
+.sc-hole-row.match {
+  grid-template-columns: 24px auto 1fr 1fr auto;
+  gap: 8px;
+}
+.sc-score-tap.my-team  { border-color: rgba(74,130,216,0.35); min-width: 52px; }
+.sc-score-tap.opp-team { border-color: rgba(200,90,74,0.25);  min-width: 52px; }
+.sc-score-tap.my-team:active  { border-color: var(--tee1); background: rgba(74,130,216,0.1); }
+.sc-score-tap.opp-team:active { border-color: var(--red);  background: rgba(200,90,74,0.08); }
+.sc-score-tap.my-team.active-input  { border-color: var(--tee1); background: rgba(74,130,216,0.1); }
+.sc-score-tap.opp-team.active-input { border-color: var(--red);  background: rgba(200,90,74,0.08); }
+
+/* Hole net result badge (match mode) */
+.sc-hole-result {
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.05em; text-align: right;
+  min-width: 28px;
+}
+.sc-hole-result.win  { color: var(--green); }
+.sc-hole-result.loss { color: var(--red); }
+.sc-hole-result.half { color: var(--muted); }
+
+/* Match col header */
+.sc-col-header.match {
+  grid-template-columns: 24px auto 1fr 1fr auto;
+  gap: 8px;
+}
+.sc-col-label.dual { text-align: center; min-width: 52px; }
 </style>
 </head>
 <body>
@@ -1030,7 +1124,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 <!-- AUTH LOADING OVERLAY -->
 <div id="authLoadingOverlay">
   <div class="auth-spinner"></div>
-  <div class="auth-spinner-text">Connecting…</div>
+  <div class="auth-spinner-text" data-i18n="connecting">Connecting…</div>
 </div>
 
 <!-- AUTH MODAL -->
@@ -1038,7 +1132,7 @@ input { transition:border-color 0.4s, background 0.2s; }
   <div class="auth-sheet">
     <div class="auth-sheet-icon">⛳</div>
     <div class="auth-sheet-title" id="authModalTitle">Welcome back</div>
-    <div class="auth-sheet-sub">Parmate · Team HCP</div>
+    <div class="auth-sheet-sub" data-i18n="appSub">Parmate · Team HCP</div>
     <button class="btn-google" onclick="doGoogleSignIn()">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.075 17.64 11.768 17.64 9.2z" fill="#4285F4"/>
@@ -1046,28 +1140,28 @@ input { transition:border-color 0.4s, background 0.2s; }
         <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
         <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
       </svg>
-      Continue with Google
+      <span data-i18n="continueGoogle">Continue with Google</span>
     </button>
-    <div class="auth-divider"><span>or</span></div>
+    <div class="auth-divider"><span data-i18n="orDivider">or</span></div>
     <div id="formSignIn">
       <div class="auth-error" id="signInError"></div>
       <div class="auth-fields">
-        <div class="field"><label>Email</label><input type="email" id="signInEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
-        <div class="field"><label>Password</label><input type="password" id="signInPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
+        <div class="field"><label data-i18n="labelEmail">Email</label><input type="email" id="signInEmail" placeholder="you@example.com" data-i18n-ph="placeholderEmail" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
+        <div class="field"><label data-i18n="labelPassword">Password</label><input type="password" id="signInPass" placeholder="Your password" data-i18n-ph="placeholderPassword" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
       </div>
-      <button class="btn-auth" id="btnSignIn" onclick="doEmailSignIn()">Sign In →</button>
-      <div class="auth-switch">No account? <button onclick="switchToRegister()">Create one</button></div>
+      <button class="btn-auth" id="btnSignIn" onclick="doEmailSignIn()" data-i18n="btnSignIn">Sign In →</button>
+      <div class="auth-switch"><span data-i18n="noAccount">No account?</span> <button onclick="switchToRegister()" data-i18n="createOne">Create one</button></div>
     </div>
     <div id="formRegister" style="display:none;">
       <div class="auth-error" id="registerError"></div>
       <div class="auth-fields">
-        <div class="field"><label>Name</label><input type="text" id="regName" placeholder="Your name" autocomplete="name"></div>
-        <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" inputmode="email"></div>
-        <div class="field"><label>Password</label><input type="password" id="regPass" placeholder="Min. 6 characters" autocomplete="new-password"></div>
-        <div class="field"><label>Confirm Password</label><input type="password" id="regPassConfirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <div class="field"><label data-i18n="labelName">Name</label><input type="text" id="regName" placeholder="Your name" data-i18n-ph="placeholderName" autocomplete="name"></div>
+        <div class="field"><label data-i18n="labelEmail">Email</label><input type="email" id="regEmail" placeholder="you@example.com" data-i18n-ph="placeholderEmail" autocomplete="email" inputmode="email"></div>
+        <div class="field"><label data-i18n="labelPassword">Password</label><input type="password" id="regPass" placeholder="Min. 6 characters" data-i18n-ph="placeholderMinPass" autocomplete="new-password"></div>
+        <div class="field"><label data-i18n="labelConfirmPassword">Confirm Password</label><input type="password" id="regPassConfirm" placeholder="Repeat password" data-i18n-ph="placeholderRepeat" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
       </div>
-      <button class="btn-auth" id="btnRegister" onclick="doRegister()">Create Account →</button>
-      <div class="auth-switch">Already have an account? <button onclick="switchToSignIn()">Sign in</button></div>
+      <button class="btn-auth" id="btnRegister" onclick="doRegister()" data-i18n="btnRegister">Create Account →</button>
+      <div class="auth-switch"><span data-i18n="alreadyAccount">Already have an account?</span> <button onclick="switchToSignIn()" data-i18n="signInLink">Sign in</button></div>
     </div>
   </div>
 </div>
@@ -1085,15 +1179,15 @@ input { transition:border-color 0.4s, background 0.2s; }
       <div id="lockedHero" class="locked-hero">
         <span class="locked-hero-flag">⛳</span>
         <h1><em>Parmate</em></h1>
-        <div class="locked-hero-sub">Scramble Handicap Calculator · WHS</div>
-        <div class="locked-hero-desc">Sign in to calculate team handicaps and save your courses & teams.</div>
+        <div class="locked-hero-sub" data-i18n="heroSub">Scramble Handicap Calculator</div>
+        <div class="locked-hero-desc" data-i18n="heroDesc">Sign in to calculate team handicaps and save your courses & teams.</div>
         <div class="locked-features">
           <div class="locked-feature"><div class="locked-feature-icon">🏌️</div>WHS scramble handicap calculator</div>
-          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save up to 5 courses & 2 teams & 10 scorecards</div>
-          <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 or 18 hole support</div>
+          <div class="locked-feature"><div class="locked-feature-icon">💾</div><span data-i18n="featureSave">Save up to 5 courses & 2 teams & multiple scorecards</span></div>
+          <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 and 18 hole support</div>
         </div>
-        <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
-        <div class="locked-terms">Free to use · No payment required</div>
+        <button class="btn-locked-signin" onclick="openAuthModal()" data-i18n="btnSignInCreate">Sign In / Create Account →</button>
+        <div class="locked-terms" data-i18n="freeNote">Free to use · No payment required</div>
       </div>
 
       <!-- App content (revealed on login) -->
@@ -1102,26 +1196,27 @@ input { transition:border-color 0.4s, background 0.2s; }
         <header class="header">
           <span class="header-flag">⛳</span>
           <h1><em>Parmate</em></h1>
-          <div class="header-sub">Scramble Handicap Calculator · WHS</div>
+          <div class="header-sub" data-i18n="heroSub">Scramble Handicap Calculator</div>
           <div class="header-auth">
             <div class="user-pill" id="userPill">
               <span class="user-dot"></span>
               <span class="user-name" id="userPillName">Player</span>
-              <button class="btn-signout" onclick="doSignOut()">sign out</button>
+              <button class="btn-signout" onclick="doSignOut()" data-i18n="signOut">sign out</button>
             </div>
           </div>
         </header>
+        <button id="langToggleBtn" onclick="toggleLang()" style="position:fixed;top:12px;right:14px;z-index:95;background:none;border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:0.75rem;cursor:pointer;color:var(--muted);line-height:1.4;" title="Switch language">🇳🇱</button>
 
         <!-- GAME MODE -->
         <div class="mode-toggle">
           <button class="mode-btn active" id="modeSingle" onclick="setGameMode('single')">
             <span class="mode-btn-icon">🏌️</span>
-            <span class="mode-btn-label">Single</span>
+            <span class="mode-btn-label" data-i18n="modeSingle">Single</span>
             <span class="mode-btn-desc">vs the course</span>
           </button>
           <button class="mode-btn" id="modeMatch" onclick="setGameMode('match')">
             <span class="mode-btn-icon">⚔️</span>
-            <span class="mode-btn-label">Match</span>
+            <span class="mode-btn-label" data-i18n="modeMatch">Match</span>
             <span class="mode-btn-desc">2 vs 2 teams</span>
           </button>
         </div>
@@ -1130,7 +1225,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="section">
           <div class="section-header">
             <span class="section-icon">📍</span>
-            <span class="section-title">Course Details</span>
+            <span class="section-title" data-i18n="sectionCourse">Course Details</span>
             <div class="holes-toggle">
               <button class="holes-toggle-btn" id="btn9holes" onclick="setHoles(9)">9</button>
               <button class="holes-toggle-btn active" id="btn18holes" onclick="setHoles(18)">18</button>
@@ -1146,35 +1241,57 @@ input { transition:border-color 0.4s, background 0.2s; }
             <div class="holes-note" id="holesNote">
               ⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard.
             </div>
-            <div class="grid-3">
-              <div class="field"><label>Rating</label><input type="number" id="course_rating" placeholder="70.5" step="0.1" min="30" max="85" inputmode="decimal"></div>
-              <div class="field"><label>Slope</label><input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric"></div>
+
+            <!-- Medal / Standard Tee (required) -->
+            <div class="tee-row-label" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span class="tee-dot-sm" style="background:var(--tee2);width:9px;height:9px;flex-shrink:0;"></span>
+              <span style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);" data-i18n="teeStandard">Medal / Standard</span>
+            </div>
+            <div class="grid-3" style="margin-bottom:16px;">
+              <div class="field"><label data-i18n="labelRating">Rating</label><input type="number" id="course_rating" placeholder="70.5" step="0.1" min="30" max="85" inputmode="decimal"></div>
+              <div class="field"><label data-i18n="labelSlope">Slope</label><input type="number" id="course_slope" placeholder="128" step="1" min="55" max="155" inputmode="numeric"></div>
               <div class="field">
-                <label>Par</label>
+                <label data-i18n="labelPar">Par</label>
                 <input type="number" id="course_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric">
                 <div class="par-hint" id="parHint"></div>
               </div>
             </div>
-            <div style="margin-top:4px;">
-              <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Forward Tee <span style="opacity:0.5;font-size:0.55rem;">(optional)</span></div>
-              <div class="grid-3">
-                <div class="field"><label>Rating</label><input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="30" max="85" inputmode="decimal"></div>
-                <div class="field"><label>Slope</label><input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric"></div>
-                <div class="field"><label>Par</label><input type="number" id="tee3_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric"></div>
-              </div>
+
+            <!-- Championship Tee (optional) -->
+            <div class="tee-row-label" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span class="tee-dot-sm" style="background:var(--tee1);width:9px;height:9px;flex-shrink:0;"></span>
+              <span style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);" data-i18n="teeChampionship">Championship</span>
+              <span style="opacity:0.5;font-size:0.55rem;color:var(--muted);">(optional)</span>
+            </div>
+            <div class="grid-3" style="margin-bottom:16px;">
+              <div class="field"><label>Rating</label><input type="number" id="tee1_rating" placeholder="72.1" step="0.1" min="30" max="85" inputmode="decimal"></div>
+              <div class="field"><label>Slope</label><input type="number" id="tee1_slope" placeholder="135" step="1" min="55" max="155" inputmode="numeric"></div>
+              <div class="field"><label>Par</label><input type="number" id="tee1_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric"></div>
+            </div>
+
+            <!-- Forward Tee (optional) -->
+            <div class="tee-row-label" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span class="tee-dot-sm" style="background:var(--tee3);width:9px;height:9px;flex-shrink:0;"></span>
+              <span style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);" data-i18n="teeForward">Forward</span>
+              <span style="opacity:0.5;font-size:0.55rem;color:var(--muted);">(optional)</span>
+            </div>
+            <div class="grid-3">
+              <div class="field"><label>Rating</label><input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="30" max="85" inputmode="decimal"></div>
+              <div class="field"><label>Slope</label><input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric"></div>
+              <div class="field"><label>Par</label><input type="number" id="tee3_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric"></div>
             </div>
           </div>
         </div>
 
         <!-- FORMAT -->
         <div class="section">
-          <div class="section-header"><span class="section-icon">⚙️</span><span class="section-title">Scramble Format</span></div>
+          <div class="section-header"><span class="section-icon">⚙️</span><span class="section-title" data-i18n="sectionFormat">Scramble Format</span></div>
           <div class="section-body">
             <div class="fmt-grid">
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong>2-player scramble</label></div>
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fB" value="25_20"><label for="fB"><strong>25% / 20%</strong>Higher allowance</label></div>
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fC" value="20_15"><label for="fC"><strong>20% / 15%</strong>Lower allowance</label></div>
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fD" value="50_50"><label for="fD"><strong>50% / 50%</strong>Equal / casual</label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong><span data-i18n="fmt3515">2-player scramble</span></label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fB" value="25_20"><label for="fB"><strong>25% / 20%</strong><span data-i18n="fmt2520">Higher allowance</span></label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fC" value="20_15"><label for="fC"><strong>20% / 15%</strong><span data-i18n="fmt2015">Lower allowance</span></label></div>
+              <div class="fmt-pill"><input type="radio" name="fmt" id="fD" value="50_50"><label for="fD"><strong>50% / 50%</strong><span data-i18n="fmt5050">Equal / casual</span></label></div>
             </div>
           </div>
         </div>
@@ -1183,71 +1300,71 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="section">
           <div class="section-header">
             <span class="section-icon">🏌️</span>
-            <span class="section-title">My Team</span>
+            <span class="section-title" data-i18n="sectionMyTeam">My Team</span>
             <button class="btn-save-inline" id="saveTeamBtn" onclick="saveTeam()">💾 Save</button>
           </div>
           <div class="section-body">
             <div class="team-label">
               <div class="team-label-num">1</div>
-              <input class="team-name-input" type="text" id="team1_name" placeholder="enter team name…">
+              <input class="team-name-input" type="text" id="team1_name" placeholder="enter team name…" data-i18n-ph="placeholderTeamName">
             </div>
             <div class="player-card">
               <div class="player-card-num">1</div>
-              <div class="field"><label>Your Name <span style="color:var(--gold)">*</span></label><input type="text" id="t1p1_name" placeholder="Required"></div>
+              <div class="field"><label><span data-i18n="labelYourName">Your Name</span> <span style="color:var(--gold)">*</span></label><input type="text" id="t1p1_name" placeholder="Required" data-i18n-ph="labelRequired"></div>
               <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div></div></div>
+                <div class="field"><label data-i18n="labelHcpIndex">Handicap Index</label><input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label data-i18n="labelGender">Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div></div></div>
               </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ"><label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked><label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd"><label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+              <div class="field"><label data-i18n="labelTee">Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ"><label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span><span data-i18n="teeChampLabel">Championship</span></label></div><div class="tee-pill t2"><input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked><label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span><span data-i18n="teeStdLabel">Standard</span></label></div><div class="tee-pill t3"><input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd"><label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span><span data-i18n="teeForwardLabel">Forward</span></label></div></div></div>
             </div>
             <div class="player-card">
               <div class="player-card-num">2</div>
-              <div class="field"><label>Partner Name <span style="color:var(--gold)">*</span></label><input type="text" id="t1p2_name" placeholder="Required"></div>
+              <div class="field"><label><span data-i18n="labelPartnerName">Partner Name</span> <span style="color:var(--gold)">*</span></label><input type="text" id="t1p2_name" placeholder="Required" data-i18n-ph="labelRequired"></div>
               <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div></div></div>
+                <div class="field"><label data-i18n="labelHcpIndex">Handicap Index</label><input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label data-i18n="labelGender">Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div></div></div>
               </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ"><label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked><label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd"><label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+              <div class="field"><label data-i18n="labelTee">Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ"><label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span><span data-i18n="teeChampLabel">Championship</span></label></div><div class="tee-pill t2"><input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked><label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span><span data-i18n="teeStdLabel">Standard</span></label></div><div class="tee-pill t3"><input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd"><label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span><span data-i18n="teeForwardLabel">Forward</span></label></div></div></div>
             </div>
           </div>
         </div>
 
         <!-- OPPONENT TEAM -->
         <div class="section" id="opponentSection">
-          <div class="section-header"><span class="section-icon">🏌️</span><span class="section-title">Opponent Team</span></div>
+          <div class="section-header"><span class="section-icon">🏌️</span><span class="section-title" data-i18n="sectionOppTeam">Opponent Team</span></div>
           <div class="section-body">
             <div class="team-label">
               <div class="team-label-num">2</div>
-              <input class="team-name-input" type="text" id="team2_name" placeholder="enter team name…">
+              <input class="team-name-input" type="text" id="team2_name" placeholder="enter team name…" data-i18n-ph="placeholderTeamName">
             </div>
             <div class="player-card">
               <div class="player-card-num">1</div>
-              <div class="field"><label>Player 1 Name <span style="color:var(--gold)">*</span></label><input type="text" id="t2p1_name" placeholder="Required"></div>
+              <div class="field"><label><span data-i18n="labelPlayer1">Player 1 Name</span> <span style="color:var(--gold)">*</span></label><input type="text" id="t2p1_name" placeholder="Required" data-i18n-ph="labelRequired"></div>
               <div class="grid-2">
                 <div class="field"><label>Handicap Index</label><input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div></div></div>
+                <div class="field"><label data-i18n="labelGender">Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div></div></div>
               </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ"><label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked><label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd"><label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+              <div class="field"><label data-i18n="labelTee">Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ"><label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span><span data-i18n="teeChampLabel">Championship</span></label></div><div class="tee-pill t2"><input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked><label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span><span data-i18n="teeStdLabel">Standard</span></label></div><div class="tee-pill t3"><input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd"><label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span><span data-i18n="teeForwardLabel">Forward</span></label></div></div></div>
             </div>
             <div class="player-card">
               <div class="player-card-num">2</div>
-              <div class="field"><label>Player 2 Name <span style="color:var(--gold)">*</span></label><input type="text" id="t2p2_name" placeholder="Required"></div>
+              <div class="field"><label><span data-i18n="labelPlayer2">Player 2 Name</span> <span style="color:var(--gold)">*</span></label><input type="text" id="t2p2_name" placeholder="Required" data-i18n-ph="labelRequired"></div>
               <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div></div></div>
+                <div class="field"><label data-i18n="labelHcpIndex">Handicap Index</label><input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
+                <div class="field"><label data-i18n="labelGender">Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div></div></div>
               </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ"><label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked><label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd"><label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+              <div class="field"><label data-i18n="labelTee">Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ"><label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span><span data-i18n="teeChampLabel">Championship</span></label></div><div class="tee-pill t2"><input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked><label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span><span data-i18n="teeStdLabel">Standard</span></label></div><div class="tee-pill t3"><input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd"><label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span><span data-i18n="teeForwardLabel">Forward</span></label></div></div></div>
             </div>
           </div>
         </div>
 
         <div class="info-note">
-          ℹ️ WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH × their format %, summed and rounded.
+          <span data-i18n="whsNote">ℹ️ WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player's CH × their format %, summed and rounded.</span>
         </div>
 
         <!-- sticky calc button — sits above bottom tab bar -->
         <div class="calc-wrap">
-          <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
+          <button class="btn-calc" onclick="calculate()" data-i18n="btnCalculate">Calculate Team Handicaps →</button>
         </div>
 
       </div><!-- /appContent -->
@@ -1258,13 +1375,13 @@ input { transition:border-color 0.4s, background 0.2s; }
   <div class="tab-page" id="pageMyData">
     <div class="page-inner">
       <div class="mydata-header">
-        <h2>My <em>Scramble</em></h2>
-        <div class="mydata-sub">Saved courses &amp; teams</div>
+        <h2 data-i18n="myScrambleTitle">My <em>Scramble</em></h2>
+        <div class="mydata-sub" data-i18n="myScrambleSub">Saved courses &amp; teams</div>
       </div>
 
       <!-- COURSES -->
       <div class="mydata-section-label">
-        <span class="mydata-section-label-text">📍 Courses</span>
+        <span class="mydata-section-label-text" data-i18n="sectionCourses">📍 Courses</span>
         <span class="mydata-section-label-count" id="courseCount">0 / 5</span>
       </div>
       <div class="slots-full-note" id="coursesFull">
@@ -1281,7 +1398,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
       <!-- TEAMS -->
       <div class="mydata-section-label">
-        <span class="mydata-section-label-text">🏌️ My Teams</span>
+        <span class="mydata-section-label-text" data-i18n="sectionTeams">🏌️ My Teams</span>
         <span class="mydata-section-label-count" id="teamCount">0 / 2</span>
       </div>
       <div class="slots-full-note" id="teamsFull">
@@ -1296,15 +1413,29 @@ input { transition:border-color 0.4s, background 0.2s; }
 
       <div class="mydata-spacer"></div>
 
-      <!-- ROUNDS -->
+      <!-- SOLO ROUNDS -->
       <div class="mydata-section-label">
-        <span class="mydata-section-label-text">📋 Saved Rounds</span>
-        <span class="mydata-section-label-count" id="roundCount">0</span>
+        <span class="mydata-section-label-text" data-i18n="sectionSoloRounds">📋 Solo Rounds</span>
+        <span class="mydata-section-label-count" id="soloRoundCount">0</span>
       </div>
-      <div id="roundsList">
+      <div id="soloRoundsList">
         <div class="saved-empty">
           <span class="saved-empty-icon">📋</span>
-          No rounds saved yet.<br>Complete a scorecard and tap 💾 Save Round.
+          No solo rounds saved yet.<br>Play in Single mode and tap 💾 Save Round.
+        </div>
+      </div>
+
+      <div class="mydata-spacer"></div>
+
+      <!-- MATCH ROUNDS 2vs2 -->
+      <div class="mydata-section-label">
+        <span class="mydata-section-label-text" data-i18n="sectionMatchRounds">⚔️ Team Matches 2vs2</span>
+        <span class="mydata-section-label-count" id="matchRoundCount">0</span>
+      </div>
+      <div id="matchRoundsList">
+        <div class="saved-empty">
+          <span class="saved-empty-icon">⚔️</span>
+          No match rounds saved yet.<br>Play in Match mode and tap 💾 Save Round.
         </div>
       </div>
 
@@ -1318,18 +1449,18 @@ input { transition:border-color 0.4s, background 0.2s; }
 <nav class="bottom-tabs" id="bottomTabs">
   <button class="tab-btn-bar active" id="tabBtnCalc" onclick="switchTab('calc')">
     <span class="tab-btn-icon">⛳</span>
-    <span class="tab-btn-label">Calculator</span>
+    <span class="tab-btn-label" data-i18n="tabCalculator">Calculator</span>
   </button>
   <button class="tab-btn-bar" id="tabBtnMyData" onclick="switchTab('mydata')">
     <span class="tab-btn-icon">📁</span>
-    <span class="tab-btn-label">My Scramble</span>
+    <span class="tab-btn-label" data-i18n="tabMyScramble">My Scramble</span>
   </button>
 </nav>
 
 <!-- RESULTS OVERLAY -->
 <div class="results-overlay" id="resultsOverlay">
   <div class="results-inner">
-    <div class="results-back"><button class="btn-back" onclick="closeResults()">← Back</button></div>
+    <div class="results-back"><button class="btn-back" onclick="closeResults()" data-i18n="btnBack">← Back</button></div>
     <div class="results-hero">
       <span class="results-hero-flag">⛳</span>
       <div class="results-event" id="res_event">Results</div>
@@ -1339,7 +1470,7 @@ input { transition:border-color 0.4s, background 0.2s; }
     <!-- Start Scorecard CTA -->
     <div style="padding:0 16px 8px;">
       <button class="btn-calc" style="background:var(--green);box-shadow:0 8px 32px rgba(74,158,106,0.25);" onclick="openScorecard()">
-        📋 Start Scorecard →
+        <span data-i18n="btnStartScorecard">📋 Start Scorecard →</span>
       </button>
     </div>
   </div>
@@ -1358,18 +1489,19 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-save-round-sm" id="sc_saveBtnTop" onclick="saveRound()">💾 Save</button>
-          <button class="btn-back" onclick="closeScorecard()">← Back</button>
+          <button class="btn-back" onclick="closeScorecard()" data-i18n="scBack">← Back</button>
         </div>
       </div>
-      <!-- Live score banner -->
-      <div class="sc-score-banner">
+
+      <!-- Single mode banner -->
+      <div class="sc-score-banner" id="sc_singleBanner">
         <div class="sc-score-item">
-          <div class="sc-score-label">Gross</div>
+          <div class="sc-score-label" data-i18n="scGrossLabel">Gross</div>
           <div class="sc-score-val" id="sc_gross">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Par Played</div>
+          <div class="sc-score-label" data-i18n="scParPlayedLabel">Par Played</div>
           <div class="sc-score-val" id="sc_parTotal">–</div>
         </div>
         <div class="sc-score-divider"></div>
@@ -1379,15 +1511,36 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Holes</div>
+          <div class="sc-score-label" data-i18n="scHolesLabel">Holes</div>
           <div class="sc-holes-progress" id="sc_holesProgress">0 / 18</div>
         </div>
       </div>
-      <!-- Column headers -->
-      <div class="sc-col-header">
-        <div class="sc-col-label">Hole</div>
+
+      <!-- Match mode banner -->
+      <div class="sc-match-banner" id="sc_matchBanner" style="display:none;">
+        <div class="sc-match-team">
+          <div class="sc-match-team-name" id="sc_myTeamName" data-i18n="scMyTeam">My Team</div>
+          <div class="sc-match-score" id="sc_myVsPar">–</div>
+          <div class="sc-match-hcp" id="sc_myHcpLabel">HCP –</div>
+        </div>
+        <div class="sc-match-divider"></div>
+        <div class="sc-match-status">
+          <div class="sc-match-status-label" id="sc_statusLabel" data-i18n="scHolesLabel">Holes</div>
+          <div class="sc-match-status-val" id="sc_matchStatus">0/18</div>
+        </div>
+        <div class="sc-match-divider"></div>
+        <div class="sc-match-team">
+          <div class="sc-match-team-name" id="sc_oppTeamName">Opponent</div>
+          <div class="sc-match-score" id="sc_oppVsPar">–</div>
+          <div class="sc-match-hcp" id="sc_oppHcpLabel">HCP –</div>
+        </div>
+      </div>
+
+      <!-- Column headers (injected dynamically) -->
+      <div class="sc-col-header" id="sc_colHeader">
+        <div class="sc-col-label" data-i18n="scHoleColLabel">Hole</div>
         <div class="sc-col-label">Par</div>
-        <div class="sc-col-label score-col">Score</div>
+        <div class="sc-col-label score-col" data-i18n="scScoreColLabel">Score</div>
         <div class="sc-col-label badge-col">Badge</div>
       </div>
     </div>
@@ -1397,7 +1550,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
     <!-- Bottom save button (always visible, no overlap) -->
     <div class="sc-save-bottom">
-      <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()">💾 Save Round</button>
+      <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()" data-i18n="scSaveBottom">💾 Save Round</button>
     </div>
 
   </div>
@@ -1440,17 +1593,19 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-card-delete" id="rv_deleteBtn" onclick="deleteRound()" title="Delete round" style="padding:8px 12px;">🗑</button>
-          <button class="btn-back" onclick="closeRoundView()">← Back</button>
+          <button class="btn-back" onclick="closeRoundView()" data-i18n="scBack">← Back</button>
         </div>
       </div>
-      <div class="sc-score-banner">
+
+      <!-- Single mode banner -->
+      <div class="sc-score-banner" id="rv_singleBanner">
         <div class="sc-score-item">
-          <div class="sc-score-label">Gross</div>
+          <div class="sc-score-label" data-i18n="scGrossLabel">Gross</div>
           <div class="sc-score-val" id="rv_gross">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Par Played</div>
+          <div class="sc-score-label" data-i18n="scParPlayedLabel">Par Played</div>
           <div class="sc-score-val" id="rv_par">–</div>
         </div>
         <div class="sc-score-divider"></div>
@@ -1460,11 +1615,33 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Holes</div>
+          <div class="sc-score-label" data-i18n="scHolesLabel">Holes</div>
           <div class="sc-holes-progress" id="rv_holes">–</div>
         </div>
       </div>
-      <div class="rv-col-header">
+
+      <!-- Match mode banner (reuses scorecard styles) -->
+      <div class="sc-match-banner" id="rv_matchBanner" style="display:none;">
+        <div class="sc-match-team">
+          <div class="sc-match-team-name" id="rv_myTeamName" data-i18n="scMyTeam">My Team</div>
+          <div class="sc-match-score" id="rv_myVsPar">–</div>
+          <div class="sc-match-hcp" id="rv_myHcpLabel">HCP –</div>
+        </div>
+        <div class="sc-match-divider"></div>
+        <div class="sc-match-status">
+          <div class="sc-match-status-label" id="rv_statusLabel" data-i18n="scResultLabel">Result</div>
+          <div class="sc-match-status-val" id="rv_matchStatus">–</div>
+        </div>
+        <div class="sc-match-divider"></div>
+        <div class="sc-match-team">
+          <div class="sc-match-team-name" id="rv_oppTeamName">Opponent</div>
+          <div class="sc-match-score" id="rv_oppVsPar">–</div>
+          <div class="sc-match-hcp" id="rv_oppHcpLabel">HCP –</div>
+        </div>
+      </div>
+
+      <!-- Column headers (set dynamically) -->
+      <div id="rv_colHeader" class="rv-col-header">
         <div class="sc-col-label">Hole</div>
         <div class="sc-col-label" style="text-align:center;">Par</div>
         <div class="sc-col-label" style="text-align:center;">Score</div>
@@ -1562,12 +1739,13 @@ function setHoles(n) {
   document.getElementById('holesNote').classList.toggle('visible', n === 9);
   const parEl  = document.getElementById('course_par');
   const hintEl = document.getElementById('parHint');
+  const t1par  = document.getElementById('tee1_par');
   const t3par  = document.getElementById('tee3_par');
   if (n === 9) {
-    parEl.placeholder = '36'; t3par.placeholder = '36';
-    hintEl.textContent = 'Typical 9-hole par: 35 or 36';
+    parEl.placeholder = '36'; if (t1par) t1par.placeholder = '36'; t3par.placeholder = '36';
+    hintEl.textContent = t('hint9hole');
   } else {
-    parEl.placeholder = '72'; t3par.placeholder = '72';
+    parEl.placeholder = '72'; if (t1par) t1par.placeholder = '72'; t3par.placeholder = '72';
     hintEl.textContent = '';
   }
 }
@@ -1585,12 +1763,17 @@ function setGameMode(mode) {
 function getCH(index, slope, rating, par) { return index * (slope / 113) + (rating - par); }
 
 function getTee(teeKey) {
+  if (teeKey === 'champ') {
+    const r = numVal('tee1_rating'), s = numVal('tee1_slope'), p = numVal('tee1_par') || 72;
+    // Fall back to medal tee if championship fields not filled in
+    if (!isNaN(r) && !isNaN(s)) return { rating:r, slope:s, par:p, key:'champ' };
+  }
   if (teeKey === 'fwd') {
     const r = numVal('tee3_rating'), s = numVal('tee3_slope'), p = numVal('tee3_par') || 72;
     if (!isNaN(r) && !isNaN(s)) return { rating:r, slope:s, par:p, key:'fwd' };
   }
   const r = numVal('course_rating'), s = numVal('course_slope'), p = numVal('course_par') || 72;
-  return { rating:r, slope:s, par:p, key: teeKey === 'champ' ? 'champ' : 'main' };
+  return { rating:r, slope:s, par:p, key:'main' };
 }
 
 function getPlayer(ti, pi) {
@@ -1615,7 +1798,7 @@ function calcTeam(players, pcts) {
 
 function calculate() {
   const rating = numVal('course_rating'), slope = numVal('course_slope');
-  if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Course Rating and Slope first.', 'error'); return; }
+  if (isNaN(rating) || isNaN(slope)) { showToast(t('toastFillRatingSlope'), 'error'); return; }
 
   // Validate player names — always require My Team names; require opponent names only in match mode
   const myTeamFields = [
@@ -1636,7 +1819,7 @@ function calculate() {
       el.focus();
       el.style.borderColor = 'var(--red)';
       setTimeout(() => { el.style.borderColor = ''; }, 2000);
-      showToast(`Please enter: ${f.label}`, 'error');
+      showToast(t('toastEnterField') + f.label, 'error');
       return;
     }
   }
@@ -1657,7 +1840,7 @@ function calculate() {
     if (res) { any = true; results.push({ name: team.name, ...res }); }
     else      results.push({ name: team.name, hcp: null, players: [] });
   }
-  if (!any) { showToast("Enter at least one player's handicap.", 'error'); return; }
+  if (!any) { showToast(t('toastEnterHcp'), 'error'); return; }
   renderResults(results, rating, slope, numVal('course_par') || 72, pcts);
   document.getElementById('resultsOverlay').classList.add('open');
   document.getElementById('resultsOverlay').scrollTop = 0;
@@ -1665,16 +1848,16 @@ function calculate() {
 
 function renderResults(results, rating, slope, par, pcts) {
   const fmt = pcts.map(p => Math.round(p*100)+'%').join(' / ');
-  document.getElementById('res_event').textContent = val('course_name') || 'Scramble Results';
+  document.getElementById('res_event').textContent = val('course_name') || t('defaultResults');
   document.getElementById('res_meta').innerHTML = `${_holes} holes · Rating ${rating} · Slope ${slope} · Par ${par}<br>Format: ${fmt} allowance`;
   const sorted = [...results].sort((a,b) => a.hcp === null ? 1 : b.hcp === null ? -1 : a.hcp - b.hcp);
   const tC = { main:'var(--tee2)', champ:'var(--tee1)', fwd:'var(--tee3)' };
   const tN = { main:'Std', champ:'Champ', fwd:'Fwd' };
   let html = '';
   sorted.forEach((team, idx) => {
-    if (team.hcp === null) { html += `<div class="result-card"><div class="result-card-top"><div class="result-team-name">${esc(team.name)}</div><div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">No players entered</div></div></div>`; return; }
+    if (team.hcp === null) { html += `<div class="result-card"><div class="result-card-top"><div class="result-team-name">${esc(team.name)}</div><div style="font-size:0.65rem;color:var(--muted);padding-top:6px;">${t('noPlayers')}</div></div></div>`; return; }
     const rows = team.players.map(p => `<div class="result-player-row"><div class="result-player-name">${esc(p.name)}</div><div class="result-player-meta"><span class="result-player-hcp">${p.hcp.toFixed(1)}</span><span class="tee-dot-sm" style="background:${tC[p.teeUsed]||tC.main}"></span><span class="result-pct">${Math.round(p.pct*100)}%</span></div></div>`).join('');
-    html += `<div class="result-card"><div class="result-card-top"><div><div class="result-team-name">${esc(team.name)}</div><div class="result-strokes">+${team.hcp} stroke${team.hcp!==1?'s':''} off scratch</div></div><div class="result-hcp-block"><div class="result-hcp-num">${team.hcp}</div><div class="result-hcp-label">Team HCP</div></div></div><div class="result-players">${rows}</div></div>`;
+    html += `<div class="result-card"><div class="result-card-top"><div><div class="result-team-name">${esc(team.name)}</div><div class="result-strokes">+${team.hcp} ${team.hcp!==1?t('strokesOff'):t('strokeOff')}</div></div><div class="result-hcp-block"><div class="result-hcp-num">${team.hcp}</div><div class="result-hcp-label" data-i18n="teamHcpLabel">${t('teamHcpLabel')}</div></div></div><div class="result-players">${rows}</div></div>`;
     if (idx === 0 && sorted.length === 2 && sorted[1].hcp !== null) {
       const diff = Math.abs(sorted[1].hcp - sorted[0].hcp);
       html += `<div class="result-vs-badge"><span>${esc(sorted[0].name)}</span><span class="result-vs-diff">${diff===0?'Even':diff+' stroke'+(diff!==1?'s':'')}</span><span>${esc(sorted[1].name)}</span></div>`;
@@ -1687,10 +1870,10 @@ function closeResults() { document.getElementById('resultsOverlay').classList.re
 
 function resetAll() {
   if (!confirm('Reset all fields?')) return;
-  ['course_name','course_rating','course_slope','tee3_rating','tee3_slope',
+  ['course_name','course_rating','course_slope','tee1_rating','tee1_slope','tee3_rating','tee3_slope',
    't1p1_name','t1p1_hcp','t1p2_name','t1p2_hcp',
    't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  setVal('course_par','72'); setVal('tee3_par','72');
+  setVal('course_par','72'); setVal('tee1_par','72'); setVal('tee3_par','72');
   setVal('team1_name','add your team name'); setVal('team2_name','add your team name');
   ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(n => setRadio(n,'M'));
   ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(n => setRadio(n,'main'));
@@ -1704,19 +1887,22 @@ function resetAll() {
 // ═══════════════════════════════════
 async function saveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toastSignInFirst'), 'error'); return; }
   if (_savedCourses.length >= MAX_COURSES) {
-    showToast(`Maximum ${MAX_COURSES} courses — delete one in My Scramble first.`, 'error');
+    showToast(t('toastMaxCourses'), 'error');
     return;
   }
   const rating = numVal('course_rating'), slope = numVal('course_slope');
-  if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Rating and Slope before saving.', 'error'); return; }
+  if (isNaN(rating) || isNaN(slope)) { showToast(t('toastFillRatingSlopeS'), 'error'); return; }
   const data = {
     id:          Date.now().toString(),
     name:        val('course_name') || 'Unnamed Course',
     rating, slope,
     par:         numVal('course_par') || (_holes === 9 ? 36 : 72),
     holes:       _holes,
+    tee1_rating: numVal('tee1_rating'),
+    tee1_slope:  numVal('tee1_slope'),
+    tee1_par:    numVal('tee1_par') || (_holes === 9 ? 36 : 72),
     tee3_rating: numVal('tee3_rating'),
     tee3_slope:  numVal('tee3_slope'),
     tee3_par:    numVal('tee3_par') || (_holes === 9 ? 36 : 72),
@@ -1727,14 +1913,14 @@ async function saveCourse() {
   try {
     _savedCourses.push(data);
     await persistCourses(uid);
-    btn.textContent = '✓ Saved'; btn.classList.add('saved');
-    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); }, 2200);
-    showToast('Course saved!', 'success');
+    btn.textContent = '✓'; btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = '💾 ' + t('scSaveTop').replace('💾 ',''); btn.classList.remove('saved'); }, 2200);
+    showToast(t('toastCourseSaved'), 'success');
     renderMyData();
   } catch(e) {
     _savedCourses.pop();
     btn.textContent = '💾 Save';
-    showToast('Could not save: ' + e.message, 'error');
+    showToast(t('toastCourseFail') + e.message, 'error');
   }
 }
 
@@ -1742,8 +1928,8 @@ async function deleteCourse(id) {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) return;
   _savedCourses = _savedCourses.filter(c => c.id !== id);
-  try { await persistCourses(uid); renderMyData(); showToast('Course deleted.', 'success'); }
-  catch(e) { showToast('Error: ' + e.message, 'error'); }
+  try { await persistCourses(uid); renderMyData(); showToast(t('toastCourseDeleted'), 'success'); }
+  catch(e) { showToast(t('toastError') + e.message, 'error'); }
 }
 
 async function persistCourses(uid) {
@@ -1757,6 +1943,9 @@ function loadCourseIntoCalc(id) {
   setVal('course_rating', c.rating);
   setVal('course_slope',  c.slope);
   setVal('course_par',    c.par || (c.holes === 9 ? 36 : 72));
+  if (!isNaN(c.tee1_rating)) setVal('tee1_rating', c.tee1_rating);
+  if (!isNaN(c.tee1_slope))  setVal('tee1_slope',  c.tee1_slope);
+  if (!isNaN(c.tee1_par))    setVal('tee1_par',    c.tee1_par);
   if (!isNaN(c.tee3_rating)) setVal('tee3_rating', c.tee3_rating);
   if (!isNaN(c.tee3_slope))  setVal('tee3_slope',  c.tee3_slope);
   if (!isNaN(c.tee3_par))    setVal('tee3_par',    c.tee3_par);
@@ -1774,7 +1963,7 @@ async function saveTeam() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
   if (_savedTeams.length >= MAX_TEAMS) {
-    showToast(`Maximum ${MAX_TEAMS} teams — delete one in My Scramble first.`, 'error');
+    showToast('Maximum 2 teams — delete one in My Scramble first.', 'error');
     return;
   }
   const data = {
@@ -1844,22 +2033,23 @@ function renderMyData() {
   document.getElementById('coursesFull').classList.toggle('visible', _savedCourses.length >= MAX_COURSES);
   const cList = document.getElementById('coursesList');
   if (_savedCourses.length === 0) {
-    cList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📍</span>No courses saved yet.<br>Fill in course details in the Calculator tab and tap 💾 Save.</div>`;
+    cList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📍</span>${t('emptyCourses')}</div>`;
   } else {
     cList.innerHTML = _savedCourses.map(c => {
       const hLabel = c.holes === 9 ? '9 holes' : '18 holes';
-      const fwd    = !isNaN(c.tee3_rating) ? ` · Fwd ${c.tee3_rating}/${c.tee3_slope}` : '';
+      const champ  = !isNaN(c.tee1_rating) ? ` · ${t('teeChampLabel')} ${c.tee1_rating}/${c.tee1_slope}` : '';
+      const fwd    = !isNaN(c.tee3_rating) ? ` · ${t('teeForwardLabel')} ${c.tee3_rating}/${c.tee3_slope}` : '';
       return `
         <div class="saved-card">
           <div class="saved-card-icon">📍</div>
           <div class="saved-card-body">
             <div class="saved-card-name">${esc(c.name)}</div>
             <div class="saved-card-meta">
-              <strong>${hLabel}</strong> · Rating ${c.rating} · Slope ${c.slope} · Par ${c.par}${fwd}
+              <strong>${hLabel}</strong> · ${t('teeStdLabel')} ${c.rating}/${c.slope} · Par ${c.par}${champ}${fwd}
             </div>
           </div>
           <div class="saved-card-actions">
-            <button class="btn-card-load" onclick="loadCourseIntoCalc('${c.id}')">Load</button>
+            <button class="btn-card-load" onclick="loadCourseIntoCalc('${c.id}')">${_lang==='nl'?'Laden':'Load'}</button>
             <button class="btn-card-delete" onclick="deleteCourse('${c.id}')" title="Delete">🗑</button>
           </div>
         </div>`;
@@ -1871,44 +2061,48 @@ function renderMyData() {
   document.getElementById('teamsFull').classList.toggle('visible', _savedTeams.length >= MAX_TEAMS);
   const tList = document.getElementById('teamsList');
   if (_savedTeams.length === 0) {
-    tList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">🏌️</span>No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.</div>`;
+    tList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">🏌️</span>${t('emptyTeams')}</div>`;
   } else {
-    tList.innerHTML = _savedTeams.map(t => {
-      const p1 = t.p1Name || 'Player 1';
-      const p2 = t.p2Name || 'Player 2';
-      const h1 = isNaN(t.p1Hcp) ? '–' : t.p1Hcp.toFixed(1);
-      const h2 = isNaN(t.p2Hcp) ? '–' : t.p2Hcp.toFixed(1);
+    tList.innerHTML = _savedTeams.map(tm => {
+      const p1 = tm.p1Name || 'Player 1';
+      const p2 = tm.p2Name || 'Player 2';
+      const h1 = isNaN(tm.p1Hcp) ? '–' : tm.p1Hcp.toFixed(1);
+      const h2 = isNaN(tm.p2Hcp) ? '–' : tm.p2Hcp.toFixed(1);
       return `
         <div class="saved-card">
           <div class="saved-card-icon">🏌️</div>
           <div class="saved-card-body">
-            <div class="saved-card-name">${esc(t.teamName)}</div>
+            <div class="saved-card-name">${esc(tm.teamName)}</div>
             <div class="saved-card-meta">
               ${esc(p1)} <strong>${h1}</strong> &nbsp;·&nbsp; ${esc(p2)} <strong>${h2}</strong>
             </div>
           </div>
           <div class="saved-card-actions">
-            <button class="btn-card-load" onclick="loadTeamIntoCalc('${t.id}')">Load</button>
-            <button class="btn-card-delete" onclick="deleteTeam('${t.id}')" title="Delete">🗑</button>
+            <button class="btn-card-load" onclick="loadTeamIntoCalc('${tm.id}')">${_lang==='nl'?'Laden':'Load'}</button>
+            <button class="btn-card-delete" onclick="deleteTeam('${tm.id}')" title="Delete">🗑</button>
           </div>
         </div>`;
     }).join('');
   }
 
-  // --- Rounds ---
-  document.getElementById('roundCount').textContent = _savedRounds.length;
-  const rList = document.getElementById('roundsList');
-  if (_savedRounds.length === 0) {
-    rList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📋</span>No rounds saved yet.<br>Complete a scorecard and tap 💾 Save Round.</div>`;
+  // --- Rounds: split solo vs match ---
+  const soloRounds  = _savedRounds.filter(r => !r.isMatch);
+  const matchRounds = _savedRounds.filter(r =>  r.isMatch);
+
+  document.getElementById('soloRoundCount').textContent  = soloRounds.length;
+  document.getElementById('matchRoundCount').textContent = matchRounds.length;
+
+  // Solo rounds
+  const srList = document.getElementById('soloRoundsList');
+  if (soloRounds.length === 0) {
+    srList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📋</span>${t('emptySoloRounds')}</div>`;
   } else {
-    rList.innerHTML = _savedRounds.map(r => {
+    srList.innerHTML = soloRounds.map(r => {
       const vsPar     = r.vsPar ?? (r.gross - (r.parPlayed || r.totalPar));
       const vsClass   = vsPar < 0 ? 'under' : vsPar > 0 ? 'over' : 'even';
       const vsLabel   = vsPar === 0 ? 'E' : vsPar > 0 ? `+${vsPar}` : `${vsPar}`;
       const hLabel    = (r.holes === 9 ? '9' : '18') + ' holes';
-      const playedStr = r.playedAt
-        ? new Date(r.playedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
-        : '';
+      const playedStr = r.playedAt ? new Date(r.playedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '';
       const holesNote = r.holesPlayed < r.holes ? ` · ${r.holesPlayed} played` : '';
       return `
         <div class="round-card" onclick="openRoundView('${r.id}')">
@@ -1923,6 +2117,56 @@ function renderMyData() {
           <div class="round-score-badge">
             <div class="round-score-num ${vsClass}">${vsLabel}</div>
             <div class="round-score-lbl">vs par</div>
+          </div>
+          <div class="round-card-chevron">›</div>
+        </div>`;
+    }).join('');
+  }
+
+  // Match rounds
+  const mrList = document.getElementById('matchRoundsList');
+  if (matchRounds.length === 0) {
+    mrList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">⚔️</span>${t('emptyMatchRounds')}</div>`;
+  } else {
+    mrList.innerHTML = matchRounds.map(r => {
+      const hLabel    = (r.holes === 9 ? '9' : '18') + ' holes';
+      const playedStr = r.playedAt ? new Date(r.playedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '';
+      const holesNote = r.holesPlayed < r.holes ? ` · ${r.holesPlayed} played` : '';
+
+      // Recalculate match result from stored scores
+      const par       = r.par       || Array(r.holes).fill(4);
+      const scores    = r.scores    || Array(r.holes).fill(0);
+      const oppScores = r.oppScores || Array(r.holes).fill(0);
+      const hcpDiff   = (r.oppHcp || 0) - (r.teamHcp || 0);
+      let myWins = 0, oppWins = 0;
+      for (let i = 0; i < r.holes; i++) {
+        if (scores[i] > 0 && oppScores[i] > 0) {
+          const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+          const myNet  = scores[i]    + (s < 0 ? s : 0);
+          const oppNet = oppScores[i] + (s > 0 ? -s : 0);
+          if      (myNet < oppNet) myWins++;
+          else if (myNet > oppNet) oppWins++;
+        }
+      }
+      const diff = myWins - oppWins;
+      let resultLabel, resultClass;
+      if (diff > 0)       { resultLabel = `${diff} UP`;  resultClass = 'under'; }
+      else if (diff < 0)  { resultLabel = `${Math.abs(diff)} DN`; resultClass = 'over'; }
+      else                { resultLabel = 'A/S';          resultClass = 'even'; }
+
+      return `
+        <div class="round-card" onclick="openRoundView('${r.id}')">
+          <div class="round-card-icon">⚔️</div>
+          <div class="round-card-body">
+            <div class="round-card-name">${esc(r.courseName || 'Unnamed Course')}</div>
+            <div class="round-card-meta">
+              <strong>${hLabel}${holesNote}</strong> · ${esc(r.teamName || '')} vs ${esc(r.oppName || t('scOpponent'))}
+              ${playedStr ? '<br>' + playedStr : ''}
+            </div>
+          </div>
+          <div class="round-score-badge">
+            <div class="round-score-num ${resultClass}">${resultLabel}</div>
+            <div class="round-score-lbl">net result</div>
           </div>
           <div class="round-card-chevron">›</div>
         </div>`;
@@ -1980,15 +2224,15 @@ function clearAuthForms() {
 function switchToSignIn() {
   document.getElementById('formSignIn').style.display = 'block';
   document.getElementById('formRegister').style.display = 'none';
-  document.getElementById('authModalTitle').textContent = 'Welcome back';
+  document.getElementById('authModalTitle').textContent = t('welcomeBack');
 }
 function switchToRegister() {
   document.getElementById('formSignIn').style.display = 'none';
   document.getElementById('formRegister').style.display = 'block';
-  document.getElementById('authModalTitle').textContent = 'Create account';
+  document.getElementById('authModalTitle').textContent = t('createAccount');
 }
 function setAuthError(id, msg) { const el = document.getElementById(id); if (!el) return; el.textContent = msg; el.classList.toggle('visible', !!msg); }
-function setAuthBtnLoading(id, loading, def) { const btn = document.getElementById(id); if (!btn) return; btn.textContent = loading ? 'Please wait…' : def; btn.disabled = loading; }
+function setAuthBtnLoading(id, loading, def) { const btn = document.getElementById(id); if (!btn) return; btn.textContent = loading ? t('pleasWait') : def; btn.disabled = loading; }
 
 async function doGoogleSignIn() {
   if (!window._fbAuth) return;
@@ -2066,52 +2310,151 @@ function openRoundView(id) {
   if (!r) return;
   _viewingRoundId = id;
 
-  // Header
+  const par       = r.par       || Array(r.holes).fill(4);
+  const scores    = r.scores    || Array(r.holes).fill(0);
+  const oppScores = r.oppScores || Array(r.holes).fill(0);
+  const isMatch   = !!r.isMatch;
+
+  // Common header
   document.getElementById('rv_courseName').textContent = r.courseName || 'Round';
   const playedStr = r.playedAt
     ? new Date(r.playedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
     : '';
-  document.getElementById('rv_meta').textContent =
-    `${r.holes} holes · Team HCP ${r.teamHcp} · ${r.teamName || ''}${playedStr ? ' · ' + playedStr : ''}`;
+  document.getElementById('rv_meta').textContent = isMatch
+    ? `${r.holes} holes · ${r.teamName || 'My Team'} vs ${r.oppName || 'Opponent'}${playedStr ? ' · ' + playedStr : ''}`
+    : `${r.holes} holes · HCP ${r.teamHcp} · ${r.teamName || ''}${playedStr ? ' · ' + playedStr : ''}`;
 
-  // Totals banner
-  const vsPar   = r.vsPar ?? (r.gross - r.totalPar);
-  const vsClass = vsPar < 0 ? 'under' : vsPar > 0 ? 'over' : 'even';
-  const vsLabel = vsPar === 0 ? 'E' : vsPar > 0 ? `+${vsPar}` : `${vsPar}`;
+  // Show correct banner
+  document.getElementById('rv_singleBanner').style.display = isMatch ? 'none' : '';
+  document.getElementById('rv_matchBanner').style.display  = isMatch ? '' : 'none';
 
-  document.getElementById('rv_gross').textContent    = r.gross || '–';
-  document.getElementById('rv_par').textContent      = r.totalPar || '–';
-  document.getElementById('rv_holes').textContent    = `${r.holesPlayed} / ${r.holes}`;
-  const vsParEl = document.getElementById('rv_vsPar');
-  vsParEl.textContent = vsLabel;
-  vsParEl.className   = 'sc-score-val ' + vsClass;
+  if (!isMatch) {
+    // ── Single mode banner ──
+    const vsPar   = r.vsPar ?? (r.gross - r.totalPar);
+    const vsClass = vsPar < 0 ? 'under' : vsPar > 0 ? 'over' : 'even';
+    const vsLabel = vsPar === 0 ? 'E' : vsPar > 0 ? `+${vsPar}` : `${vsPar}`;
+    document.getElementById('rv_gross').textContent = r.gross || '–';
+    document.getElementById('rv_par').textContent   = r.totalPar || '–';
+    document.getElementById('rv_holes').textContent = `${r.holesPlayed} / ${r.holes}`;
+    const vsParEl = document.getElementById('rv_vsPar');
+    vsParEl.textContent = vsLabel; vsParEl.className = 'sc-score-val ' + vsClass;
 
-  // Hole rows
-  const par    = r.par    || Array(r.holes).fill(4);
-  const scores = r.scores || Array(r.holes).fill(0);
-  document.getElementById('rv_holes_list').innerHTML = par.map((p, i) => {
-    const score    = scores[i];
-    const complete = score > 0;
-    const diff     = complete ? score - p : null;
+    // Single col header
+    document.getElementById('rv_colHeader').innerHTML = `
+      <div class="sc-col-label">Hole</div>
+      <div class="sc-col-label" style="text-align:center;">Par</div>
+      <div class="sc-col-label" style="text-align:center;">Score</div>
+      <div class="sc-col-label" style="text-align:right;">Badge</div>`;
+    document.getElementById('rv_colHeader').className = 'rv-col-header';
 
-    let scoreClass = 'empty', badgeClass = 'empty', badgeLabel = '';
-    if (complete) {
-      badgeLabel  = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
-      badgeClass  = diff < 0 ? 'under' : diff > 0 ? 'over' : 'even';
-      scoreClass  = score <= p - 2 ? 'eagle'
-                  : score === p - 1 ? 'birdie'
-                  : score === p + 1 ? 'bogey'
-                  : score >= p + 2  ? 'double' : '';
+    // Single hole rows
+    document.getElementById('rv_holes_list').innerHTML = par.map((p, i) => {
+      const score    = scores[i];
+      const complete = score > 0;
+      const diff     = complete ? score - p : null;
+      const scoreClass = complete
+        ? score <= p - 2 ? 'eagle' : score === p - 1 ? 'birdie'
+        : score === p + 1 ? 'bogey' : score >= p + 2 ? 'double' : '' : 'empty';
+      const badgeClass = diff === null ? 'empty' : diff < 0 ? 'under' : diff > 0 ? 'over' : 'even';
+      const badgeLabel = diff === null ? '' : diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+      return `
+        <div class="rv-hole-row${complete ? ' complete' : ''}">
+          <div class="rv-hole-num">${i + 1}</div>
+          <div class="rv-par">${p}</div>
+          <div class="rv-score ${scoreClass}">${complete ? score : '–'}</div>
+          <div class="rv-badge ${badgeClass}">${badgeLabel}</div>
+        </div>`;
+    }).join('');
+
+  } else {
+    // ── Match mode banner ──
+    const hcpDiff = (r.oppHcp || 0) - (r.teamHcp || 0);
+    let myGross = 0, oppGross = 0, myParPlayed = 0, oppParPlayed = 0;
+    let myWins = 0, oppWins = 0, holesPlayed = 0;
+
+    for (let i = 0; i < r.holes; i++) {
+      const myS  = scores[i];
+      const oppS = oppScores[i];
+      if (myS  > 0) { myGross  += myS;  myParPlayed  += par[i]; }
+      if (oppS > 0) { oppGross += oppS; oppParPlayed += par[i]; }
+      if (myS > 0 && oppS > 0) {
+        holesPlayed++;
+        const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+        const myNet  = myS  + (s < 0 ? s : 0);
+        const oppNet = oppS + (s > 0 ? -s : 0);
+        if      (myNet < oppNet) myWins++;
+        else if (myNet > oppNet) oppWins++;
+      }
     }
 
-    return `
-      <div class="rv-hole-row${complete ? ' complete' : ''}">
-        <div class="rv-hole-num">${i + 1}</div>
-        <div class="rv-par">${p}</div>
-        <div class="rv-score ${scoreClass}">${complete ? score : '–'}</div>
-        <div class="rv-badge ${badgeClass}">${badgeLabel}</div>
-      </div>`;
-  }).join('');
+    const myVsPar  = myGross  > 0 ? myGross  - myParPlayed  : null;
+    const oppVsPar = oppGross > 0 ? oppGross - oppParPlayed : null;
+    const diff     = myWins - oppWins;
+
+    document.getElementById('rv_myTeamName').textContent  = r.teamName   || 'My Team';
+    document.getElementById('rv_oppTeamName').textContent = r.oppName    || 'Opponent';
+    document.getElementById('rv_myHcpLabel').textContent  = `HCP ${r.teamHcp || 0}`;
+    document.getElementById('rv_oppHcpLabel').textContent = `HCP ${r.oppHcp  || 0}`;
+
+    const myVsEl  = document.getElementById('rv_myVsPar');
+    const oppVsEl = document.getElementById('rv_oppVsPar');
+    myVsEl.textContent  = myVsPar  === null ? '–' : myVsPar  === 0 ? 'E' : myVsPar  > 0 ? `+${myVsPar}`  : `${myVsPar}`;
+    oppVsEl.textContent = oppVsPar === null ? '–' : oppVsPar === 0 ? 'E' : oppVsPar > 0 ? `+${oppVsPar}` : `${oppVsPar}`;
+    myVsEl.className    = 'sc-match-score' + (myVsPar  === null ? '' : myVsPar  < 0 ? ' under' : myVsPar  > 0 ? ' over' : ' even');
+    oppVsEl.className   = 'sc-match-score' + (oppVsPar === null ? '' : oppVsPar < 0 ? ' under' : oppVsPar > 0 ? ' over' : ' even');
+
+    const statusEl = document.getElementById('rv_matchStatus');
+    const labelEl  = document.getElementById('rv_statusLabel');
+    if (holesPlayed === 0) {
+      statusEl.textContent = '–'; statusEl.className = 'sc-match-status-val'; labelEl.textContent = 'Result';
+    } else if (diff === 0) {
+      statusEl.textContent = 'All Square'; statusEl.className = 'sc-match-status-val square';
+      labelEl.textContent  = `${holesPlayed} holes`;
+    } else {
+      const leader = diff > 0 ? (r.teamName || 'My Team') : (r.oppName || 'Opponent');
+      statusEl.textContent = `${Math.abs(diff)} UP`;
+      statusEl.className   = 'sc-match-status-val ' + (diff > 0 ? 'leading' : 'trailing');
+      labelEl.textContent  = leader.length > 10 ? leader.slice(0, 10) + '…' : leader;
+    }
+
+    // Match col header — 5 columns
+    document.getElementById('rv_colHeader').innerHTML = `
+      <div class="sc-col-label" style="font-size:0.48rem;">Hole</div>
+      <div class="sc-col-label" style="font-size:0.48rem;">Par</div>
+      <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(r.teamName || 'My Team')}</div>
+      <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(r.oppName  || 'Opponent')}</div>
+      <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>`;
+    document.getElementById('rv_colHeader').className = 'rv-col-header match';
+
+    // Match hole rows
+    document.getElementById('rv_holes_list').innerHTML = par.map((p, i) => {
+      const myS  = scores[i];
+      const oppS = oppScores[i];
+      const myDone  = myS  > 0;
+      const oppDone = oppS > 0;
+      const mySC    = myDone  ? (myS  <= p-2 ? 'eagle' : myS  === p-1 ? 'birdie' : myS  === p+1 ? 'bogey' : myS  >= p+2 ? 'double' : '') : 'empty';
+      const oppSC   = oppDone ? (oppS <= p-2 ? 'eagle' : oppS === p-1 ? 'birdie' : oppS === p+1 ? 'bogey' : oppS >= p+2 ? 'double' : '') : 'empty';
+
+      let resultLabel = '', resultClass = '';
+      if (myDone && oppDone) {
+        const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+        const myNet  = myS  + (s < 0 ? s : 0);
+        const oppNet = oppS + (s > 0 ? -s : 0);
+        if      (myNet < oppNet) { resultLabel = 'W'; resultClass = 'win'; }
+        else if (myNet > oppNet) { resultLabel = 'L'; resultClass = 'loss'; }
+        else                     { resultLabel = 'H'; resultClass = 'half'; }
+      }
+
+      return `
+        <div class="rv-hole-row match${(myDone || oppDone) ? ' complete' : ''}">
+          <div class="rv-hole-num">${i + 1}</div>
+          <div class="rv-par">${p}</div>
+          <div class="rv-score ${mySC}">${myDone  ? myS  : '–'}</div>
+          <div class="rv-score ${oppSC}">${oppDone ? oppS : '–'}</div>
+          <div class="rv-badge ${resultClass || 'empty'}">${resultLabel}</div>
+        </div>`;
+    }).join('');
+  }
 
   document.getElementById('roundViewOverlay').classList.add('open');
   document.getElementById('roundViewOverlay').scrollTop = 0;
@@ -2138,32 +2481,71 @@ async function deleteRound() {
   }
 }
 let _sc = {
-  holes:      18,
-  teamName:   '',
-  teamHcp:    0,
-  courseName: '',
-  par:        [],
-  scores:     [],
+  holes:       18,
+  isMatch:     false,
+  teamName:    '',
+  teamHcp:     0,
+  oppName:     '',
+  oppHcp:      0,
+  courseName:  '',
+  par:         [],
+  scores:      [],   // my team gross per hole
+  oppScores:   [],   // opponent gross per hole
 };
 
-// Numpad state
-let _numpad = { holeIdx: -1, buffer: '' };
+// Numpad state — track which team we're entering for
+let _numpad = { holeIdx: -1, team: 'my', buffer: '' };
 
 function openScorecard() {
   const n = _holes;
+  const isMatch = _gameMode === 'match';
   _sc.holes      = n;
+  _sc.isMatch    = isMatch;
   _sc.teamName   = val('team1_name') || 'My Team';
+  _sc.oppName    = val('team2_name') || 'Opponent';
   _sc.courseName = val('course_name') || 'Unnamed Course';
-  const hcpEl    = document.querySelector('.result-hcp-num');
-  _sc.teamHcp    = hcpEl ? parseInt(hcpEl.textContent) || 0 : 0;
+
+  // Pull HCPs from the rendered result cards (sorted lowest first)
+  const hcpNums = document.querySelectorAll('.result-hcp-num');
+  _sc.teamHcp = hcpNums[0] ? parseInt(hcpNums[0].textContent) || 0 : 0;
+  _sc.oppHcp  = hcpNums[1] ? parseInt(hcpNums[1].textContent) || 0 : 0;
+
   const totalPar = numVal('course_par') || (n === 9 ? 36 : 72);
   const basePar  = Math.floor(totalPar / n);
   _sc.par        = Array(n).fill(basePar);
   _sc.scores     = Array(n).fill(0);
+  _sc.oppScores  = Array(n).fill(0);
 
-  document.getElementById('sc_courseName').textContent = _sc.courseName;
-  document.getElementById('sc_meta').textContent       = `${n} holes · Team HCP ${_sc.teamHcp} · ${_sc.teamName}`;
+  // Header
+  document.getElementById('sc_courseName').textContent    = _sc.courseName;
+  document.getElementById('sc_meta').textContent          =
+    `${n} holes · ${isMatch ? _sc.teamName + ' vs ' + _sc.oppName : 'HCP ' + _sc.teamHcp + ' · ' + _sc.teamName}`;
   document.getElementById('sc_holesProgress').textContent = `0 / ${n}`;
+
+  // Show correct banner
+  document.getElementById('sc_singleBanner').style.display = isMatch ? 'none' : '';
+  document.getElementById('sc_matchBanner').style.display  = isMatch ? '' : 'none';
+
+  if (isMatch) {
+    document.getElementById('sc_myTeamName').textContent  = _sc.teamName;
+    document.getElementById('sc_oppTeamName').textContent = _sc.oppName;
+    document.getElementById('sc_myHcpLabel').textContent  = `HCP ${_sc.teamHcp}`;
+    document.getElementById('sc_oppHcpLabel').textContent = `HCP ${_sc.oppHcp}`;
+    document.getElementById('sc_colHeader').innerHTML = `
+      <div class="sc-col-label" style="font-size:0.48rem;">Hole</div>
+      <div class="sc-col-label" style="font-size:0.48rem;">Par</div>
+      <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.teamName)}</div>
+      <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.oppName)}</div>
+      <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>`;
+    document.getElementById('sc_colHeader').className = 'sc-col-header match';
+  } else {
+    document.getElementById('sc_colHeader').innerHTML = `
+      <div class="sc-col-label">Hole</div>
+      <div class="sc-col-label">Par</div>
+      <div class="sc-col-label score-col">Score</div>
+      <div class="sc-col-label badge-col">Badge</div>`;
+    document.getElementById('sc_colHeader').className = 'sc-col-header';
+  }
 
   renderScorecardHoles();
   updateScorecardTotals();
@@ -2180,45 +2562,88 @@ function closeScorecard() {
 function setSaveBtnsState(disabled) {
   ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
     const btn = document.getElementById(id);
-    if (btn) { btn.disabled = disabled; btn.textContent = disabled ? '⏳ Saving…' : (id === 'sc_saveBtnTop' ? '💾 Save' : '💾 Save Round'); }
+    if (btn) { btn.disabled = disabled; btn.textContent = disabled ? t('saving') : (id === 'sc_saveBtnTop' ? t('scSaveTop') : t('scSaveBottom')); }
   });
 }
 
 function renderScorecardHoles() {
   const container = document.getElementById('sc_holes');
   container.innerHTML = _sc.par.map((p, i) => {
-    const h      = i + 1;
-    const score  = _sc.scores[i];
-    const complete = score > 0;
-    const diff   = complete ? score - p : null;
-    const scoreClass = complete
-      ? score <= p - 2 ? 'eagle'
-      : score === p - 1 ? 'birdie'
-      : score === p + 1 ? 'bogey'
-      : score >= p + 2  ? 'double' : ''
-      : '';
-    const vsParLabel = diff === null ? '' : diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
-    const vsParClass = diff === null ? '' : diff < 0 ? 'under' : diff > 0 ? 'over' : '';
-
-    return `
-      <div class="sc-hole-row${complete ? ' complete' : ''}" id="sc_row_${i}">
-        <div class="sc-hole-num">${h}</div>
-        <div class="sc-par-btns">
-          ${[3,4,5].map(v => `<button class="sc-par-btn${p===v?' active':''}" onclick="setHolePar(${i},${v})">${v}</button>`).join('')}
-        </div>
-        <div class="sc-score-tap${complete ? '' : ''}" id="sc_tap_${i}" onclick="openNumpad(${i})">
-          <div class="sc-score-display${scoreClass ? ' '+scoreClass : ''}" id="sc_score_${i}">${complete ? score : '–'}</div>
-          ${!complete ? '<div class="sc-score-tap-hint">tap</div>' : ''}
-        </div>
-        <div class="sc-vs-par ${vsParClass}" id="sc_vs_${i}">${vsParLabel}</div>
-      </div>`;
+    if (_sc.isMatch) return renderMatchHoleRow(i, p);
+    return renderSingleHoleRow(i, p);
   }).join('');
+}
+
+function renderSingleHoleRow(i, p) {
+  const score    = _sc.scores[i];
+  const complete = score > 0;
+  const diff     = complete ? score - p : null;
+  const scoreClass  = scoreColorClass(score, p, complete);
+  const vsParLabel  = diff === null ? '' : diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
+  const vsParClass  = diff === null ? '' : diff < 0 ? 'under' : diff > 0 ? 'over' : '';
+  return `
+    <div class="sc-hole-row${complete ? ' complete' : ''}" id="sc_row_${i}">
+      <div class="sc-hole-num">${i + 1}</div>
+      <div class="sc-par-btns">
+        ${[3,4,5].map(v => `<button class="sc-par-btn${p===v?' active':''}" onclick="setHolePar(${i},${v})">${v}</button>`).join('')}
+      </div>
+      <div class="sc-score-tap" id="sc_tap_${i}" onclick="openNumpad(${i},'my')">
+        <div class="sc-score-display${scoreClass ? ' '+scoreClass : ''}" id="sc_score_${i}">${complete ? score : '–'}</div>
+        ${!complete ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+      </div>
+      <div class="sc-vs-par ${vsParClass}" id="sc_vs_${i}">${vsParLabel}</div>
+    </div>`;
+}
+
+function renderMatchHoleRow(i, p) {
+  const myScore  = _sc.scores[i];
+  const oppScore = _sc.oppScores[i];
+  const myDone   = myScore > 0;
+  const oppDone  = oppScore > 0;
+  const complete = myDone || oppDone;
+  let resultLabel = '', resultClass = '';
+  if (myDone && oppDone) {
+    const hcpDiff = _sc.oppHcp - _sc.teamHcp;
+    const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+    const myNet  = myScore  + (s < 0 ? s : 0);
+    const oppNet = oppScore + (s > 0 ? -s : 0);
+    if      (myNet < oppNet) { resultLabel = 'W'; resultClass = 'win'; }
+    else if (myNet > oppNet) { resultLabel = 'L'; resultClass = 'loss'; }
+    else                     { resultLabel = 'H'; resultClass = 'half'; }
+  }
+  const mySC  = scoreColorClass(myScore,  p, myDone);
+  const oppSC = scoreColorClass(oppScore, p, oppDone);
+  return `
+    <div class="sc-hole-row match${complete ? ' complete' : ''}" id="sc_row_${i}">
+      <div class="sc-hole-num">${i + 1}</div>
+      <div class="sc-par-btns">
+        ${[3,4,5].map(v => `<button class="sc-par-btn${p===v?' active':''}" onclick="setHolePar(${i},${v})">${v}</button>`).join('')}
+      </div>
+      <div class="sc-score-tap my-team" id="sc_tap_my_${i}" onclick="openNumpad(${i},'my')">
+        <div class="sc-score-display${mySC ? ' '+mySC : ''}" id="sc_score_my_${i}">${myDone ? myScore : '–'}</div>
+        ${!myDone ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+      </div>
+      <div class="sc-score-tap opp-team" id="sc_tap_opp_${i}" onclick="openNumpad(${i},'opp')">
+        <div class="sc-score-display${oppSC ? ' '+oppSC : ''}" id="sc_score_opp_${i}">${oppDone ? oppScore : '–'}</div>
+        ${!oppDone ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+      </div>
+      <div class="sc-hole-result ${resultClass}" id="sc_result_${i}">${resultLabel}</div>
+    </div>`;
+}
+
+function scoreColorClass(score, par, complete) {
+  if (!complete) return '';
+  if (score <= par - 2) return 'eagle';
+  if (score === par - 1) return 'birdie';
+  if (score === par + 1) return 'bogey';
+  if (score >= par + 2)  return 'double';
+  return '';
 }
 
 function setHolePar(holeIdx, parVal) {
   _sc.par[holeIdx] = parVal;
   const row = document.getElementById(`sc_row_${holeIdx}`);
-  row.querySelectorAll('.sc-par-btn').forEach(btn => {
+  if (row) row.querySelectorAll('.sc-par-btn').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.textContent) === parVal);
   });
   updateHoleDisplay(holeIdx);
@@ -2226,15 +2651,19 @@ function setHolePar(holeIdx, parVal) {
 }
 
 // ─── NUMPAD ───
-function openNumpad(holeIdx) {
+function openNumpad(holeIdx, team) {
   _numpad.holeIdx = holeIdx;
-  _numpad.buffer  = _sc.scores[holeIdx] > 0 ? String(_sc.scores[holeIdx]) : '';
-  document.getElementById('numpad_label').textContent = `Hole ${holeIdx + 1} — Par ${_sc.par[holeIdx]}`;
+  _numpad.team    = team || 'my';
+  const existing  = team === 'opp' ? _sc.oppScores[holeIdx] : _sc.scores[holeIdx];
+  _numpad.buffer  = existing > 0 ? String(existing) : '';
+  const teamLabel = team === 'opp' ? _sc.oppName : _sc.teamName;
+  document.getElementById('numpad_label').textContent =
+    `${teamLabel} — Hole ${holeIdx + 1} · Par ${_sc.par[holeIdx]}`;
   updateNumpadDisplay();
   document.getElementById('numpadOverlay').classList.add('open');
-  // Highlight the tapped hole row
   document.querySelectorAll('.sc-score-tap').forEach(el => el.classList.remove('active-input'));
-  const tap = document.getElementById(`sc_tap_${holeIdx}`);
+  const tapId = _sc.isMatch ? `sc_tap_${team}_${holeIdx}` : `sc_tap_${holeIdx}`;
+  const tap = document.getElementById(tapId);
   if (tap) tap.classList.add('active-input');
 }
 
@@ -2246,7 +2675,6 @@ function numpadCancel() {
 }
 
 function numpadKey(digit) {
-  // Max 2 digits (score won't exceed 99)
   if (_numpad.buffer.length >= 2) _numpad.buffer = _numpad.buffer.slice(1);
   _numpad.buffer += String(digit);
   updateNumpadDisplay();
@@ -2268,7 +2696,8 @@ function updateNumpadDisplay() {
 function numpadConfirm() {
   const v = parseInt(_numpad.buffer);
   if (!isNaN(v) && v >= 1 && v <= 20) {
-    _sc.scores[_numpad.holeIdx] = v;
+    if (_numpad.team === 'opp') { _sc.oppScores[_numpad.holeIdx] = v; }
+    else                        { _sc.scores[_numpad.holeIdx]    = v; }
     updateHoleDisplay(_numpad.holeIdx);
     updateScorecardTotals();
   }
@@ -2276,62 +2705,143 @@ function numpadConfirm() {
 }
 
 function updateHoleDisplay(holeIdx) {
+  if (_sc.isMatch) { updateMatchHoleDisplay(holeIdx); }
+  else             { updateSingleHoleDisplay(holeIdx); }
+}
+
+function updateSingleHoleDisplay(holeIdx) {
   const score    = _sc.scores[holeIdx];
   const par      = _sc.par[holeIdx] || 4;
   const complete = score > 0;
   const diff     = complete ? score - par : null;
-
-  const scoreEl = document.getElementById(`sc_score_${holeIdx}`);
+  const scoreEl  = document.getElementById(`sc_score_${holeIdx}`);
   if (scoreEl) {
     scoreEl.textContent = complete ? score : '–';
-    scoreEl.className   = 'sc-score-display';
-    if (complete) {
-      if      (score <= par - 2) scoreEl.classList.add('eagle');
-      else if (score === par - 1) scoreEl.classList.add('birdie');
-      else if (score === par + 1) scoreEl.classList.add('bogey');
-      else if (score >= par + 2)  scoreEl.classList.add('double');
-    }
+    scoreEl.className   = 'sc-score-display' + (scoreColorClass(score, par, complete) ? ' ' + scoreColorClass(score, par, complete) : '');
   }
-
-  // Refresh tap hint visibility
   const tapEl = document.getElementById(`sc_tap_${holeIdx}`);
   if (tapEl) {
-    const hintEl = tapEl.querySelector('.sc-score-tap-hint');
-    if (complete && hintEl) hintEl.remove();
-    else if (!complete && !hintEl) {
-      const hint = document.createElement('div');
-      hint.className = 'sc-score-tap-hint';
-      hint.textContent = 'tap';
-      tapEl.appendChild(hint);
-    }
+    const h = tapEl.querySelector('.sc-score-tap-hint');
+    if (complete && h) h.remove();
+    else if (!complete && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'tap'; tapEl.appendChild(nh); }
   }
-
   const vsEl = document.getElementById(`sc_vs_${holeIdx}`);
   if (vsEl) {
     vsEl.textContent = diff === null ? '' : diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
     vsEl.className   = 'sc-vs-par' + (diff === null ? '' : diff < 0 ? ' under' : diff > 0 ? ' over' : '');
   }
-
   const row = document.getElementById(`sc_row_${holeIdx}`);
   if (row) row.classList.toggle('complete', complete);
 }
 
+function updateMatchHoleDisplay(holeIdx) {
+  const par      = _sc.par[holeIdx] || 4;
+  const myScore  = _sc.scores[holeIdx];
+  const oppScore = _sc.oppScores[holeIdx];
+  const myDone   = myScore > 0;
+  const oppDone  = oppScore > 0;
+
+  const myEl = document.getElementById(`sc_score_my_${holeIdx}`);
+  if (myEl) {
+    myEl.textContent = myDone ? myScore : '–';
+    myEl.className   = 'sc-score-display' + (myDone && scoreColorClass(myScore, par, true) ? ' ' + scoreColorClass(myScore, par, true) : '');
+  }
+  const myTap = document.getElementById(`sc_tap_my_${holeIdx}`);
+  if (myTap) {
+    const h = myTap.querySelector('.sc-score-tap-hint');
+    if (myDone && h) h.remove();
+    else if (!myDone && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'tap'; myTap.appendChild(nh); }
+  }
+
+  const oppEl = document.getElementById(`sc_score_opp_${holeIdx}`);
+  if (oppEl) {
+    oppEl.textContent = oppDone ? oppScore : '–';
+    oppEl.className   = 'sc-score-display' + (oppDone && scoreColorClass(oppScore, par, true) ? ' ' + scoreColorClass(oppScore, par, true) : '');
+  }
+  const oppTap = document.getElementById(`sc_tap_opp_${holeIdx}`);
+  if (oppTap) {
+    const h = oppTap.querySelector('.sc-score-tap-hint');
+    if (oppDone && h) h.remove();
+    else if (!oppDone && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'tap'; oppTap.appendChild(nh); }
+  }
+
+  const resultEl = document.getElementById(`sc_result_${holeIdx}`);
+  if (resultEl) {
+    if (myDone && oppDone) {
+      const hcpDiff = _sc.oppHcp - _sc.teamHcp;
+      const s = hcpDiff > 0 ? (holeIdx < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (holeIdx < -hcpDiff ? -1 : 0) : 0;
+      const myNet  = myScore  + (s < 0 ? s : 0);
+      const oppNet = oppScore + (s > 0 ? -s : 0);
+      if      (myNet < oppNet) { resultEl.textContent = 'W'; resultEl.className = 'sc-hole-result win'; }
+      else if (myNet > oppNet) { resultEl.textContent = 'L'; resultEl.className = 'sc-hole-result loss'; }
+      else                     { resultEl.textContent = 'H'; resultEl.className = 'sc-hole-result half'; }
+    } else { resultEl.textContent = ''; resultEl.className = 'sc-hole-result'; }
+  }
+
+  const row = document.getElementById(`sc_row_${holeIdx}`);
+  if (row) row.classList.toggle('complete', myDone || oppDone);
+}
+
 function updateScorecardTotals() {
+  if (_sc.isMatch) { updateMatchBanner(); }
+  else             { updateSingleBanner(); }
+}
+
+function updateSingleBanner() {
   const played   = _sc.scores.filter(s => s > 0);
   const gross    = played.reduce((a,b) => a+b, 0);
   const parSoFar = _sc.par.filter((_,i) => _sc.scores[i] > 0).reduce((a,b) => a+b, 0);
   const diff     = played.length > 0 ? gross - parSoFar : null;
-
   document.getElementById('sc_gross').textContent    = played.length > 0 ? gross : '–';
   document.getElementById('sc_parTotal').textContent = played.length > 0 ? parSoFar : '–';
   document.getElementById('sc_holesProgress').textContent = `${played.length} / ${_sc.holes}`;
-
   const vsParEl = document.getElementById('sc_vsPar');
-  if (diff === null) {
-    vsParEl.textContent = '–'; vsParEl.className = 'sc-score-val';
+  if (diff === null) { vsParEl.textContent = '–'; vsParEl.className = 'sc-score-val'; }
+  else { vsParEl.textContent = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`; vsParEl.className = 'sc-score-val ' + (diff < 0 ? 'under' : diff > 0 ? 'over' : 'even'); }
+}
+
+function updateMatchBanner() {
+  let myGross = 0, oppGross = 0, myParPlayed = 0, oppParPlayed = 0, holesPlayed = 0;
+  let myWins = 0, oppWins = 0;
+  const hcpDiff = _sc.oppHcp - _sc.teamHcp;
+
+  for (let i = 0; i < _sc.holes; i++) {
+    const myS  = _sc.scores[i];
+    const oppS = _sc.oppScores[i];
+    if (myS  > 0) { myGross  += myS;  myParPlayed  += _sc.par[i]; }
+    if (oppS > 0) { oppGross += oppS; oppParPlayed += _sc.par[i]; }
+    if (myS > 0 && oppS > 0) {
+      holesPlayed++;
+      const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+      const myNet  = myS  + (s < 0 ? s : 0);
+      const oppNet = oppS + (s > 0 ? -s : 0);
+      if      (myNet < oppNet) myWins++;
+      else if (myNet > oppNet) oppWins++;
+    }
+  }
+
+  const myVsPar  = myGross  > 0 ? myGross  - myParPlayed  : null;
+  const oppVsPar = oppGross > 0 ? oppGross - oppParPlayed : null;
+
+  const myEl  = document.getElementById('sc_myVsPar');
+  const oppEl = document.getElementById('sc_oppVsPar');
+  myEl.textContent  = myVsPar  === null ? '–' : myVsPar  === 0 ? 'E' : myVsPar  > 0 ? `+${myVsPar}`  : `${myVsPar}`;
+  oppEl.textContent = oppVsPar === null ? '–' : oppVsPar === 0 ? 'E' : oppVsPar > 0 ? `+${oppVsPar}` : `${oppVsPar}`;
+  myEl.className    = 'sc-match-score' + (myVsPar  === null ? '' : myVsPar  < 0 ? ' under' : myVsPar  > 0 ? ' over' : ' even');
+  oppEl.className   = 'sc-match-score' + (oppVsPar === null ? '' : oppVsPar < 0 ? ' under' : oppVsPar > 0 ? ' over' : ' even');
+
+  const statusEl = document.getElementById('sc_matchStatus');
+  const labelEl  = document.getElementById('sc_statusLabel');
+  const diff     = myWins - oppWins;
+  if (holesPlayed === 0) {
+    statusEl.textContent = `0 / ${_sc.holes}`; statusEl.className = 'sc-match-status-val'; labelEl.textContent = 'Holes';
+  } else if (diff === 0) {
+    statusEl.textContent = 'All Square'; statusEl.className = 'sc-match-status-val square'; labelEl.textContent = `${holesPlayed} played`;
   } else {
-    vsParEl.textContent = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`;
-    vsParEl.className   = 'sc-score-val ' + (diff < 0 ? 'under' : diff > 0 ? 'over' : 'even');
+    const leader = diff > 0 ? _sc.teamName : _sc.oppName;
+    statusEl.textContent = `${Math.abs(diff)} UP`;
+    statusEl.className   = 'sc-match-status-val ' + (diff > 0 ? 'leading' : 'trailing');
+    labelEl.textContent  = leader.length > 10 ? leader.slice(0,10) + '…' : leader;
   }
 }
 
@@ -2342,28 +2852,31 @@ async function saveRound() {
   if (played === 0) { showToast('Enter at least one hole score before saving.', 'error'); return; }
 
   const gross     = _sc.scores.reduce((a,b) => a+b, 0);
+  const oppGross  = _sc.oppScores.reduce((a,b) => a+b, 0);
   const totalPar  = _sc.par.reduce((a,b) => a+b, 0);
   const parPlayed = _sc.par.filter((_,i) => _sc.scores[i] > 0).reduce((a,b) => a+b, 0);
   const vsPar     = gross - parPlayed;
 
   const round = {
     id: Date.now().toString(),
-    courseName: _sc.courseName, teamName: _sc.teamName, teamHcp: _sc.teamHcp,
+    courseName: _sc.courseName,
+    teamName:   _sc.teamName,  teamHcp:   _sc.teamHcp,
+    oppName:    _sc.oppName,   oppHcp:    _sc.oppHcp,
+    isMatch:    _sc.isMatch,
     holes: _sc.holes, holesPlayed: played,
-    par: _sc.par.slice(), scores: _sc.scores.slice(),
-    totalPar, gross, vsPar,
+    par: _sc.par.slice(), scores: _sc.scores.slice(), oppScores: _sc.oppScores.slice(),
+    totalPar, gross, oppGross, vsPar,
     playedAt: new Date().toISOString(),
   };
 
   setSaveBtnsState(true);
   try {
     await window._fbDb.collection('users').doc(uid).collection('rounds').doc(round.id).set(round);
-    // Add to local list immediately (newest first)
     _savedRounds.unshift(round);
     renderMyData();
     ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
       const btn = document.getElementById(id);
-      if (btn) btn.textContent = '✓ Saved!';
+      if (btn) btn.textContent = t('saved');
     });
     showToast(`Round saved — ${vsPar >= 0 ? '+' : ''}${vsPar} vs par`, 'success');
     setTimeout(() => setSaveBtnsState(false), 3000);
@@ -2386,6 +2899,350 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW failed:', err));
   });
 }
+
+// ══════════════════════════════════════════════════════════════
+//  i18n — English / Dutch
+// ══════════════════════════════════════════════════════════════
+
+const LANG = {
+  en: {
+    // ── Meta / loading ──────────────────────────────────────
+    connecting:           'Connecting…',
+
+    // ── Auth modal ──────────────────────────────────────────
+    welcomeBack:          'Welcome back',
+    createAccount:        'Create account',
+    appSub:               'Parmate · Team HCP',
+    continueGoogle:       'Continue with Google',
+    orDivider:            'or',
+    labelEmail:           'Email',
+    labelPassword:        'Password',
+    labelName:            'Name',
+    labelConfirmPassword: 'Confirm Password',
+    placeholderEmail:     'you@example.com',
+    placeholderPassword:  'Your password',
+    placeholderName:      'Your name',
+    placeholderMinPass:   'Min. 6 characters',
+    placeholderRepeat:    'Repeat password',
+    btnSignIn:            'Sign In →',
+    btnRegister:          'Create Account →',
+    noAccount:            'No account?',
+    createOne:            'Create one',
+    alreadyAccount:       'Already have an account?',
+    signInLink:           'Sign in',
+
+    // ── Locked screen ────────────────────────────────────────
+    heroSub:              'Scramble Handicap Calculator',
+    heroDesc:             'Sign in to calculate team handicaps and save your courses & teams.',
+    featureSave:          'Save up to 5 courses & 2 teams & multiple scorecards',
+    btnSignInCreate:      'Sign In / Create Account →',
+    freeNote:             'Free to use · No payment required',
+
+    // ── Header / nav ─────────────────────────────────────────
+    signOut:              'sign out',
+    tabCalculator:        'Calculator',
+    tabMyScramble:        'My Scramble',
+
+    // ── Game mode ────────────────────────────────────────────
+    modeSingle:           'Single',
+    modeMatch:            'Match',
+
+    // ── Course section ───────────────────────────────────────
+    sectionCourse:        'Course Details',
+    hint9hole:            'Typical 9-hole par: 35 or 36',
+    labelCourseName:      'Course Name',
+    placeholderCourse:    'e.g. Royal Amsterdam Golf Club',
+    teeStandard:          'Medal / Standard',
+    teeChampionship:      'Championship',
+    teeForward:           'Forward',
+    labelRating:          'Rating',
+    labelSlope:           'Slope',
+    labelPar:             'Par',
+    note9hole:            '⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard.',
+
+    // ── Format section ───────────────────────────────────────
+    sectionFormat:        'Scramble Format',
+    fmt3515:              '2-player scramble',
+    fmt2520:              'Higher allowance',
+    fmt2015:              'Lower allowance',
+    fmt5050:              'Equal / casual',
+
+    // ── Team section ─────────────────────────────────────────
+    sectionMyTeam:        'My Team',
+    sectionOppTeam:       'Opponent Team',
+    placeholderTeamName:  'enter team name…',
+    labelYourName:        'Your Name',
+    labelPartnerName:     'Partner Name',
+    labelPlayer1:         'Player 1 Name',
+    labelPlayer2:         'Player 2 Name',
+    labelRequired:        'Required',
+    labelHcpIndex:        'Handicap Index',
+    placeholderHcp:       '0–54',
+    labelGender:          'Gender',
+    labelTee:             'Tee',
+    teeChampLabel:        'Championship',
+    teeStdLabel:          'Standard',
+    teeForwardLabel:      'Forward',
+
+    // ── WHS note & CTA ───────────────────────────────────────
+    whsNote:              'WHS formula: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. Each player\'s CH × their format %, summed and rounded.',
+    btnCalculate:         'Calculate Team Handicaps →',
+
+    // ── Results overlay ──────────────────────────────────────
+    btnBack:              '← Back',
+    defaultResults:       'Scramble Results',
+    teamHcpLabel:         'Team HCP',
+    strokesOff:           'strokes off scratch', // used in JS: +N stroke(s) off scratch
+    strokeOff:            'stroke off scratch',
+    noPlayers:            'No players entered',
+    btnStartScorecard:    '📋 Start Scorecard →',
+
+    // ── My Scramble tab ──────────────────────────────────────
+    myScrambleTitle:      'My <em>Scramble</em>',
+    myScrambleSub:        'Saved courses & teams',
+    sectionCourses:       '📍 Courses',
+    maxCourses:           'You\'ve saved 5 courses — delete one before saving a new course.',
+    emptyCourses:         'No courses saved yet.<br>Fill in course details in the Calculator tab and tap 💾 Save.',
+    sectionTeams:         '🏌️ My Teams',
+    maxTeams:             'You\'ve saved 2 teams — delete one before saving a new team.',
+    emptyTeams:           'No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.',
+    sectionSoloRounds:    '📋 Solo Team Rounds',
+    sectionMatchRounds:   '⚔️ Team Matches 2vs2',
+    emptySoloRounds:      'No solo team rounds saved yet.<br>Play in Single mode and tap 💾 Save Round.',
+    emptyMatchRounds:     'No match rounds saved yet.<br>Play in Match mode and tap 💾 Save Round.',
+
+    // ── Scorecard ────────────────────────────────────────────
+    scGrossLabel:         'Gross',
+    scParPlayedLabel:     'Played',
+    scHolesLabel:         'Holes',
+    scResultLabel:        'Result',
+    scHoleColLabel:       'Hole',
+    scScoreColLabel:      'Score',
+    scSaveTop:            '💾 Save',
+    scSaveBottom:         '💾 Save Round',
+    scBack:               '← Back',
+    scMyTeam:             'My Team',
+    scOpponent:           'Opponent',
+
+    // ── Toasts ───────────────────────────────────────────────
+    toastFillRatingSlope: 'Please fill in Course Rating and Slope first.',
+    toastEnterField:      'Please enter: ',           // + field label
+    toastEnterHcp:        "Enter at least one player's handicap.",
+    toastSignInFirst:     'Please sign in first.',
+    toastMaxCourses:      'Maximum 5 courses — delete one in My Scramble first.',
+    toastFillRatingSlopeS:'Please fill in Rating and Slope before saving.',
+    toastCourseSaved:     'Course saved!',
+    toastCourseFail:      'Could not save: ',
+    toastCourseDeleted:   'Course deleted.',
+    toastCourseLoaded:    ' loaded!',                 // prefixed with course name
+    toastMaxTeams:        'Maximum 2 teams — delete one in My Scramble first.',
+    toastTeamSaved:       'Team saved!',
+    toastTeamFail:        'Could not save: ',
+    toastTeamDeleted:     'Team deleted.',
+    toastTeamLoaded:      ' loaded!',
+    toastSignInSave:      'Please sign in to save the round.',
+    toastEnterScore:      'Enter at least one hole score before saving.',
+    toastRoundSaved:      'Round saved — ',           // + vs par string
+    toastRoundFail:       'Could not save: ',
+    toastRoundDeleted:    'Round deleted.',
+    toastRoundDeleteFail: 'Could not delete: ',
+    toastError:           'Error: ',
+    pleasWait:            'Please wait…',
+    saving:               '⏳ Saving…',
+    saved:                '✓ Saved!',
+  },
+
+  nl: {
+    // ── Meta / loading ──────────────────────────────────────
+    connecting:           'Verbinden…',
+
+    // ── Auth modal ──────────────────────────────────────────
+    welcomeBack:          'Welkom terug',
+    createAccount:        'Account aanmaken',
+    appSub:               'Parmate · Team HCP',
+    continueGoogle:       'Doorgaan met Google',
+    orDivider:            'of',
+    labelEmail:           'E-mail',
+    labelPassword:        'Wachtwoord',
+    labelName:            'Naam',
+    labelConfirmPassword: 'Wachtwoord bevestigen',
+    placeholderEmail:     'jij@voorbeeld.nl',
+    placeholderPassword:  'Jouw wachtwoord',
+    placeholderName:      'Jouw naam',
+    placeholderMinPass:   'Min. 6 tekens',
+    placeholderRepeat:    'Herhaal wachtwoord',
+    btnSignIn:            'Inloggen →',
+    btnRegister:          'Account aanmaken →',
+    noAccount:            'Nog geen account?',
+    createOne:            'Maak er een',
+    alreadyAccount:       'Al een account?',
+    signInLink:           'Inloggen',
+
+    // ── Locked screen ────────────────────────────────────────
+    heroSub:              'Scramble Handicap Calculator',
+    heroDesc:             'Log in om teamhandicaps te berekenen en je banen & teams op te slaan.',
+    featureSave:          'Sla tot 5 banen & 2 teams & meerdere scorecards op',
+    btnSignInCreate:      'Inloggen / Account aanmaken →',
+    freeNote:             'Gratis te gebruiken · Geen betaling vereist',
+
+    // ── Header / nav ─────────────────────────────────────────
+    signOut:              'uitloggen',
+    tabCalculator:        'Calculator',
+    tabMyScramble:        'Mijn Scramble',
+
+    // ── Game mode ────────────────────────────────────────────
+    modeSingle:           'Single',
+    modeMatch:            'Match',
+
+    // ── Course section ───────────────────────────────────────
+    sectionCourse:        'Baangegevens',
+    hint9hole:            'Typische 9-holes par: 35 of 36',
+    labelCourseName:      'Golfbaan',
+    placeholderCourse:    'bijv. Royal Amsterdam Golf Club',
+    teeStandard:          'Geel',
+    teeChampionship:      'Wit',
+    teeForward:           'Rood',
+    labelRating:          'Rating',
+    labelSlope:           'Slope',
+    labelPar:             'Par',
+    note9hole:            '⛳ 9-holes modus — vul de <strong>9-holes</strong> rating, slope en par in van jouw scorecard.',
+
+    // ── Format section ───────────────────────────────────────
+    sectionFormat:        'Scramble Format',
+    fmt3515:              '2-speler scramble',
+    fmt2520:              'Hogere toelage',
+    fmt2015:              'Lagere toelage',
+    fmt5050:              'Gelijk / casual',
+
+    // ── Team section ─────────────────────────────────────────
+    sectionMyTeam:        'Mijn Team',
+    sectionOppTeam:       'Tegenstander',
+    placeholderTeamName:  'teamnaam invoeren…',
+    labelYourName:        'Jouw naam',
+    labelPartnerName:     'Naam partner',
+    labelPlayer1:         'Naam speler 1',
+    labelPlayer2:         'Naam speler 2',
+    labelRequired:        'Verplicht',
+    labelHcpIndex:        'Handicap Index',
+    placeholderHcp:       '0–54',
+    labelGender:          'Geslacht',
+    labelTee:             'Tee',
+    teeChampLabel:        'Wit',
+    teeStdLabel:          'Geel',
+    teeForwardLabel:      'Rood',
+
+    // ── WHS note & CTA ───────────────────────────────────────
+    whsNote:              'WHS-formule: <em>Index × (Slope ÷ 113) + (Rating − Par)</em>. CH per speler × hun format %, opgeteld en afgerond.',
+    btnCalculate:         'Teamhandicaps berekenen →',
+
+    // ── Results overlay ──────────────────────────────────────
+    btnBack:              '← Terug',
+    defaultResults:       'Scramble Uitslag',
+    teamHcpLabel:         'Team HCP',
+    strokesOff:           'slagen onder scratch',
+    strokeOff:            'slag onder scratch',
+    noPlayers:            'Geen spelers ingevoerd',
+    btnStartScorecard:    '📋 Scorecard starten →',
+
+    // ── My Scramble tab ──────────────────────────────────────
+    myScrambleTitle:      'Mijn <em>Scramble</em>',
+    myScrambleSub:        'Opgeslagen banen & teams',
+    sectionCourses:       '📍 Banen',
+    maxCourses:           'Je hebt 5 banen opgeslagen — verwijder er een voor je een nieuwe opslaat.',
+    emptyCourses:         'Nog geen banen opgeslagen.<br>Vul baangegevens in via de Calculator en kies 💾 Opslaan.',
+    sectionTeams:         '🏌️ Mijn Teams',
+    maxTeams:             'Je hebt 2 teams opgeslagen — verwijder er een voor je een nieuw team opslaat.',
+    emptyTeams:           'Nog geen teams opgeslagen.<br>Vul je team in via de Calculator en kies 💾 Opslaan.',
+    sectionSoloRounds:    '📋 Solo Team Rondes',
+    sectionMatchRounds:   '⚔️ Team Matches 2vs2',
+    emptySoloRounds:      'Nog geen solo team rondes opgeslagen.<br>Speel in Enkelmodus en kies 💾 Ronde opslaan.',
+    emptyMatchRounds:     'Nog geen matchrondes opgeslagen.<br>Speel in Matchmodus en kies 💾 Ronde opslaan.',
+
+    // ── Scorecard ────────────────────────────────────────────
+    scGrossLabel:         'Gross',
+    scParPlayedLabel:     'Gespeeld',
+    scHolesLabel:         'Holes',
+    scResultLabel:        'Uitslag',
+    scHoleColLabel:       'Hole',
+    scScoreColLabel:      'Score',
+    scSaveTop:            '💾 Opslaan',
+    scSaveBottom:         '💾 Ronde opslaan',
+    scBack:               '← Terug',
+    scMyTeam:             'Mijn Team',
+    scOpponent:           'Tegenstander',
+
+    // ── Toasts ───────────────────────────────────────────────
+    toastFillRatingSlope: 'Vul eerst de Course Rating en Slope in.',
+    toastEnterField:      'Vul in: ',
+    toastEnterHcp:        'Voer minimaal één handicap index in.',
+    toastSignInFirst:     'Log eerst in.',
+    toastMaxCourses:      'Maximaal 5 banen — verwijder er een in Mijn Scramble.',
+    toastFillRatingSlopeS:'Vul Rating en Slope in voor het opslaan.',
+    toastCourseSaved:     'Baan opgeslagen!',
+    toastCourseFail:      'Kon niet opslaan: ',
+    toastCourseDeleted:   'Baan verwijderd.',
+    toastCourseLoaded:    ' geladen!',
+    toastMaxTeams:        'Maximaal 2 teams — verwijder er een in Mijn Scramble.',
+    toastTeamSaved:       'Team opgeslagen!',
+    toastTeamFail:        'Kon niet opslaan: ',
+    toastTeamDeleted:     'Team verwijderd.',
+    toastTeamLoaded:      ' geladen!',
+    toastSignInSave:      'Log in om de ronde op te slaan.',
+    toastEnterScore:      'Voer minimaal één holescore in voor het opslaan.',
+    toastRoundSaved:      'Ronde opgeslagen — ',
+    toastRoundFail:       'Kon niet opslaan: ',
+    toastRoundDeleted:    'Ronde verwijderd.',
+    toastRoundDeleteFail: 'Kon niet verwijderen: ',
+    toastError:           'Fout: ',
+    pleasWait:            'Even geduld…',
+    saving:               '⏳ Opslaan…',
+    saved:                '✓ Opgeslagen!',
+  }
+};
+
+// ── Active language & apply function ────────────────────────
+let _lang = localStorage.getItem('parmate_lang') ||
+            (navigator.language.startsWith('nl') ? 'nl' : 'en');
+
+function t(key) {
+  return (LANG[_lang] && LANG[_lang][key] !== undefined)
+    ? LANG[_lang][key]
+    : (LANG.en[key] || key);
+}
+
+function applyLang() {
+  // Update html lang attribute
+  document.documentElement.lang = _lang;
+
+  // Toggle button flag
+  const btn = document.getElementById('langToggleBtn');
+  if (btn) btn.textContent = _lang === 'nl' ? '🇬🇧' : '🇳🇱';
+
+  // All static data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (LANG[_lang] && LANG[_lang][key] !== undefined) {
+      el.innerHTML = LANG[_lang][key];
+    }
+  });
+
+  // Placeholders
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const key = el.getAttribute('data-i18n-ph');
+    if (LANG[_lang] && LANG[_lang][key] !== undefined) {
+      el.placeholder = LANG[_lang][key];
+    }
+  });
+}
+
+function toggleLang() {
+  _lang = _lang === 'en' ? 'nl' : 'en';
+  localStorage.setItem('parmate_lang', _lang);
+  applyLang();
+}
+
+// Apply on load (after DOM ready, called at bottom of body)
+document.addEventListener('DOMContentLoaded', applyLang);
 </script>
 </body>
 </html>
