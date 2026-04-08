@@ -2893,6 +2893,166 @@ window.addEventListener('popstate', () => {
   if (document.getElementById('resultsOverlay').classList.contains('open')) closeResults();
 });
 
+// ── LIVE MATCH ─────────────────────────────────────────────
+
+function generateMatchCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 5; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+async function createMatch(matchData) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in to start a match.', 'error'); return null; }
+
+  let code;
+  let exists = true;
+  let attempts = 0;
+
+  // Keep generating until we find a unique code
+  while (exists && attempts < 10) {
+    code = generateMatchCode();
+    const ref = window._fbDb.collection('matches').doc(code);
+    const snap = await ref.get();
+    exists = snap.exists;
+    attempts++;
+  }
+
+  if (exists) {
+    showToast('Could not generate a unique match code. Please try again.', 'error');
+    return null;
+  }
+
+  const doc = {
+    matchId: code,
+    status: 'waiting',
+    createdAt: Date.now(),
+    startedAt: null,
+    completedAt: null,
+    holes: matchData.holes,
+    course: matchData.course,
+    par: matchData.par,
+    teamA: {
+      uid: uid,
+      teamName: matchData.teamA.teamName,
+      teamHcp: matchData.teamA.teamHcp,
+      players: matchData.teamA.players,
+      scores: Array(matchData.holes).fill(0),
+      holesComplete: 0
+    },
+    teamB: {
+      uid: null,
+      teamName: matchData.teamB.teamName,
+      teamHcp: matchData.teamB.teamHcp,
+      players: matchData.teamB.players,
+      scores: Array(matchData.holes).fill(0),
+      holesComplete: 0
+    },
+    result: {
+      winner: null,
+      margin: null,
+      status: null
+    }
+  };
+
+  try {
+    await window._fbDb.collection('matches').doc(code).set(doc);
+    showToast(`Match created — code: ${code}`, 'success');
+    return code;
+  } catch (err) {
+    console.error('createMatch error:', err);
+    showToast('Failed to create match. Please try again.', 'error');
+    return null;
+  }
+}
+
+async function joinMatch(code) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in to join a match.', 'error'); return null; }
+
+  const ref = window._fbDb.collection('matches').doc(code.toUpperCase());
+
+  try {
+    const snap = await ref.get();
+
+    if (!snap.exists) {
+      showToast('Match code not found. Please check and try again.', 'error');
+      return null;
+    }
+
+    const data = snap.data();
+
+    if (data.status !== 'waiting') {
+      showToast('This match has already started or is complete.', 'error');
+      return null;
+    }
+
+    if (data.teamA.uid === uid) {
+      showToast('You cannot join your own match as the opponent.', 'error');
+      return null;
+    }
+
+    if (data.teamB.uid !== null) {
+      showToast('This match already has two teams.', 'error');
+      return null;
+    }
+
+    // Write Team B UID and set status to active
+    await ref.update({
+      'teamB.uid': uid,
+      status: 'active',
+      startedAt: Date.now()
+    });
+
+    showToast('Joined match successfully!', 'success');
+    return data;
+
+  } catch (err) {
+    console.error('joinMatch error:', err);
+    showToast('Failed to join match. Please try again.', 'error');
+    return null;
+  }
+}
+
+function listenToMatch(matchId, callback) {
+  if (window._matchUnsubscribe) {
+    window._matchUnsubscribe();
+    window._matchUnsubscribe = null;
+  }
+
+  const ref = window._fbDb.collection('matches').doc(matchId);
+
+  window._matchUnsubscribe = ref.onSnapshot(snap => {
+    if (!snap.exists) {
+      console.warn('Match document no longer exists.');
+      return;
+    }
+    callback(snap.data());
+  }, err => {
+    console.error('listenToMatch error:', err);
+    showToast('Lost connection to match. Please rejoin.', 'error');
+  });
+}
+
+async function abandonMatch(matchId) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid || !matchId) return;
+
+  if (window._matchUnsubscribe) {
+    window._matchUnsubscribe();
+    window._matchUnsubscribe = null;
+  }
+
+  try {
+    await window._fbDb.collection('matches').doc(matchId).delete();
+  } catch (err) {
+    console.error('abandonMatch error:', err);
+  }
+}  
+  
 // ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
