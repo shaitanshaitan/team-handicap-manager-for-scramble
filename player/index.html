@@ -3267,22 +3267,7 @@ async function createMatch(matchData) {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in to start a match.', 'error'); return null; }
 
-  let code;
-  let exists = true;
-  let attempts = 0;
-
-  while (exists && attempts < 10) {
-    code = generateMatchCode();
-    const ref = window._fbDb.collection('matches').doc(code);
-    const snap = await ref.get();
-    exists = snap.exists;
-    attempts++;
-  }
-
-  if (exists) {
-    showToast('Could not generate a unique match code. Please try again.', 'error');
-    return null;
-  }
+  const code = generateMatchCode();
 
   const doc = {
     matchId: code,
