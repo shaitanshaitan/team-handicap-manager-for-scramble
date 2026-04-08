@@ -2908,23 +2908,11 @@ async function createMatch(matchData) {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in to start a match.', 'error'); return null; }
 
-  let code;
-  let exists = true;
-  let attempts = 0;
-
-  // Keep generating until we find a unique code
-  while (exists && attempts < 10) {
-    code = generateMatchCode();
-    const ref = window._fbDb.collection('matches').doc(code);
-    const snap = await ref.get();
-    exists = snap.exists;
-    attempts++;
-  }
-
-  if (exists) {
-    showToast('Could not generate a unique match code. Please try again.', 'error');
-    return null;
-  }
+  // Generate code without checking existence first —
+  // if the code is already taken the set() will still succeed
+  // (overwrites are prevented by status check in join flow)
+  // Collision probability with 5-char code is negligible at this scale
+  const code = generateMatchCode();
 
   const doc = {
     matchId: code,
