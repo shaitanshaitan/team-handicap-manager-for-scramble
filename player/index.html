@@ -567,6 +567,24 @@ input { transition:border-color 0.4s, background 0.2s; }
 .match-fallback-link { font-size:0.75rem; color:var(--muted); text-decoration:underline; cursor:pointer; opacity:0.6; }
 .match-fallback-link:active { opacity:1; }
 
+/* Live match read-only opponent column */
+.sc-score-tap.live-readonly { cursor:default; opacity:0.75; }
+.sc-score-tap.live-readonly:active { transform:none; }
+.sc-score-tap-hint.live { font-size:0.65rem; color:var(--muted); }
+
+/* Join match */
+.join-code-input-wrap { display:flex; justify-content:center; margin-top:16px; }
+.join-code-input { font-size:2.2rem; font-weight:800; letter-spacing:0.25em; text-align:center; text-transform:uppercase; background:var(--surface); border:2px solid var(--border2); border-radius:var(--radius); color:var(--gold); padding:16px 20px; width:100%; max-width:280px; font-family:'Inter',sans-serif; outline:none; }
+.join-code-input:focus { border-color:var(--gold); }
+.join-code-error { background:var(--red-dim); border:1px solid var(--red); border-radius:var(--radius-sm); color:var(--red); padding:10px 14px; font-size:0.85rem; margin-top:16px; text-align:center; }
+.join-confirm-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:14px; margin-bottom:12px; }
+.join-confirm-card-title { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; }
+.join-confirm-row { display:flex; justify-content:space-between; font-size:0.85rem; padding:3px 0; border-bottom:1px solid var(--border); }
+.join-confirm-row:last-child { border-bottom:none; }
+.join-confirm-row span:first-child { color:var(--muted); }
+.join-confirm-row span:last-child { color:var(--white); font-weight:600; }
+.join-confirm-hcp { display:inline-block; background:var(--gold-dim); color:var(--gold); border-radius:6px; padding:2px 8px; font-size:0.8rem; font-weight:700; margin-top:6px; }
+
 /*
    RESULTS OVERLAY
 ═══════════════════════════════════ */
@@ -1834,10 +1852,223 @@ function closeMatchGate() {
   document.getElementById('modeSingle').classList.add('active');
 }
 
+// ═══════════════════════════════════
+// JOIN MATCH
+// ═══════════════════════════════════
+let _joinMatchData = null;
+
 function openJoinMatch() {
-  // Phase 3 — stub for now
   closeMatchGate();
-  showToast('Join Match coming soon!', 'info');
+
+  // Reset state
+  _joinMatchData = null;
+  document.getElementById('joinCodeInput').value = '';
+  document.getElementById('joinLookupBtn').disabled = true;
+  document.getElementById('joinCodeError').style.display = 'none';
+  document.getElementById('joinStep1').style.display = '';
+  document.getElementById('joinStep2').style.display = 'none';
+
+  // Check for ?join=CODE in URL (QR code scan entry point)
+  const urlParams = new URLSearchParams(window.location.search);
+  const codeFromUrl = urlParams.get('join');
+  if (codeFromUrl) {
+    document.getElementById('joinCodeInput').value = codeFromUrl.toUpperCase();
+    document.getElementById('joinLookupBtn').disabled = false;
+  }
+
+  const el = document.getElementById('joinMatchOverlay');
+  el.style.display = '';
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function closeJoinMatch() {
+  const el = document.getElementById('joinMatchOverlay');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.display = 'none'; }, 350);
+  document.getElementById('modeMatch').classList.remove('active');
+  document.getElementById('modeSingle').classList.add('active');
+  // Clean URL if came via QR
+  if (window.location.search.includes('join=')) {
+    history.replaceState({}, '', window.location.pathname);
+  }
+}
+
+function joinCodeTyped(input) {
+  input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  document.getElementById('joinLookupBtn').disabled = input.value.length < 5;
+  document.getElementById('joinCodeError').style.display = 'none';
+}
+
+async function joinLookupCode() {
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if (code.length < 5) return;
+
+  const btn = document.getElementById('joinLookupBtn');
+  btn.disabled = true;
+  btn.textContent = 'Looking up…';
+
+  const errorEl = document.getElementById('joinCodeError');
+  errorEl.style.display = 'none';
+
+  try {
+    const snap = await window._fbDb.collection('matches').doc(code).get();
+
+    if (!snap.exists) {
+      errorEl.textContent = 'Match code not found. Please check and try again.';
+      errorEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Find Match →';
+      return;
+    }
+
+    const data = snap.data();
+
+    if (data.status !== 'waiting') {
+      errorEl.textContent = 'This match has already started or is complete.';
+      errorEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Find Match →';
+      return;
+    }
+
+    const uid = window._fbAuth?.currentUser?.uid;
+    if (data.teamA.uid === uid) {
+      errorEl.textContent = 'You cannot join your own match as the opponent.';
+      errorEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Find Match →';
+      return;
+    }
+
+    if (data.teamB.uid !== null) {
+      errorEl.textContent = 'This match already has two teams.';
+      errorEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Find Match →';
+      return;
+    }
+
+    // Match found — store and show confirmation
+    _joinMatchData = data;
+    joinShowConfirm(data);
+
+  } catch (err) {
+    console.error('joinLookupCode error:', err);
+    errorEl.textContent = 'Could not look up match. Please check your connection.';
+    errorEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Find Match →';
+  }
+}
+
+function joinShowConfirm(data) {
+  const teeLabel = { champ:'Championship', main:'Standard', fwd:'Forward' };
+
+  // Build confirmation card showing match details
+  document.getElementById('joinConfirmContent').innerHTML = `
+    <div class="join-confirm-card">
+      <div class="join-confirm-card-title">Course</div>
+      <div class="join-confirm-row"><span>Name</span><span>${data.course.name}</span></div>
+      <div class="join-confirm-row"><span>Holes</span><span>${data.holes}</span></div>
+      <div class="join-confirm-row"><span>Rating / Slope / Par</span><span>${data.course.rating} / ${data.course.slope} / ${data.course.par}</span></div>
+    </div>
+    <div class="join-confirm-card">
+      <div class="join-confirm-card-title">Opponent — ${data.teamA.teamName}</div>
+      <div class="join-confirm-row"><span>${data.teamA.players[0]?.name || '—'}</span><span>${data.teamA.players[0]?.hcpIndex ?? '—'} · ${teeLabel[data.teamA.players[0]?.tee] || 'Standard'}</span></div>
+      <div class="join-confirm-row"><span>${data.teamA.players[1]?.name || '—'}</span><span>${data.teamA.players[1]?.hcpIndex ?? '—'} · ${teeLabel[data.teamA.players[1]?.tee] || 'Standard'}</span></div>
+      <div><span class="join-confirm-hcp">Team HCP: ${data.teamA.teamHcp}</span></div>
+    </div>`;
+
+  // Pre-fill Team B fields from match data (host entered these)
+  document.getElementById('join_t2_name').value    = data.teamB.teamName || '';
+  document.getElementById('join_t2p1_name').value  = data.teamB.players[0]?.name || '';
+  document.getElementById('join_t2p1_hcp').value   = data.teamB.players[0]?.hcpIndex ?? '';
+  document.getElementById('join_t2p2_name').value  = data.teamB.players[1]?.name || '';
+  document.getElementById('join_t2p2_hcp').value   = data.teamB.players[1]?.hcpIndex ?? '';
+
+  // Set tee selections
+  const p1tee = data.teamB.players[0]?.tee || 'main';
+  const p2tee = data.teamB.players[1]?.tee || 'main';
+  const p1g   = data.teamB.players[0]?.gender || 'M';
+  const p2g   = data.teamB.players[1]?.gender || 'M';
+  const p1teeEl = document.getElementById(`join_t2p1_tee${p1tee === 'champ' ? '1' : p1tee === 'fwd' ? '3' : '2'}`);
+  const p2teeEl = document.getElementById(`join_t2p2_tee${p2tee === 'champ' ? '1' : p2tee === 'fwd' ? '3' : '2'}`);
+  const p1gEl   = document.getElementById(`join_t2p1_g${p1g}`);
+  const p2gEl   = document.getElementById(`join_t2p2_g${p2g}`);
+  if (p1teeEl) p1teeEl.checked = true;
+  if (p2teeEl) p2teeEl.checked = true;
+  if (p1gEl)   p1gEl.checked   = true;
+  if (p2gEl)   p2gEl.checked   = true;
+
+  // Switch to step 2
+  document.getElementById('joinStep1').style.display = 'none';
+  document.getElementById('joinStep2').style.display = '';
+  document.getElementById('joinMatchOverlay').scrollTop = 0;
+
+  // Reset lookup button for if user goes back
+  document.getElementById('joinLookupBtn').disabled = false;
+  document.getElementById('joinLookupBtn').textContent = 'Find Match →';
+}
+
+async function joinConfirm() {
+  if (!_joinMatchData) return;
+
+  const p1name = document.getElementById('join_t2p1_name').value.trim();
+  const p2name = document.getElementById('join_t2p2_name').value.trim();
+  if (!p1name) { showToast('Please enter Player 1 name.', 'error'); return; }
+  if (!p2name) { showToast('Please enter Player 2 name.', 'error'); return; }
+
+  const btn = document.getElementById('joinConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Joining match…';
+
+  const teamName = document.getElementById('join_t2_name').value.trim() || _joinMatchData.teamB.teamName;
+  const p1hcp    = parseFloat(document.getElementById('join_t2p1_hcp').value);
+  const p1tee    = document.querySelector('input[name="join_t2p1_tee"]:checked')?.value || 'main';
+  const p1g      = document.querySelector('input[name="join_t2p1_g"]:checked')?.value || 'M';
+  const p2hcp    = parseFloat(document.getElementById('join_t2p2_hcp').value);
+  const p2tee    = document.querySelector('input[name="join_t2p2_tee"]:checked')?.value || 'main';
+  const p2g      = document.querySelector('input[name="join_t2p2_g"]:checked')?.value || 'M';
+
+  const uid = window._fbAuth?.currentUser?.uid;
+  const code = _joinMatchData.matchId;
+
+  try {
+    await window._fbDb.collection('matches').doc(code).update({
+      'teamB.uid':        uid,
+      'teamB.teamName':   teamName,
+      'teamB.players':    [
+        { name: p1name, hcpIndex: isNaN(p1hcp) ? 0 : p1hcp, tee: p1tee, gender: p1g },
+        { name: p2name, hcpIndex: isNaN(p2hcp) ? 0 : p2hcp, tee: p2tee, gender: p2g }
+      ],
+      status:    'active',
+      startedAt: Date.now()
+    });
+
+    window._activeMatchId   = code;
+    window._activeMatchRole = 'B';
+
+    showToast('Joined match successfully!', 'success');
+    closeJoinMatch();
+
+    // Fetch latest match data and open live scorecard for Team B
+    const latestSnap = await window._fbDb.collection('matches').doc(code).get();
+    if (latestSnap.exists) {
+      openLiveScorecard(latestSnap.data(), 'B');
+    }
+
+  } catch (err) {
+    console.error('joinConfirm error:', err);
+    showToast('Failed to join match. Please try again.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Join & Start Scoring →';
+  }
+}
+
+function joinScanQR() {
+  showToast('Point your camera at the QR code to scan.', 'info');
+  // Native camera handles QR scanning on mobile — user scans QR,
+  // browser opens the join URL, openJoinMatch() reads ?join= param automatically
 }
 
 // ═══════════════════════════════════
@@ -2052,6 +2283,20 @@ async function msGenerateCode() {
 
   closeMatchSetup();
   openMatchCode(code);
+
+  // Listen for Team B joining then open live scorecard for Team A
+  listenToMatch(code, (data) => {
+    if (data.status === 'active' && data.teamB?.uid) {
+      // Update code screen status
+      const statusEl = document.getElementById('matchCodeStatus');
+      if (statusEl) statusEl.innerHTML = `<span class="match-code-connected">✅ ${data.teamB.teamName} connected — starting match!</span>`;
+      clearTimeout(_matchFallbackTimer);
+      setTimeout(() => {
+        closeMatchCode();
+        openLiveScorecard(data, 'A');
+      }, 1500);
+    }
+  });
 }
 
 // ═══════════════════════════════════
@@ -2842,6 +3087,9 @@ async function deleteRound() {
 let _sc = {
   holes:       18,
   isMatch:     false,
+  isLive:      false,   // true when playing a live shared match
+  myRole:      null,    // 'A' (host) or 'B' (joining team)
+  matchId:     null,    // Firestore match document ID
   teamName:    '',
   teamHcp:     0,
   oppName:     '',
@@ -2916,6 +3164,88 @@ function openScorecard() {
 function closeScorecard() {
   document.getElementById('scorecardOverlay').classList.remove('open');
   numpadCancel();
+  // Unsubscribe live match listener when scorecard closes
+  if (_sc.isLive && window._matchUnsubscribe) {
+    window._matchUnsubscribe();
+    window._matchUnsubscribe = null;
+  }
+  _sc.isLive  = false;
+  _sc.myRole  = null;
+  _sc.matchId = null;
+}
+
+// ── LIVE SCORECARD ─────────────────────────────────────────
+function openLiveScorecard(matchData, role) {
+  const n = matchData.holes;
+  const isA = role === 'A';
+
+  _sc.holes      = n;
+  _sc.isMatch    = true;
+  _sc.isLive     = true;
+  _sc.myRole     = role;
+  _sc.matchId    = matchData.matchId;
+  _sc.teamName   = isA ? matchData.teamA.teamName : matchData.teamB.teamName;
+  _sc.teamHcp    = isA ? matchData.teamA.teamHcp  : matchData.teamB.teamHcp;
+  _sc.oppName    = isA ? matchData.teamB.teamName : matchData.teamA.teamName;
+  _sc.oppHcp     = isA ? matchData.teamB.teamHcp  : matchData.teamA.teamHcp;
+  _sc.courseName = matchData.course.name;
+  _sc.par        = matchData.par.length === n ? matchData.par.slice() : Array(n).fill(Math.floor((matchData.course.par || (n === 9 ? 36 : 72)) / n));
+  _sc.scores     = isA ? matchData.teamA.scores.slice() : matchData.teamB.scores.slice();
+  _sc.oppScores  = isA ? matchData.teamB.scores.slice() : matchData.teamA.scores.slice();
+
+  // Header
+  document.getElementById('sc_courseName').textContent = _sc.courseName;
+  document.getElementById('sc_meta').textContent = `${n} holes · ${_sc.teamName} vs ${_sc.oppName} · LIVE ⚡`;
+  document.getElementById('sc_holesProgress').textContent = `0 / ${n}`;
+
+  // Banners
+  document.getElementById('sc_singleBanner').style.display = 'none';
+  document.getElementById('sc_matchBanner').style.display  = '';
+  document.getElementById('sc_myTeamName').textContent     = _sc.teamName;
+  document.getElementById('sc_oppTeamName').textContent    = _sc.oppName;
+  document.getElementById('sc_myHcpLabel').textContent     = `HCP ${_sc.teamHcp}`;
+  document.getElementById('sc_oppHcpLabel').textContent    = `HCP ${_sc.oppHcp}`;
+  document.getElementById('sc_colHeader').innerHTML = `
+    <div class="sc-col-label" style="font-size:0.48rem;">Hole</div>
+    <div class="sc-col-label" style="font-size:0.48rem;">Par</div>
+    <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.teamName)}</div>
+    <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.oppName)}</div>
+    <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>`;
+  document.getElementById('sc_colHeader').className = 'sc-col-header match';
+
+  renderScorecardHoles();
+  updateScorecardTotals();
+  setSaveBtnsState(false);
+  document.getElementById('scorecardOverlay').classList.add('open');
+  document.getElementById('scorecardOverlay').scrollTop = 0;
+
+  // Start live listener
+  listenToMatch(matchData.matchId, (data) => {
+    if (!data) return;
+    const myScores  = isA ? data.teamA.scores : data.teamB.scores;
+    const oppScores = isA ? data.teamB.scores : data.teamA.scores;
+
+    // Update opponent scores and re-render changed holes
+    for (let i = 0; i < n; i++) {
+      const prevOpp = _sc.oppScores[i];
+      const newOpp  = oppScores[i] || 0;
+      const prevMy  = _sc.scores[i];
+      const newMy   = myScores[i] || 0;
+
+      _sc.oppScores[i] = newOpp;
+      _sc.scores[i]    = newMy;
+
+      if (prevOpp !== newOpp || prevMy !== newMy) {
+        updateHoleDisplay(i);
+      }
+    }
+    updateScorecardTotals();
+
+    // Handle match completion from other side
+    if (data.status === 'complete' && _sc.isLive) {
+      showToast('Match completed by opponent — round saved.', 'info');
+    }
+  });
 }
 
 function setSaveBtnsState(disabled) {
@@ -2982,9 +3312,10 @@ function renderMatchHoleRow(i, p) {
         <div class="sc-score-display${mySC ? ' '+mySC : ''}" id="sc_score_my_${i}">${myDone ? myScore : '–'}</div>
         ${!myDone ? '<div class="sc-score-tap-hint">tap</div>' : ''}
       </div>
-      <div class="sc-score-tap opp-team" id="sc_tap_opp_${i}" onclick="openNumpad(${i},'opp')">
+      <div class="sc-score-tap opp-team${_sc.isLive ? ' live-readonly' : ''}" id="sc_tap_opp_${i}" onclick="${_sc.isLive ? 'void(0)' : `openNumpad(${i},'opp')`}">
         <div class="sc-score-display${oppSC ? ' '+oppSC : ''}" id="sc_score_opp_${i}">${oppDone ? oppScore : '–'}</div>
-        ${!oppDone ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+        ${!oppDone && !_sc.isLive ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+        ${!oppDone && _sc.isLive ? '<div class="sc-score-tap-hint live">⏳</div>' : ''}
       </div>
       <div class="sc-hole-result ${resultClass}" id="sc_result_${i}">${resultLabel}</div>
     </div>`;
@@ -3059,6 +3390,23 @@ function numpadConfirm() {
     else                        { _sc.scores[_numpad.holeIdx]    = v; }
     updateHoleDisplay(_numpad.holeIdx);
     updateScorecardTotals();
+
+    // Write to Firestore if live match
+    if (_sc.isLive && _sc.matchId && _numpad.team !== 'opp') {
+      const role      = _sc.myRole;
+      const scoreKey  = role === 'A' ? 'teamA.scores' : 'teamB.scores';
+      const hcpKey    = role === 'A' ? 'teamA.holesComplete' : 'teamB.holesComplete';
+      const scores    = _sc.scores.slice();
+      const complete  = scores.filter(s => s > 0).length;
+
+      window._fbDb.collection('matches').doc(_sc.matchId).update({
+        [scoreKey]:  scores,
+        [hcpKey]:    complete
+      }).catch(err => {
+        console.error('Live score write failed:', err);
+        showToast('Score not synced — check connection.', 'error');
+      });
+    }
   }
   numpadCancel();
 }
@@ -3536,6 +3884,79 @@ if ('serviceWorker' in navigator) {
         <span class="match-fallback-link" onclick="matchFallback()">Opponent not joining? Continue without them →</span>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── JOIN MATCH OVERLAY ── -->
+<div class="match-overlay" id="joinMatchOverlay" style="display:none;">
+  <div class="match-overlay-inner">
+
+    <!-- Header -->
+    <div class="match-overlay-header">
+      <button class="btn-back" onclick="closeJoinMatch()">← Back</button>
+      <div class="match-overlay-title">Join Match</div>
+    </div>
+
+    <!-- Step 1: Enter code -->
+    <div id="joinStep1">
+      <p class="match-gate-sub" style="margin-top:4px;">Enter the 5-character code from your opponent</p>
+
+      <div class="join-code-input-wrap">
+        <input
+          type="text"
+          id="joinCodeInput"
+          class="join-code-input"
+          placeholder="e.g. GX4K9"
+          maxlength="5"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          oninput="joinCodeTyped(this)"
+        >
+      </div>
+
+      <button class="btn-calc" id="joinLookupBtn" onclick="joinLookupCode()" style="margin-top:20px;" disabled>
+        Find Match →
+      </button>
+
+      <div style="text-align:center;margin-top:20px;">
+        <button class="match-code-share-btn" onclick="joinScanQR()">📷 Scan QR Code</button>
+      </div>
+
+      <div id="joinCodeError" class="join-code-error" style="display:none;"></div>
+    </div>
+
+    <!-- Step 2: Confirm match details -->
+    <div id="joinStep2" style="display:none;">
+      <p class="match-gate-sub" style="margin-top:4px;">Confirm you are joining the right match</p>
+      <div id="joinConfirmContent"></div>
+
+      <div class="match-step-label" style="margin-top:20px;">Your Team Details</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Check your details below — correct anything that's wrong before joining.</p>
+
+      <div class="field"><label>Team Name</label><input type="text" id="join_t2_name" placeholder="Your team name"></div>
+      <div class="match-step-sublabel">Player 1</div>
+      <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="join_t2p1_name" placeholder="Required"></div>
+      <div class="grid-2">
+        <div class="field"><label>HCP Index</label><input type="number" id="join_t2p1_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="join_t2p1_g" id="join_t2p1_gM" value="M" checked><label for="join_t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="join_t2p1_g" id="join_t2p1_gF" value="F"><label for="join_t2p1_gF">♀ F</label></div></div></div>
+      </div>
+      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="join_t2p1_tee" id="join_t2p1_tee1" value="champ"><label for="join_t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="join_t2p1_tee" id="join_t2p1_tee2" value="main" checked><label for="join_t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="join_t2p1_tee" id="join_t2p1_tee3" value="fwd"><label for="join_t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+
+      <div class="match-step-sublabel" style="margin-top:12px;">Player 2</div>
+      <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="join_t2p2_name" placeholder="Required"></div>
+      <div class="grid-2">
+        <div class="field"><label>HCP Index</label><input type="number" id="join_t2p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="join_t2p2_g" id="join_t2p2_gM" value="M" checked><label for="join_t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="join_t2p2_g" id="join_t2p2_gF" value="F"><label for="join_t2p2_gF">♀ F</label></div></div></div>
+      </div>
+      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="join_t2p2_tee" id="join_t2p2_tee1" value="champ"><label for="join_t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="join_t2p2_tee" id="join_t2p2_tee2" value="main" checked><label for="join_t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="join_t2p2_tee" id="join_t2p2_tee3" value="fwd"><label for="join_t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+
+      <button class="btn-calc" id="joinConfirmBtn" onclick="joinConfirm()" style="margin-top:20px;">
+        Join & Start Scoring →
+      </button>
+    </div>
+
   </div>
 </div>
 
