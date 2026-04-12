@@ -48,23 +48,23 @@
 </script>
 <style>
 :root {
-  --bg:       #0a1a10;
-  --surface:  #111f17;
-  --surface2: #182e1e;
-  --border:   rgba(255,255,255,0.07);
-  --border2:  rgba(255,255,255,0.13);
-  --gold:     #c8a84b;
-  --gold2:    #e5c96a;
-  --gold-dim: rgba(200,168,75,0.12);
-  --green:    #4a9e6a;
-  --muted:    #6a8e78;
-  --cream:    #ede8dc;
-  --white:    #f8f5ee;
-  --red:      #c85a4a;
-  --red-dim:  rgba(200,90,74,0.12);
-  --tee1:     #4a82d8;
-  --tee2:     #c8a84b;
-  --tee3:     #e08080;
+  --bg:       #f4f6f2;
+  --surface:  #ffffff;
+  --surface2: #eef1ec;
+  --border:   rgba(0,0,0,0.07);
+  --border2:  rgba(0,0,0,0.13);
+  --gold:     #2a7a48;
+  --gold2:    #1f5e36;
+  --gold-dim: rgba(42,122,72,0.10);
+  --green:    #2a7a48;
+  --muted:    #5a7a66;
+  --cream:    #1a2820;
+  --white:    #0f1a14;
+  --red:      #c0392b;
+  --red-dim:  rgba(192,57,43,0.10);
+  --tee1:     #2060c0;
+  --tee2:     #b8860b;
+  --tee3:     #c0392b;
   --radius:   12px;
   --radius-sm:8px;
   --tab-h:    64px;
@@ -77,7 +77,7 @@ body {
   background: var(--bg);
   color: var(--cream);
   font-family: 'Roboto', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   min-height: 100vh; min-height:100dvh;
   overflow: hidden; /* tabs handle scroll */
 }
@@ -183,7 +183,7 @@ body::before {
 }
 .header-flag { font-size:2rem; margin-bottom:12px; display:block; filter:drop-shadow(0 0 12px rgba(200,168,75,0.3)); }
 .header h1 { font-family:'Inter',sans-serif; font-size:2.2rem; font-weight:700; color:var(--white); line-height:1; letter-spacing:-0.02em; }
-.header h1 em { color:var(--gold); font-style:italic; }
+.header h1 em { color:#1a3d28; font-style:italic; }
 .header-sub { margin-top:8px; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); }
 .header-auth { margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; min-height:36px; }
 .user-pill { display:none; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:6px 14px 6px 8px; }
@@ -219,7 +219,7 @@ body::before {
 .section-header { padding:14px 18px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
 .section-icon { font-size:0.9rem; opacity:0.7; }
 .section-title { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); flex:1; }
-.section-body { padding:18px; }
+.section-body { padding:18px; background:#ffffff; }
 
 .btn-save-inline {
   background:none; border:1px solid rgba(200,168,75,0.3); border-radius:20px;
@@ -234,15 +234,23 @@ body::before {
 .field:last-child { margin-bottom:0; }
 .field label { font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); }
 
-input[type=text], input[type=number] {
-  background:rgba(0,0,0,0.3); border:1px solid var(--border2); border-radius:var(--radius-sm);
-  color:var(--white); font-family:'Roboto',sans-serif; font-size:1rem; padding:13px 14px;
-  outline:none; width:100%; transition:border-color 0.2s, background 0.2s;
-  -moz-appearance:textfield; appearance:textfield;
+input[type=text], input[type=number], select {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 3px;
+  color: var(--cream);
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.82rem;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  width: 100%;
 }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance:none; }
-input:focus { border-color:var(--gold); background:rgba(0,0,0,0.45); }
-input::placeholder { color:rgba(255,255,255,0.18); }
+input:focus, select:focus { border-color: #2a7a48; outline: none; background: #ffffff; }
+input::placeholder { color: rgba(0,0,0,0.28); }
 input { transition:border-color 0.4s, background 0.2s; }
 
 .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
@@ -266,15 +274,15 @@ input { transition:border-color 0.4s, background 0.2s; }
 .tee-pill.t3 input:checked + label { color:var(--tee3); background:rgba(224,128,128,0.1); }
 .tee-pill label:active { transform:scale(0.97); }
 
-.player-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin-bottom:10px; position:relative; }
+.player-card { background:#ffffff; border:1px solid rgba(0,0,0,0.10); border-radius:var(--radius-sm); padding:16px; margin-bottom:10px; position:relative; }
 .player-card:last-child { margin-bottom:0; }
-.player-card-num { position:absolute; top:10px; right:14px; font-family:'Inter',sans-serif; font-size:2.2rem; font-weight:700; color:rgba(255,255,255,0.04); line-height:1; pointer-events:none; user-select:none; }
+.player-card-num { position:absolute; top:10px; right:14px; font-family:'Inter',sans-serif; font-size:2.2rem; font-weight:700; color:rgba(0,0,0,0.06); line-height:1; pointer-events:none; user-select:none; }
 
 .team-label { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-.team-label-num { font-family:'Inter',sans-serif; font-size:2.5rem; font-weight:700; color:var(--gold); opacity:0.25; line-height:1; }
-.team-name-input { background:transparent; border:none; border-bottom:1px solid var(--border2); border-radius:0; padding:4px 2px; font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:600; color:var(--white); width:100%; transition:border-color 0.2s; }
-.team-name-input:focus { border-bottom-color:var(--gold); outline:none; }
-.team-name-input::placeholder { color:rgba(255,255,255,0.2); }
+.team-label-num { font-family:'Inter',sans-serif; font-size:2.5rem; font-weight:700; color:#1a3d28; opacity:0.35; line-height:1; }
+.team-name-input { background:transparent; border:none; border-bottom:2px solid rgba(0,0,0,0.18); border-radius:0; padding:4px 2px; font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:600; color:#1a2820; width:100%; transition:border-color 0.2s; }
+.team-name-input:focus { border-bottom-color:#2a7a48; outline:none; }
+.team-name-input::placeholder { color:rgba(0,0,0,0.25); }
 
 .fmt-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .fmt-pill { position:relative; }
@@ -298,8 +306,8 @@ input { transition:border-color 0.4s, background 0.2s; }
 .mode-toggle {
   display: flex;
   margin: 0 16px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #1a3d28;
+  border: 1px solid #143020;
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -317,17 +325,17 @@ input { transition:border-color 0.4s, background 0.2s; }
   position: relative;
 }
 .mode-btn + .mode-btn {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgba(255,255,255,0.10);
 }
 .mode-btn.active {
-  background: var(--gold-dim);
+  background: rgba(255,255,255,0.10);
 }
 .mode-btn.active::after {
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 2px;
-  background: var(--gold);
+  background: #7ecf9e;
   border-radius: 2px 2px 0 0;
 }
 .mode-btn-icon { font-size: 1.4rem; line-height: 1; }
@@ -335,10 +343,10 @@ input { transition:border-color 0.4s, background 0.2s; }
   font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--muted);
+  color: rgba(255,255,255,0.60);
   transition: color 0.2s;
 }
-.mode-btn.active .mode-btn-label { color: var(--gold2); }
+.mode-btn.active .mode-btn-label { color: #ffffff; }
 .mode-btn-desc {
   font-size: 0.55rem;
   letter-spacing: 0.08em;
@@ -555,6 +563,41 @@ input { transition:border-color 0.4s, background 0.2s; }
 .ms-review-row span:last-child { color:var(--white); font-weight:600; }
 .ms-review-hcp { display:inline-block; background:var(--gold-dim); color:var(--gold); border-radius:6px; padding:2px 8px; font-size:0.8rem; font-weight:700; margin-top:6px; }
 
+/* Per-hole par grid */
+.ms-par-grid { display:grid; grid-template-columns:repeat(9,1fr); gap:4px; margin-bottom:8px; }
+.ms-par-hole { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.ms-par-hole-num { font-size:0.58rem; color:var(--muted); font-weight:600; }
+.ms-par-btn-group { display:flex; flex-direction:column; gap:2px; width:100%; }
+.ms-par-btn { background:var(--surface2); border:1px solid var(--border); border-radius:4px; color:var(--muted); font-size:0.65rem; font-weight:600; padding:4px 0; cursor:pointer; text-align:center; width:100%; }
+.ms-par-btn.active { background:var(--gold); border-color:var(--gold); color:#000; }
+.ms-par-total-row { display:flex; justify-content:space-between; align-items:center; padding:8px 4px 0; border-top:1px solid var(--border); margin-top:4px; }
+
+/* Par summary in review */
+.ms-par-summary { display:flex; flex-wrap:wrap; gap:4px; }
+.ms-par-summary-hole { font-size:0.72rem; color:var(--muted); background:var(--surface2); border-radius:4px; padding:2px 5px; }
+.ms-par-summary-hole strong { color:var(--white); margin-left:2px; }
+
+/* Live match return banner */
+.live-match-banner { position:fixed; top:0; left:0; right:0; z-index:90; background:var(--green); color:#fff; display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+.live-match-banner-dot { width:8px; height:8px; border-radius:50%; background:#fff; animation:livepulse 1.2s infinite; flex-shrink:0; }
+.live-match-banner-text { flex:1; }
+.live-match-banner-arrow { font-size:1.2rem; opacity:0.8; }
+@keyframes livepulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* End match button */
+.btn-end-match { background:var(--red-dim); border:1px solid var(--red); border-radius:var(--radius-sm); color:var(--red); font-family:'Roboto',sans-serif; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; padding:10px 14px; cursor:pointer; }
+.btn-end-match:active { background:var(--red); color:#fff; }
+
+/* End match modal */
+.end-match-modal { position:fixed; inset:0; z-index:200; display:flex; align-items:flex-end; }
+.end-match-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
+.end-match-sheet { position:relative; width:100%; background:var(--surface); border-radius:20px 20px 0 0; padding:24px 20px 40px; max-width:480px; margin:0 auto; }
+.end-match-title { font-size:1.1rem; font-weight:700; color:var(--white); margin-bottom:10px; }
+.end-match-body { font-size:0.85rem; color:var(--muted); margin-bottom:24px; line-height:1.5; }
+.end-match-btns { display:flex; gap:12px; }
+.end-match-btn-cancel { flex:1; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius); color:var(--cream); padding:14px; font-size:0.9rem; font-weight:600; cursor:pointer; }
+.end-match-btn-confirm { flex:1; background:var(--red); border:none; border-radius:var(--radius); color:#fff; padding:14px; font-size:0.9rem; font-weight:600; cursor:pointer; }
+
 /* Code display */
 .match-code-body { display:flex; flex-direction:column; align-items:center; padding-top:16px; }
 .match-code-label { color:var(--muted); font-size:0.85rem; margin-bottom:16px; text-align:center; }
@@ -744,23 +787,23 @@ input { transition:border-color 0.4s, background 0.2s; }
 
 .sc-hole-num {
   font-family: 'Inter', sans-serif;
-  font-size: 1rem; font-weight: 700;
-  color: rgba(255,255,255,0.2);
+  font-size: 1.1rem; font-weight: 700;
+  color: rgba(0,0,0,0.25);
   text-align: center;
   line-height: 1;
 }
-.sc-hole-row.complete .sc-hole-num { color: var(--muted); }
+.sc-hole-row.complete .sc-hole-num { color: var(--gold); }
 
 /* Par selector */
 .sc-par-btns { display: flex; gap: 4px; }
 .sc-par-btn {
-  width: 28px; height: 28px;
-  background: none;
-  border: 1px solid var(--border2);
+  width: 34px; height: 34px;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.15);
   border-radius: 6px;
   font-family: 'Roboto', sans-serif;
-  font-size: 0.7rem;
-  color: var(--muted);
+  font-size: 0.85rem;
+  color: #1a2820;
   cursor: pointer;
   transition: all 0.15s;
   display: flex; align-items: center; justify-content: center;
@@ -798,9 +841,9 @@ input { transition:border-color 0.4s, background 0.2s; }
 .sc-step-btn:active { background: rgba(255,255,255,0.06); color: var(--cream); }
 .sc-score-display {
   font-family: 'Inter', sans-serif;
-  font-size: 1rem; font-weight: 600;
+  font-size: 1.2rem; font-weight: 700;
   color: var(--white);
-  min-width: 28px;
+  min-width: 32px;
   text-align: center;
   line-height: 1;
 }
@@ -863,21 +906,21 @@ input { transition:border-color 0.4s, background 0.2s; }
   margin: 0 16px 4px;
 }
 .sc-col-label {
-  font-size: 0.52rem;
-  letter-spacing: 0.16em;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  opacity: 0.7;
+  opacity: 0.9;
 }
 .sc-col-label.score-col { min-width: 110px; text-align: center; }
 .sc-col-label.badge-col { min-width: 28px; text-align: right; }
 
 /* Score tap target (replaces stepper) */
 .sc-score-tap {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border2);
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.15);
   border-radius: var(--radius-sm);
-  min-width: 110px; height: 38px;
+  min-width: 110px; height: 42px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: border-color 0.15s;
@@ -887,8 +930,8 @@ input { transition:border-color 0.4s, background 0.2s; }
 .sc-score-tap:active { border-color: var(--gold); background: rgba(200,168,75,0.07); }
 .sc-score-tap.active-input { border-color: var(--gold); background: rgba(200,168,75,0.07); }
 .sc-score-tap-hint {
-  font-size: 0.55rem;
-  color: rgba(255,255,255,0.2);
+  font-size: 0.62rem;
+  color: rgba(0,0,0,0.3);
   letter-spacing: 0.06em;
 }
 
@@ -960,9 +1003,9 @@ input { transition:border-color 0.4s, background 0.2s; }
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  height: 54px;
+  height: 58px;
   font-family: 'Inter', sans-serif;
-  font-size: 1.3rem; font-weight: 600;
+  font-size: 1.5rem; font-weight: 600;
   color: var(--cream);
   cursor: pointer;
   transition: all 0.12s;
@@ -1253,7 +1296,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="locked-hero-desc">Sign in to calculate team handicaps and save your courses & teams.</div>
         <div class="locked-features">
           <div class="locked-feature"><div class="locked-feature-icon">🏌️</div>WHS scramble handicap calculator</div>
-          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save up to 5 courses & 2 teams & 10 scorecards</div>
+          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save up to 5 courses & 2 teams & scorecards</div>
           <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 or 18 hole support</div>
         </div>
         <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
@@ -1526,6 +1569,13 @@ input { transition:border-color 0.4s, background 0.2s; }
   </button>
 </nav>
 
+<!-- LIVE MATCH RETURN BANNER -->
+<div id="liveMatchBanner" style="display:none;" onclick="resumeLiveScorecard()" class="live-match-banner">
+  <span class="live-match-banner-dot"></span>
+  <span class="live-match-banner-text" id="liveMatchBannerText">⚡ Live Match in progress — tap to return</span>
+  <span class="live-match-banner-arrow">›</span>
+</div>
+
 <!-- RESULTS OVERLAY -->
 <div class="results-overlay" id="resultsOverlay">
   <div class="results-inner">
@@ -1558,7 +1608,8 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-save-round-sm" id="sc_saveBtnTop" onclick="saveRound()">💾 Save</button>
-          <button class="btn-back" onclick="closeScorecard()">← Back</button>
+          <button class="btn-back" id="sc_backBtn" onclick="closeScorecard()">← Back</button>
+          <button class="btn-end-match" id="sc_endMatchBtn" onclick="confirmEndMatch()" style="display:none;">🏁 End</button>
         </div>
       </div>
 
@@ -1622,6 +1673,19 @@ input { transition:border-color 0.4s, background 0.2s; }
       <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()">💾 Save Round</button>
     </div>
 
+  </div>
+</div>
+
+<!-- END MATCH MODAL -->
+<div id="endMatchModal" class="end-match-modal" style="display:none;">
+  <div class="end-match-backdrop" onclick="cancelEndMatch()"></div>
+  <div class="end-match-sheet">
+    <div class="end-match-title">🏁 End Match?</div>
+    <p class="end-match-body">This will finish the match and save the round for both teams. This cannot be undone.</p>
+    <div class="end-match-btns">
+      <button class="end-match-btn-cancel" onclick="cancelEndMatch()">Keep Playing</button>
+      <button class="end-match-btn-confirm" onclick="endMatch()">End Match</button>
+    </div>
   </div>
 </div>
 
@@ -2116,6 +2180,8 @@ function openMatchSetup() {
   if (t2p2h)  document.getElementById('ms_t2p2_hcp').value = t2p2h;
 
   msGoToStep(1);
+  window._msParValues = null; // reset par values
+  msRenderParGrid();          // render fresh grid
   const el = document.getElementById('matchSetupOverlay');
   el.style.display = '';
   requestAnimationFrame(() => el.classList.add('open'));
@@ -2143,6 +2209,68 @@ function msSetHoles(n) {
   _msHoles = n;
   document.getElementById('ms_btn9').classList.toggle('active', n === 9);
   document.getElementById('ms_btn18').classList.toggle('active', n === 18);
+  msRenderParGrid();
+}
+
+function msUpdateParGrid() {
+  msRenderParGrid();
+}
+
+function msRenderParGrid() {
+  const n         = _msHoles;
+  const totalPar  = parseInt(document.getElementById('ms_par').value);
+  const basePar   = (!isNaN(totalPar) && totalPar > 0) ? Math.round(totalPar / n) : 4;
+
+  // Init _msParValues if needed or if holes count changed
+  if (!window._msParValues || window._msParValues.length !== n) {
+    window._msParValues = Array(n).fill(basePar);
+  } else if (!isNaN(totalPar) && totalPar > 0) {
+    // Re-fill only if total par just changed and all values are same (user hasn't customised yet)
+    const allSame = window._msParValues.every(v => v === window._msParValues[0]);
+    if (allSame) window._msParValues = Array(n).fill(basePar);
+  }
+
+  const grid = document.getElementById('msParGrid');
+  if (!grid) return;
+
+  // Render in two rows of 9 for 18 holes, one row for 9 holes
+  const cols = n === 9 ? 9 : 9;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  grid.innerHTML = Array.from({length: n}, (_, i) => {
+    const p = window._msParValues[i];
+    return `
+      <div class="ms-par-hole">
+        <div class="ms-par-hole-num">${i + 1}</div>
+        <div class="ms-par-btn-group">
+          ${[3,4,5].map(v => `<button class="ms-par-btn${p===v?' active':''}" onclick="msSetHolePar(${i},${v})">${v}</button>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  msUpdateParTotal();
+}
+
+function msSetHolePar(holeIdx, val) {
+  if (!window._msParValues) return;
+  window._msParValues[holeIdx] = val;
+
+  // Update button states for this hole
+  const grid = document.getElementById('msParGrid');
+  if (!grid) return;
+  const holes = grid.querySelectorAll('.ms-par-hole');
+  if (holes[holeIdx]) {
+    holes[holeIdx].querySelectorAll('.ms-par-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.textContent) === val);
+    });
+  }
+  msUpdateParTotal();
+}
+
+function msUpdateParTotal() {
+  const total = (window._msParValues || []).reduce((a, b) => a + b, 0);
+  const el = document.getElementById('msParGridTotal');
+  if (el) el.textContent = total > 0 ? total : '—';
 }
 
 function msGoToStep(n) {
@@ -2231,7 +2359,9 @@ function msBuildReview() {
   _msMatchData = {
     holes: _msHoles,
     course: { name: courseName, rating, slope, par },
-    par: Array(_msHoles).fill(Math.round(par / _msHoles)),
+    par: window._msParValues && window._msParValues.length === _msHoles
+      ? window._msParValues.slice()
+      : Array(_msHoles).fill(Math.round(par / _msHoles)),
     teamA: {
       teamName: t1name, teamHcp: t1hcp,
       players: [
@@ -2248,12 +2378,18 @@ function msBuildReview() {
     }
   };
 
+  const parArr = window._msParValues && window._msParValues.length === _msHoles
+    ? window._msParValues.slice()
+    : Array(_msHoles).fill(Math.round(par / _msHoles));
+  const parSummary = parArr.map((p, i) => `<span class="ms-par-summary-hole">${i+1}:<strong>${p}</strong></span>`).join('');
+
   document.getElementById('msReviewContent').innerHTML = `
     <div class="ms-review-card">
       <div class="ms-review-card-title">Course</div>
       <div class="ms-review-row"><span>Name</span><span>${courseName}</span></div>
       <div class="ms-review-row"><span>Holes</span><span>${_msHoles}</span></div>
       <div class="ms-review-row"><span>Rating / Slope / Par</span><span>${rating} / ${slope} / ${par}</span></div>
+      <div style="margin-top:8px;"><div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Par per hole</div><div class="ms-par-summary">${parSummary}</div></div>
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Your Team — ${t1name}</div>
@@ -2890,8 +3026,9 @@ function onSignedIn(user) {
   document.getElementById('lockedHero').style.display  = 'none';
   document.getElementById('appContent').classList.add('unlocked');
   document.getElementById('bottomTabs').classList.add('visible');
-  setGameMode('single'); // default to single on each login
+  setGameMode('single');
   loadSavedData(user.uid);
+  checkForActiveMatch(user.uid);
 }
 
 function onSignedOut() {
@@ -3162,19 +3299,144 @@ function openScorecard() {
 }
 
 function closeScorecard() {
+  // During live match — minimise instead of closing
+  if (_sc.isLive) {
+    document.getElementById('scorecardOverlay').classList.remove('open');
+    numpadCancel();
+    showLiveMatchBanner();
+    showToast('Match is live — tap the banner to return.', 'info');
+    return;
+  }
   document.getElementById('scorecardOverlay').classList.remove('open');
   numpadCancel();
-  // Unsubscribe live match listener when scorecard closes
-  if (_sc.isLive && window._matchUnsubscribe) {
+  const backBtn = document.getElementById('sc_backBtn');
+  const endBtn  = document.getElementById('sc_endMatchBtn');
+  const codeEl  = document.getElementById('sc_liveCode');
+  if (backBtn) backBtn.style.display = '';
+  if (endBtn)  endBtn.style.display  = 'none';
+  if (codeEl)  codeEl.style.display  = 'none';
+}
+
+function forceCloseScorecard() {
+  document.getElementById('scorecardOverlay').classList.remove('open');
+  numpadCancel();
+  if (window._matchUnsubscribe) {
     window._matchUnsubscribe();
     window._matchUnsubscribe = null;
   }
   _sc.isLive  = false;
   _sc.myRole  = null;
   _sc.matchId = null;
+  window._activeMatchId   = null;
+  window._activeMatchRole = null;
+  const backBtn = document.getElementById('sc_backBtn');
+  const endBtn  = document.getElementById('sc_endMatchBtn');
+  const codeEl  = document.getElementById('sc_liveCode');
+  if (backBtn) backBtn.style.display = '';
+  if (endBtn)  endBtn.style.display  = 'none';
+  if (codeEl)  codeEl.style.display  = 'none';
+  hideLiveMatchBanner();
 }
 
-// ── LIVE SCORECARD ─────────────────────────────────────────
+// ── LIVE MATCH BANNER ──────────────────────────────────────
+function showLiveMatchBanner(label) {
+  const banner = document.getElementById('liveMatchBanner');
+  const textEl = document.getElementById('liveMatchBannerText');
+  if (textEl) textEl.textContent = label || '⚡ Live Match in progress — tap to return';
+  if (banner) banner.style.display = '';
+  const pageInner = document.querySelector('.page-inner');
+  if (pageInner) pageInner.style.paddingTop = '44px';
+}
+
+function hideLiveMatchBanner() {
+  const banner = document.getElementById('liveMatchBanner');
+  if (banner) banner.style.display = 'none';
+  const pageInner = document.querySelector('.page-inner');
+  if (pageInner) pageInner.style.paddingTop = '';
+}
+
+async function resumeLiveScorecard() {
+  if (!window._activeMatchId) return;
+  try {
+    const snap = await window._fbDb.collection('matches').doc(window._activeMatchId).get();
+    if (!snap.exists) {
+      showToast('Match no longer exists.', 'error');
+      hideLiveMatchBanner();
+      window._activeMatchId = null;
+      return;
+    }
+    const data = snap.data();
+    if (data.status === 'complete') {
+      showToast('This match has already ended.', 'info');
+      hideLiveMatchBanner();
+      window._activeMatchId = null;
+      return;
+    }
+    hideLiveMatchBanner();
+    openLiveScorecard(data, window._activeMatchRole);
+  } catch(err) {
+    console.error('resumeLiveScorecard error:', err);
+    showToast('Could not resume match. Check your connection.', 'error');
+  }
+}
+
+// ── END MATCH ──────────────────────────────────────────────
+function confirmEndMatch() {
+  document.getElementById('endMatchModal').style.display = 'flex';
+}
+
+function cancelEndMatch() {
+  document.getElementById('endMatchModal').style.display = 'none';
+}
+
+async function endMatch() {
+  cancelEndMatch();
+  const matchId = _sc.matchId;
+  try { await saveRound(); } catch(e) { console.warn('saveRound in endMatch:', e); }
+  if (matchId) {
+    try {
+      await window._fbDb.collection('matches').doc(matchId).update({
+        status:      'complete',
+        completedAt: Date.now()
+      });
+    } catch(err) {
+      console.error('endMatch Firestore error:', err);
+    }
+  }
+  showToast('Match ended — round saved.', 'success');
+  forceCloseScorecard();
+}
+
+// ── CHECK FOR ACTIVE MATCH ON LOGIN ───────────────────────
+async function checkForActiveMatch(uid) {
+  try {
+    const snapA = await window._fbDb.collection('matches')
+      .where('teamA.uid', '==', uid)
+      .where('status', '==', 'active')
+      .limit(1).get();
+    if (!snapA.empty) {
+      const data = snapA.docs[0].data();
+      window._activeMatchId   = data.matchId;
+      window._activeMatchRole = 'A';
+      showLiveMatchBanner(`⚡ Active match vs ${data.teamB.teamName} — tap to rejoin`);
+      return;
+    }
+    const snapB = await window._fbDb.collection('matches')
+      .where('teamB.uid', '==', uid)
+      .where('status', '==', 'active')
+      .limit(1).get();
+    if (!snapB.empty) {
+      const data = snapB.docs[0].data();
+      window._activeMatchId   = data.matchId;
+      window._activeMatchRole = 'B';
+      showLiveMatchBanner(`⚡ Active match vs ${data.teamA.teamName} — tap to rejoin`);
+      return;
+    }
+  } catch(err) {
+    // Index may not exist yet — user can still rejoin via code
+    console.warn('checkForActiveMatch:', err.message);
+  }
+}
 function openLiveScorecard(matchData, role) {
   const n = matchData.holes;
   const isA = role === 'A';
@@ -3216,6 +3478,17 @@ function openLiveScorecard(matchData, role) {
   renderScorecardHoles();
   updateScorecardTotals();
   setSaveBtnsState(false);
+
+  // Swap back → end match button, show code badge
+  const backBtn   = document.getElementById('sc_backBtn');
+  const endBtn    = document.getElementById('sc_endMatchBtn');
+  const codeEl    = document.getElementById('sc_liveCode');
+  const codeValEl = document.getElementById('sc_liveCodeVal');
+  if (backBtn)   backBtn.style.display  = 'none';
+  if (endBtn)    endBtn.style.display   = '';
+  if (codeEl)    codeEl.style.display   = '';
+  if (codeValEl) codeValEl.textContent  = matchData.matchId;
+
   document.getElementById('scorecardOverlay').classList.add('open');
   document.getElementById('scorecardOverlay').scrollTop = 0;
 
@@ -3278,7 +3551,7 @@ function renderSingleHoleRow(i, p) {
       </div>
       <div class="sc-score-tap" id="sc_tap_${i}" onclick="openNumpad(${i},'my')">
         <div class="sc-score-display${scoreClass ? ' '+scoreClass : ''}" id="sc_score_${i}">${complete ? score : '–'}</div>
-        ${!complete ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+        ${!complete ? '<div class="sc-score-tap-hint">score</div>' : ''}
       </div>
       <div class="sc-vs-par ${vsParClass}" id="sc_vs_${i}">${vsParLabel}</div>
     </div>`;
@@ -3310,11 +3583,11 @@ function renderMatchHoleRow(i, p) {
       </div>
       <div class="sc-score-tap my-team" id="sc_tap_my_${i}" onclick="openNumpad(${i},'my')">
         <div class="sc-score-display${mySC ? ' '+mySC : ''}" id="sc_score_my_${i}">${myDone ? myScore : '–'}</div>
-        ${!myDone ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+        ${!myDone ? '<div class="sc-score-tap-hint">score</div>' : ''}
       </div>
       <div class="sc-score-tap opp-team${_sc.isLive ? ' live-readonly' : ''}" id="sc_tap_opp_${i}" onclick="${_sc.isLive ? 'void(0)' : `openNumpad(${i},'opp')`}">
         <div class="sc-score-display${oppSC ? ' '+oppSC : ''}" id="sc_score_opp_${i}">${oppDone ? oppScore : '–'}</div>
-        ${!oppDone && !_sc.isLive ? '<div class="sc-score-tap-hint">tap</div>' : ''}
+        ${!oppDone && !_sc.isLive ? '<div class="sc-score-tap-hint">score</div>' : ''}
         ${!oppDone && _sc.isLive ? '<div class="sc-score-tap-hint live">⏳</div>' : ''}
       </div>
       <div class="sc-hole-result ${resultClass}" id="sc_result_${i}">${resultLabel}</div>
@@ -3430,7 +3703,7 @@ function updateSingleHoleDisplay(holeIdx) {
   if (tapEl) {
     const h = tapEl.querySelector('.sc-score-tap-hint');
     if (complete && h) h.remove();
-    else if (!complete && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'tap'; tapEl.appendChild(nh); }
+    else if (!complete && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'score'; tapEl.appendChild(nh); }
   }
   const vsEl = document.getElementById(`sc_vs_${holeIdx}`);
   if (vsEl) {
@@ -3457,7 +3730,7 @@ function updateMatchHoleDisplay(holeIdx) {
   if (myTap) {
     const h = myTap.querySelector('.sc-score-tap-hint');
     if (myDone && h) h.remove();
-    else if (!myDone && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'tap'; myTap.appendChild(nh); }
+    else if (!myDone && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'score'; myTap.appendChild(nh); }
   }
 
   const oppEl = document.getElementById(`sc_score_opp_${holeIdx}`);
@@ -3469,7 +3742,7 @@ function updateMatchHoleDisplay(holeIdx) {
   if (oppTap) {
     const h = oppTap.querySelector('.sc-score-tap-hint');
     if (oppDone && h) h.remove();
-    else if (!oppDone && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'tap'; oppTap.appendChild(nh); }
+    else if (!oppDone && !h) { const nh = document.createElement('div'); nh.className = 'sc-score-tap-hint'; nh.textContent = 'score'; oppTap.appendChild(nh); }
   }
 
   const resultEl = document.getElementById(`sc_result_${holeIdx}`);
@@ -3596,7 +3869,10 @@ async function saveRound() {
 // Back button also closes scorecard / round view
 window.addEventListener('popstate', () => {
   if (document.getElementById('roundViewOverlay').classList.contains('open')) { closeRoundView(); return; }
-  if (document.getElementById('scorecardOverlay').classList.contains('open')) { closeScorecard(); return; }
+  if (document.getElementById('scorecardOverlay').classList.contains('open')) {
+    closeScorecard(); // respects isLive internally
+    return;
+  }
   if (document.getElementById('resultsOverlay').classList.contains('open')) closeResults();
 });
 
@@ -3806,8 +4082,20 @@ if ('serviceWorker' in navigator) {
       <div class="grid-3" style="margin-top:12px;">
         <div class="field"><label>Rating</label><input type="number" id="ms_rating" placeholder="70.5" step="0.1" inputmode="decimal"></div>
         <div class="field"><label>Slope</label><input type="number" id="ms_slope" placeholder="128" step="1" inputmode="numeric"></div>
-        <div class="field"><label>Par</label><input type="number" id="ms_par" placeholder="72" step="1" inputmode="numeric"></div>
+        <div class="field"><label>Total Par</label><input type="number" id="ms_par" placeholder="36" step="1" inputmode="numeric" oninput="msUpdateParGrid()"></div>
       </div>
+
+      <!-- Per-hole par grid -->
+      <div id="msParGridWrap" style="margin-top:16px;">
+        <div class="match-step-sublabel">Par Per Hole</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">Tap to set each hole's par. Pre-filled from total par.</p>
+        <div id="msParGrid" class="ms-par-grid"></div>
+        <div class="ms-par-total-row">
+          <span style="color:var(--muted);font-size:0.8rem;">Total</span>
+          <span id="msParGridTotal" style="color:var(--gold);font-weight:700;font-size:0.9rem;">—</span>
+        </div>
+      </div>
+
       <button class="btn-calc" style="margin-top:20px;" onclick="msNext(1)">Next: Your Team →</button>
     </div>
 
