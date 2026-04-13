@@ -1509,10 +1509,19 @@ input { transition:border-color 0.4s, background 0.2s; }
             <button class="btn-save-inline" id="saveCourseBtn" onclick="saveCourse()">💾 Save</button>
           </div>
           <div class="section-body">
-            <div class="field">
+            <!-- Course name with shared DB search -->
+            <div class="field" style="margin-bottom:8px;">
               <label>Course Name</label>
-              <input type="text" id="course_name" placeholder="e.g. Royal Amsterdam Golf Club">
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="position:relative;flex:1;">
+                  <input type="text" id="course_name" placeholder="e.g. Royal Amsterdam Golf Club"
+                    oninput="calcFilterCourseDropdown()" onfocus="calcShowCourseDropdown()" autocomplete="off">
+                  <div id="calcCourseDropdown" class="ms-course-dropdown" style="display:none;"></div>
+                </div>
+                <button class="btn-save-inline" onclick="calcShareCourse()" title="Add/update in shared database">🌐</button>
+              </div>
             </div>
+
             <div class="holes-note" id="holesNote">
               ⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard.
             </div>
@@ -1550,10 +1559,23 @@ input { transition:border-color 0.4s, background 0.2s; }
               <span style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);">Forward</span>
               <span style="opacity:0.5;font-size:0.55rem;color:var(--muted);">(optional)</span>
             </div>
-            <div class="grid-3">
+            <div class="grid-3" style="margin-bottom:16px;">
               <div class="field"><label>Rating</label><input type="number" id="tee3_rating" placeholder="68.2" step="0.1" min="30" max="85" inputmode="decimal"></div>
               <div class="field"><label>Slope</label><input type="number" id="tee3_slope" placeholder="120" step="1" min="55" max="155" inputmode="numeric"></div>
               <div class="field"><label>Par</label><input type="number" id="tee3_par" placeholder="72" step="1" min="27" max="80" value="72" inputmode="numeric"></div>
+            </div>
+
+            <!-- Par & SI Grid (shown when course loaded from DB) -->
+            <div id="calcParGridWrap" style="display:none;margin-top:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div style="font-size:0.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;">Par &amp; Stroke Index</div>
+                <span style="font-size:0.65rem;color:var(--muted);">Par = 3/4/5 · SI = 1–18</span>
+              </div>
+              <div id="calcParGrid" class="ms-par-grid"></div>
+              <div class="ms-par-total-row">
+                <span style="color:var(--muted);font-size:0.8rem;">Total Par</span>
+                <span id="calcParGridTotal" style="color:var(--gold);font-weight:700;font-size:0.9rem;">—</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1659,6 +1681,14 @@ input { transition:border-color 0.4s, background 0.2s; }
         <span class="mydata-section-label-text">📍 Courses</span>
         <span class="mydata-section-label-count" id="courseCount">0 / 20</span>
       </div>
+
+      <!-- Admin import button — only shown to admin UID -->
+      <div id="adminImportBtn" style="display:none;margin-bottom:12px;">
+        <button class="btn-save-inline" style="width:100%;padding:12px;font-size:0.8rem;" onclick="openCsvImport()">
+          🗂 Import Courses to Shared DB (Admin)
+        </button>
+      </div>
+
       <div class="slots-full-note" id="coursesFull">
         You've saved 20 courses — delete one before saving a new course.
       </div>
@@ -1667,13 +1697,6 @@ input { transition:border-color 0.4s, background 0.2s; }
           <span class="saved-empty-icon">📍</span>
           No courses saved yet.<br>Fill in course details in the Calculator tab and tap 💾 Save.
         </div>
-      </div>
-
-      <!-- Admin import button — only shown to admin UID -->
-      <div id="adminImportBtn" style="display:none;margin-top:12px;text-align:center;">
-        <button class="btn-save-inline" style="width:100%;padding:12px;font-size:0.8rem;" onclick="openCsvImport()">
-          🗂 Import Courses to Shared DB (Admin)
-        </button>
       </div>
 
       <div class="mydata-spacer"></div>
@@ -1849,6 +1872,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="sc-carousel-hole-info">
           <div class="sc-carousel-hole-num" id="sc_carouselHoleNum">Hole 1</div>
           <div class="sc-carousel-par-info" id="sc_carouselParInfo">Par 4</div>
+          <div id="sc_carouselSiBadge" style="margin-top:6px;display:none;"></div>
         </div>
         <button class="sc-carousel-btn" id="sc_nextBtn" onclick="carouselNav(1)">›</button>
       </div>
@@ -2145,13 +2169,16 @@ const MAX_TEAMS   = 2;
 let _holes       = 18;
 let _gameMode    = 'single'; // 'single' | 'match'
 let _savedCourses  = []; // array, max 20
+let _calcCourseTees  = []; // tees for currently loaded calc course
+let _calcParValues   = null; // par per hole for calc course
+let _calcIndexValues = null; // SI per hole for calc course
 let _sharedCourses = []; // shared course DB — loaded on sign-in
 let _msCourseTees  = []; // tees for currently loaded match setup course
 let _savedTeams    = []; // array, max 2
 let _savedRounds   = []; // loaded from Firestore, newest first
 
 // Your UID — gates the CSV import tool
-const ADMIN_UID = 'exzpUxVP7MeiXPUfsMPiaDlL1tg2';
+const ADMIN_UID = 'uAEyzbYi5RXHwJYiALrzzaLSjSm1';
 let _activeTab   = 'calc';
 
 // ═══════════════════════════════════
@@ -2633,8 +2660,13 @@ function msResetStep1() {
   if (f9)  f9.style.display  = '';
   if (f18) f18.style.display = 'none';
   // Reset grids
-  window._msParValues   = null;
-  window._msIndexValues = null;
+  window._msParValues       = null;
+  window._msIndexValues     = null;
+  window._msFrontParValues  = null;
+  window._msFrontIndexValues= null;
+  window._msBackParValues   = null;
+  window._msBackIndexValues = null;
+  _msCourseTees = [];
   msRenderParGrid();
   showToast('Course fields reset.', 'info');
 }
@@ -2779,7 +2811,14 @@ function confirmSiEditor() {
   if (isNaN(v) || v < 1) v = 1;
   if (v > 18) v = 18;
 
-  const arr = _siEditorGridId === 'ecParGrid' ? window._ecIndexValues : window._msIndexValues;
+  // Write to correct index array based on which grid is being edited
+  let arr;
+  if (_siEditorGridId === 'ecParGrid')   arr = window._ecIndexValues;
+  else if (_siEditorGridId === 'calcParGrid') {
+    if (!_calcIndexValues) _calcIndexValues = Array.from({length: _holes}, (_, i) => i + 1);
+    arr = _calcIndexValues;
+  }
+  else arr = window._msIndexValues;
   if (arr) arr[_siEditorHole] = v;
 
   // Update badge display
@@ -3243,6 +3282,14 @@ function resetAll() {
   document.getElementById('fA').checked = true;
   setHoles(18);
   setGameMode('single');
+  // Clear calc course state
+  _calcParValues   = null;
+  _calcIndexValues = null;
+  _calcCourseTees  = [];
+  const wrap = document.getElementById('calcParGridWrap');
+  if (wrap) wrap.style.display = 'none';
+  const drop = document.getElementById('calcCourseDropdown');
+  if (drop) drop.style.display = 'none';
 }
 
 // ═══════════════════════════════════
@@ -3595,10 +3642,13 @@ function msMerge18HoleGrid() {
               || _sharedCourses.find(c => c.name === frontName);
   const backC  = _savedCourses.find(c => c.name === backName)
               || _sharedCourses.find(c => c.name === backName);
-  const frontPar  = frontC?.parPerHole   || Array(9).fill(4);
-  const backPar   = backC?.parPerHole    || Array(9).fill(4);
-  const frontIdx  = frontC?.indexPerHole || Array.from({length:9},(_,i)=>i*2+1);
-  const backIdx   = backC?.indexPerHole  || Array.from({length:9},(_,i)=>i*2+2);
+
+  // Use stored values from direct load if available, else fall back to course lookup
+  const frontPar = (window._msFrontParValues   && window._msFrontParValues.length   === 9) ? window._msFrontParValues   : (frontC?.parPerHole   || Array(9).fill(4));
+  const backPar  = (window._msBackParValues    && window._msBackParValues.length    === 9) ? window._msBackParValues    : (backC?.parPerHole    || Array(9).fill(4));
+  const frontIdx = (window._msFrontIndexValues && window._msFrontIndexValues.length === 9) ? window._msFrontIndexValues : (frontC?.indexPerHole || Array.from({length:9},(_,i)=>i*2+1));
+  const backIdx  = (window._msBackIndexValues  && window._msBackIndexValues.length  === 9) ? window._msBackIndexValues  : (backC?.indexPerHole  || Array.from({length:9},(_,i)=>i*2+2));
+
   window._msParValues   = [...frontPar, ...backPar];
   window._msIndexValues = [...frontIdx, ...backIdx];
   msRenderParGrid();
@@ -3729,6 +3779,208 @@ async function saveEditCourse() {
   }
 }
 
+// ── CALC COURSE DROPDOWN (shared DB) ───────────────────────
+
+function calcShowCourseDropdown() {
+  calcRenderCourseDropdown();
+  setTimeout(() => {
+    document.addEventListener('click', function handler(e) {
+      const drop = document.getElementById('calcCourseDropdown');
+      const inp  = document.getElementById('course_name');
+      if (drop && !drop.contains(e.target) && e.target !== inp) {
+        drop.style.display = 'none';
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 0);
+}
+
+function calcFilterCourseDropdown() {
+  calcRenderCourseDropdown();
+}
+
+function calcRenderCourseDropdown() {
+  const drop  = document.getElementById('calcCourseDropdown');
+  const input = document.getElementById('course_name');
+  if (!drop || !input) return;
+  const query = input.value.trim().toLowerCase();
+
+  const filteredShared   = _sharedCourses.filter(c => !query || c.name.toLowerCase().includes(query));
+  const filteredPersonal = _savedCourses.filter(c =>
+    (!query || c.name.toLowerCase().includes(query)) &&
+    !_sharedCourses.some(s => s.courseId === c.courseId && c.courseId)
+  );
+
+  if (filteredShared.length === 0 && filteredPersonal.length === 0) {
+    const msg = query ? `No courses matching "${query}" — tap 🌐 to add` : 'No courses yet';
+    drop.innerHTML = `<div class="ms-course-dropdown-empty">${msg}</div>`;
+  } else {
+    let html = '';
+    if (filteredShared.length > 0) {
+      html += filteredShared.map(c => `
+        <div class="ms-course-dropdown-item" onclick="calcLoadSharedCourse('${c.courseId}')">
+          <div class="ms-course-dropdown-name"><span class="ms-course-badge shared">🌐</span>${esc(c.name)}</div>
+          <div class="ms-course-dropdown-meta">${c.holes===9?'9 holes':'18 holes'} · Par ${c.par} · ${c.tees ? c.tees.map(t=>t.label).join('/') : c.rating+'/'+c.slope}</div>
+        </div>`).join('');
+    }
+    if (filteredPersonal.length > 0) {
+      if (filteredShared.length > 0) html += `<div class="ms-course-dropdown-divider">My Courses</div>`;
+      html += filteredPersonal.map(c => `
+        <div class="ms-course-dropdown-item" onclick="loadCourseIntoCalc('${c.id}')">
+          <div class="ms-course-dropdown-name"><span class="ms-course-badge personal">👤</span>${esc(c.name)}</div>
+          <div class="ms-course-dropdown-meta">${c.holes===9?'9 holes':'18 holes'} · Par ${c.par} · ${c.rating}/${c.slope}</div>
+        </div>`).join('');
+    }
+    drop.innerHTML = html;
+  }
+  drop.style.display = '';
+}
+
+function calcLoadSharedCourse(courseId) {
+  const c = _sharedCourses.find(s => s.courseId === courseId);
+  if (!c) return;
+
+  setHoles(c.holes || 18);
+  setVal('course_name', c.name);
+
+  // Fill tee fields from tees array
+  const tees = c.tees && c.tees.length ? c.tees : [{ label: 'Medal', rating: c.rating, slope: c.slope, par: c.par }];
+  _calcCourseTees = tees;
+
+  // Fill Medal/main tee fields (first tee or the one labelled Medal)
+  const medalTee = tees.find(t => t.label.toLowerCase().includes('medal') || t.label.toLowerCase().includes('standard')) || tees[0];
+  const champTee = tees.find(t => t.label.toLowerCase().includes('champ'));
+  const fwdTee   = tees.find(t => t.label.toLowerCase().includes('forward') || t.label.toLowerCase().includes('fwd'));
+
+  if (medalTee) { setVal('course_rating', medalTee.rating); setVal('course_slope', medalTee.slope); setVal('course_par', medalTee.par); }
+  if (champTee) { setVal('tee1_rating',   champTee.rating); setVal('tee1_slope',   champTee.slope); setVal('tee1_par',   champTee.par); }
+  if (fwdTee)   { setVal('tee3_rating',   fwdTee.rating);   setVal('tee3_slope',   fwdTee.slope);   setVal('tee3_par',   fwdTee.par); }
+
+  // Update dynamic tee pills for players
+  calcUpdateTeePills();
+
+  // Load par/SI grid
+  if (c.parPerHole && c.parPerHole.length === c.holes) {
+    _calcParValues   = c.parPerHole.slice();
+    _calcIndexValues = c.indexPerHole && c.indexPerHole.length === c.holes ? c.indexPerHole.slice() : Array.from({length:c.holes},(_,i)=>i+1);
+    calcRenderParGrid();
+    document.getElementById('calcParGridWrap').style.display = '';
+  } else {
+    _calcParValues   = null;
+    _calcIndexValues = null;
+    document.getElementById('calcParGridWrap').style.display = 'none';
+  }
+
+  document.getElementById('calcCourseDropdown').style.display = 'none';
+  showToast(`Loaded "${c.name}" from shared database`, 'success');
+}
+
+function calcUpdateTeePills() {
+  // Update tee pills for all calc players dynamically
+  const players = ['t1p1','t1p2','t2p1','t2p2'];
+  players.forEach(pfx => {
+    const container = document.getElementById(`${pfx}_calc_tee_pills`);
+    if (!container) return;
+    const tees = _calcCourseTees && _calcCourseTees.length ? _calcCourseTees : null;
+    if (!tees) return; // keep hardcoded pills if no DB course loaded
+    container.innerHTML = tees.map((t, i) => `
+      <div class="tee-pill">
+        <input type="radio" name="${pfx}_tee" id="${pfx}_ctee${i}"
+          value="${i === 0 ? 'main' : i === 1 ? 'champ' : 'fwd'}"
+          ${t.label.toLowerCase().includes('medal') || t.label.toLowerCase().includes('standard') ? 'checked' : ''}>
+        <label for="${pfx}_ctee${i}">${esc(t.label)}</label>
+      </div>`).join('');
+  });
+}
+
+function calcRenderParGrid() {
+  // Reuse the ms par grid renderer for the calc grid
+  const n = _holes;
+  const parValues   = _calcParValues   && _calcParValues.length   === n ? _calcParValues   : Array(n).fill(4);
+  const indexValues = _calcIndexValues && _calcIndexValues.length === n ? _calcIndexValues : Array.from({length:n},(_,i)=>i+1);
+
+  const grid = document.getElementById('calcParGrid');
+  if (!grid) return;
+  grid.style.gridTemplateColumns = `repeat(9, 1fr)`;
+  grid.innerHTML = Array.from({length: n}, (_, i) => {
+    const p   = parValues[i];
+    const idx = indexValues[i];
+    return `
+      <div class="ms-par-hole">
+        <div class="ms-par-hole-num">${i + 1}</div>
+        <div class="ms-par-btn-group">
+          ${[3,4,5].map(v => `<button class="ms-par-btn${p===v?' active':''}" onclick="calcSetHolePar(${i},${v})">${v}</button>`).join('')}
+        </div>
+        <div class="ms-par-index-label">SI</div>
+        <span class="ms-par-si-badge" id="si_badge_calcParGrid_${i}" onclick="openCalcSiEditor(${i})">${idx}</span>
+      </div>`;
+  }).join('');
+
+  const total = parValues.reduce((a,b)=>a+b,0);
+  const totalEl = document.getElementById('calcParGridTotal');
+  if (totalEl) totalEl.textContent = total > 0 ? total : '—';
+}
+
+function calcSetHolePar(holeIdx, val) {
+  if (!_calcParValues) _calcParValues = Array(_holes).fill(4);
+  _calcParValues[holeIdx] = val;
+  const grid = document.getElementById('calcParGrid');
+  if (!grid) return;
+  const holes = grid.querySelectorAll('.ms-par-hole');
+  if (holes[holeIdx]) {
+    holes[holeIdx].querySelectorAll('.ms-par-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.textContent) === val);
+    });
+  }
+  const total = _calcParValues.reduce((a,b)=>a+b,0);
+  const totalEl = document.getElementById('calcParGridTotal');
+  if (totalEl) totalEl.textContent = total;
+}
+
+function openCalcSiEditor(holeIdx) {
+  // Reuse the SI editor popup — set context to calc grid
+  window._siEditorCalcMode = true;
+  openSiEditor(holeIdx, 'calcParGrid');
+}
+
+async function calcShareCourse() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  const name = val('course_name');
+  if (!name) { showToast('Please enter a course name first.', 'error'); return; }
+
+  const rating = numVal('course_rating');
+  const slope  = numVal('course_slope');
+  const par    = numVal('course_par');
+  if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Rating and Slope first.', 'error'); return; }
+
+  // Build tees from filled fields
+  const tees = [];
+  if (!isNaN(numVal('tee1_rating'))) tees.push({ label: 'Champion', rating: numVal('tee1_rating'), slope: numVal('tee1_slope'), par: numVal('tee1_par') || par });
+  tees.push({ label: 'Medal', rating, slope, par });
+  if (!isNaN(numVal('tee3_rating'))) tees.push({ label: 'Forward', rating: numVal('tee3_rating'), slope: numVal('tee3_slope'), par: numVal('tee3_par') || par });
+
+  const parPerHole   = _calcParValues   && _calcParValues.length   === _holes ? _calcParValues.slice()   : Array(_holes).fill(4);
+  const indexPerHole = _calcIndexValues && _calcIndexValues.length === _holes ? _calcIndexValues.slice() : Array.from({length:_holes},(_,i)=>i+1);
+
+  const data = { name, holes: _holes, rating, slope, par, tees, parPerHole, indexPerHole };
+
+  try {
+    const existing = _sharedCourses.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      await window._fbDb.collection('courses_shared').doc(existing._docId).update({ ...data, lastEditedBy: uid, lastEditedAt: new Date().toISOString() });
+      const idx = _sharedCourses.findIndex(c => c._docId === existing._docId);
+      if (idx >= 0) _sharedCourses[idx] = { ..._sharedCourses[idx], ...data };
+      showToast(`"${name}" updated in shared database`, 'success');
+    } else {
+      const courseId = 'c_' + Date.now().toString(36);
+      const docRef   = await window._fbDb.collection('courses_shared').add({ ...data, courseId, addedBy: uid, lastEditedBy: uid, lastEditedAt: new Date().toISOString() });
+      _sharedCourses.push({ ...data, courseId, _docId: docRef.id, addedBy: uid });
+      showToast(`"${name}" added to shared database!`, 'success');
+    }
+  } catch(e) { showToast('Could not save to shared DB: ' + e.message, 'error'); }
+}
+
 async function saveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
@@ -3794,8 +4046,26 @@ function loadCourseIntoCalc(id) {
   if (!isNaN(c.tee3_slope))  setVal('tee3_slope',  c.tee3_slope);
   if (!isNaN(c.tee3_par))    setVal('tee3_par',    c.tee3_par);
   setHoles(c.holes === 9 ? 9 : 18);
+
+  // Load par/SI grid if available
+  if (c.parPerHole && c.parPerHole.length === c.holes) {
+    _calcParValues   = c.parPerHole.slice();
+    _calcIndexValues = c.indexPerHole && c.indexPerHole.length === c.holes ? c.indexPerHole.slice() : Array.from({length:c.holes},(_,i)=>i+1);
+    calcRenderParGrid();
+    document.getElementById('calcParGridWrap').style.display = '';
+  }
+
+  // Load tees if available
+  if (c.tees && c.tees.length) {
+    _calcCourseTees = c.tees;
+    calcUpdateTeePills();
+  }
+
+  // Close dropdown
+  const drop = document.getElementById('calcCourseDropdown');
+  if (drop) drop.style.display = 'none';
+
   switchTab('calc');
-  // Scroll calc page to top
   document.getElementById('pageCalc').scrollTop = 0;
   showToast(`"${c.name}" loaded!`, 'success');
 }
@@ -4413,6 +4683,8 @@ function openScorecard() {
   const isMatch = _gameMode === 'match';
   _sc.holes      = n;
   _sc.isMatch    = isMatch;
+  _sc.isCarousel = true;
+  _sc.currentHole = 0;
   _sc.teamName   = val('team1_name') || 'My Team';
   _sc.oppName    = val('team2_name') || 'Opponent';
   _sc.courseName = val('course_name') || 'Unnamed Course';
@@ -4422,11 +4694,18 @@ function openScorecard() {
   _sc.teamHcp = hcpNums[0] ? parseInt(hcpNums[0].textContent) || 0 : 0;
   _sc.oppHcp  = hcpNums[1] ? parseInt(hcpNums[1].textContent) || 0 : 0;
 
-  const totalPar = numVal('course_par') || (n === 9 ? 36 : 72);
-  const basePar  = Math.floor(totalPar / n);
-  _sc.par        = Array(n).fill(basePar);
-  _sc.scores     = Array(n).fill(0);
-  _sc.oppScores  = Array(n).fill(0);
+  // Use par per hole from calc course if available, else equal split
+  if (_calcParValues && _calcParValues.length === n) {
+    _sc.par   = _calcParValues.slice();
+    _sc.index = _calcIndexValues && _calcIndexValues.length === n ? _calcIndexValues.slice() : Array.from({length:n},(_,i)=>i+1);
+  } else {
+    const totalPar = numVal('course_par') || (n === 9 ? 36 : 72);
+    const basePar  = Math.floor(totalPar / n);
+    _sc.par   = Array(n).fill(basePar);
+    _sc.index = Array.from({length:n},(_,i)=>i+1);
+  }
+  _sc.scores    = Array(n).fill(0);
+  _sc.oppScores = Array(n).fill(0);
 
   // Header
   document.getElementById('sc_courseName').textContent    = _sc.courseName;
@@ -4467,7 +4746,22 @@ function openScorecard() {
     document.getElementById('sc_colHeader').className = 'sc-col-header';
   }
 
-  renderScorecardHoles();
+  // Use carousel for single mode
+  if (!isMatch) {
+    document.getElementById('sc_holes').style.display     = 'none';
+    document.getElementById('sc_colHeader').style.display = 'none';
+    document.getElementById('sc_carousel').style.display  = '';
+    document.getElementById('sc_carouselMyName').textContent  = _sc.teamName;
+    document.getElementById('sc_carouselOppName').textContent = _sc.oppName;
+    renderCarouselHole(0);
+    renderCarouselDots();
+  } else {
+    document.getElementById('sc_holes').style.display     = '';
+    document.getElementById('sc_colHeader').style.display = '';
+    document.getElementById('sc_carousel').style.display  = 'none';
+    renderScorecardHoles();
+  }
+
   updateScorecardTotals();
   setSaveBtnsState(false);
   document.getElementById('scorecardOverlay').classList.add('open');
@@ -4859,13 +5153,52 @@ function renderCarouselHole(i) {
   document.getElementById('sc_prevBtn').disabled = i === 0;
   document.getElementById('sc_nextBtn').disabled = i === n - 1;
 
-  // Par + stroke info
+  // Par + stroke info + SI active display
   const hcpDiff = _sc.oppHcp - _sc.teamHcp;
   const s = strokeOnHole(i, hcpDiff);
+  const si = _sc.index && _sc.index[i] ? _sc.index[i] : null;
+
   let parInfo = `Par ${p}`;
-  if (s > 0)      parInfo += `  ·  +${s} ${esc(_sc.oppName)}`;
-  else if (s < 0) parInfo += `  ·  +${Math.abs(s)} ${esc(_sc.teamName)}`;
+  if (_sc.isMatch) {
+    if (s > 0)      parInfo += `  ·  +${s} ${esc(_sc.oppName)}`;
+    else if (s < 0) parInfo += `  ·  +${Math.abs(s)} ${esc(_sc.teamName)}`;
+  }
   document.getElementById('sc_carouselParInfo').textContent = parInfo;
+
+  // SI active badge — colour coded by difficulty
+  const siContainer = document.getElementById('sc_carouselSiBadge');
+  if (siContainer) {
+    if (si && !_sc.isMatch) {
+      const difficulty = si <= 6 ? 'Hardest' : si <= 12 ? 'Average' : 'Easiest';
+      const bg = si <= 6 ? 'var(--red)' : si <= 12 ? '#c87a3a' : 'var(--green)';
+      siContainer.innerHTML = `<span style="display:inline-block;background:${bg};color:#fff;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">SI ${si} · ${difficulty}</span>`;
+      siContainer.style.display = '';
+    } else {
+      siContainer.style.display = 'none';
+    }
+  }
+
+  // Show/hide opponent panel based on mode
+  const oppPanel   = document.getElementById('sc_carouselOppScore');
+  const oppNameEl  = document.getElementById('sc_carouselOppName');
+  const carResEl   = document.getElementById('sc_carouselResult');
+  if (!_sc.isMatch) {
+    if (oppPanel)  oppPanel.style.display  = 'none';
+    if (oppNameEl) oppNameEl.style.display = 'none';
+    if (carResEl)  carResEl.style.display  = 'none';
+    const myPanel = document.getElementById('sc_carouselMyScore');
+    if (myPanel) myPanel.style.gridColumn = '1 / -1';
+    const scoresGrid = document.querySelector('.sc-carousel-scores');
+    if (scoresGrid) scoresGrid.style.gridTemplateColumns = '1fr';
+  } else {
+    if (oppPanel)  oppPanel.style.display  = '';
+    if (oppNameEl) oppNameEl.style.display = '';
+    if (carResEl)  carResEl.style.display  = '';
+    const myPanel = document.getElementById('sc_carouselMyScore');
+    if (myPanel) myPanel.style.gridColumn = '';
+    const scoresGrid = document.querySelector('.sc-carousel-scores');
+    if (scoresGrid) scoresGrid.style.gridTemplateColumns = '';
+  }
 
   // My score
   const myDone  = myScore > 0;
@@ -4933,6 +5266,7 @@ function carouselGoTo(i) {
 }
 
 function carouselOpenNumpad(team) {
+  if (!_sc.isMatch && team === 'opp') return; // no opponent in single mode
   openNumpad(_sc.currentHole, team);
 }
 
@@ -4954,31 +5288,53 @@ function showAllHoles() {
   const overlay = document.getElementById('allHolesOverlay');
   const content = document.getElementById('allHolesContent');
   const hcpDiff = _sc.oppHcp - _sc.teamHcp;
+  const isMatch = _sc.isMatch;
 
-  // Build header row
-  let html = `
+  // Header row
+  let html = isMatch ? `
     <div style="display:grid;grid-template-columns:28px 32px 1fr 1fr 28px;gap:8px;padding:8px 12px;border-bottom:2px solid var(--border);">
       <div class="sc-col-label" style="text-align:center;">H</div>
       <div class="sc-col-label" style="text-align:center;">Par</div>
       <div class="sc-col-label" style="text-align:center;">${esc(_sc.teamName)}</div>
       <div class="sc-col-label" style="text-align:center;">${esc(_sc.oppName)}</div>
       <div class="sc-col-label" style="text-align:right;">Res</div>
+    </div>` : `
+    <div style="display:grid;grid-template-columns:28px 32px 1fr 28px;gap:8px;padding:8px 12px;border-bottom:2px solid var(--border);">
+      <div class="sc-col-label" style="text-align:center;">H</div>
+      <div class="sc-col-label" style="text-align:center;">Par</div>
+      <div class="sc-col-label" style="text-align:center;">Score</div>
+      <div class="sc-col-label" style="text-align:right;">SI</div>
     </div>`;
 
   html += Array.from({length: _sc.holes}, (_, i) => {
-    const p       = _sc.par[i] || 4;
-    const myS     = _sc.scores[i]    || 0;
-    const oppS    = _sc.oppScores[i] || 0;
-    const myDone  = myS  > 0;
+    const p      = _sc.par[i] || 4;
+    const myS    = _sc.scores[i]    || 0;
+    const oppS   = _sc.oppScores[i] || 0;
+    const myDone = myS  > 0;
+    const si     = _sc.index && _sc.index[i] ? _sc.index[i] : null;
+    const isCurrent = i === _sc.currentHole ? ' current-hole' : '';
+
+    if (!isMatch) {
+      // Single mode row — 4 columns: H, Par, Score, SI
+      const mySC = myDone ? scoreColorClass(myS, p, true) : 'empty';
+      const siColor = si ? (si <= 6 ? 'var(--red)' : si <= 12 ? '#c87a3a' : 'var(--green)') : 'var(--muted)';
+      return `
+        <div class="ah-hole-row${isCurrent}" style="grid-template-columns:28px 32px 1fr 28px;" onclick="closeAllHoles();carouselGoTo(${i})">
+          <div class="ah-hole-num${myDone ? ' done' : ''}">${i+1}</div>
+          <div class="ah-par">${p}</div>
+          <div class="ah-score ${mySC}">${myDone ? myS : '–'}</div>
+          <div style="text-align:right;font-size:0.72rem;font-weight:700;color:${siColor};">${si || '–'}</div>
+        </div>`;
+    }
+
+    // Match mode row
     const oppDone = oppS > 0;
     const s = strokeOnHole(i, hcpDiff);
     const strokeDot = s > 0
       ? `<span class="ah-stroke-dot opp">+${s}</span>`
       : s < 0 ? `<span class="ah-stroke-dot my">+${Math.abs(s)}</span>` : '';
-
     const mySC  = myDone  ? scoreColorClass(myS,  p, true) : 'empty';
     const oppSC = oppDone ? scoreColorClass(oppS, p, true) : 'empty';
-
     let resultLabel = '', resultClass = '';
     if (myDone && oppDone) {
       const myNet  = myS  + (s < 0 ? s : 0);
@@ -4987,8 +5343,6 @@ function showAllHoles() {
       else if (myNet > oppNet) { resultLabel = 'L'; resultClass = 'loss'; }
       else                     { resultLabel = 'H'; resultClass = 'half'; }
     }
-
-    const isCurrent = i === _sc.currentHole ? ' current-hole' : '';
     return `
       <div class="ah-hole-row${isCurrent}" onclick="closeAllHoles();carouselGoTo(${i})">
         <div class="ah-hole-num${myDone || oppDone ? ' done' : ''}">${i+1}${strokeDot}</div>
@@ -5003,15 +5357,28 @@ function showAllHoles() {
   const myTotal  = _sc.scores.reduce((a,b)    => a + (b > 0 ? b : 0), 0);
   const oppTotal = _sc.oppScores.reduce((a,b) => a + (b > 0 ? b : 0), 0);
   const myPar    = _sc.par.reduce((a,b) => a + b, 0);
-  if (myTotal > 0 || oppTotal > 0) {
-    html += `
-      <div style="display:grid;grid-template-columns:28px 32px 1fr 1fr 28px;gap:8px;padding:12px 12px;border-top:2px solid var(--border);margin-top:4px;background:var(--surface2);">
-        <div class="sc-col-label" style="text-align:center;">—</div>
-        <div class="sc-col-label" style="text-align:center;">${myPar}</div>
-        <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${myTotal > 0 ? myTotal : '–'}</div>
-        <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${oppTotal > 0 ? oppTotal : '–'}</div>
-        <div></div>
-      </div>`;
+  if (myTotal > 0) {
+    if (isMatch) {
+      html += `
+        <div style="display:grid;grid-template-columns:28px 32px 1fr 1fr 28px;gap:8px;padding:12px 12px;border-top:2px solid var(--border);background:var(--surface2);">
+          <div class="sc-col-label" style="text-align:center;">—</div>
+          <div class="sc-col-label" style="text-align:center;">${myPar}</div>
+          <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${myTotal > 0 ? myTotal : '–'}</div>
+          <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${oppTotal > 0 ? oppTotal : '–'}</div>
+          <div></div>
+        </div>`;
+    } else {
+      const vsPar = myTotal - myPar;
+      const vsLabel = vsPar === 0 ? 'E' : vsPar > 0 ? `+${vsPar}` : `${vsPar}`;
+      const vsColor = vsPar < 0 ? 'var(--green)' : vsPar > 0 ? 'var(--red)' : 'var(--muted)';
+      html += `
+        <div style="display:grid;grid-template-columns:28px 32px 1fr 28px;gap:8px;padding:12px 12px;border-top:2px solid var(--border);background:var(--surface2);">
+          <div class="sc-col-label" style="text-align:center;">—</div>
+          <div class="sc-col-label" style="text-align:center;">${myPar}</div>
+          <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${myTotal}</div>
+          <div style="text-align:right;font-size:1rem;font-weight:800;color:${vsColor};">${vsLabel}</div>
+        </div>`;
+    }
   }
 
   content.innerHTML = html;
@@ -5037,12 +5404,11 @@ function closeCsvImport() {
 }
 
 function parseCsvRows(raw) {
-  // Parse CSV into course objects, merging rows with same name into tees array
   const lines = raw.trim().split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('name,'));
   const courseMap = {};
 
   lines.forEach(line => {
-    // Handle quoted fields
+    // Parse CSV fields respecting quotes
     const cols = [];
     let cur = '', inQ = false;
     for (let i = 0; i < line.length; i++) {
@@ -5055,43 +5421,46 @@ function parseCsvRows(raw) {
 
     if (cols.length < 6) return;
     const [name, holesRaw, teeLabel, ratingRaw, slopeRaw, parRaw, ...rest] = cols;
-    const holes   = parseInt(holesRaw);
-    const rating  = parseFloat(ratingRaw);
-    const slope   = parseInt(slopeRaw);
-    const par     = parseInt(parRaw);
+    const holes  = parseInt(holesRaw);
+    const rating = parseFloat(ratingRaw);
+    const slope  = parseInt(slopeRaw);
+    const par    = parseInt(parRaw);
     if (!name || isNaN(holes) || isNaN(rating) || isNaN(slope) || isNaN(par)) return;
 
-    // Parse par per hole and SI — rest should have holes*2 values
-    const parPerHole   = rest.slice(0, holes).map(Number).filter(n => !isNaN(n));
-    const indexPerHole = rest.slice(holes, holes * 2).map(Number).filter(n => !isNaN(n));
+    // For a mixed 9/18 CSV, rest has up to 36 columns (18 par + 18 SI)
+    // We take exactly `holes` par values then exactly `holes` SI values
+    // using positional slice — do NOT filter out empties before slicing
+    const parCols = rest.slice(0, holes).map(v => parseInt(v));
+    const siCols  = rest.slice(18, 18 + holes).map(v => parseInt(v)); // SI always starts at column 18 in a mixed CSV
+
+    // Fallback: if siCols are all NaN (pure 9-hole CSV without 18-col padding), read SI directly after par
+    const siDirect = rest.slice(holes, holes * 2).map(v => parseInt(v));
+    const siValues = siCols.every(isNaN) ? siDirect : siCols;
+
+    const parPerHole   = parCols.every(n => !isNaN(n)) && parCols.length === holes ? parCols : Array(holes).fill(4);
+    const indexPerHole = siValues.every(n => !isNaN(n)) && siValues.length === holes ? siValues : Array.from({length:holes},(_,i)=>i+1);
 
     const tee = { label: teeLabel || 'Medal', rating, slope, par };
     const key = name.toLowerCase();
 
     if (!courseMap[key]) {
-      courseMap[key] = {
-        name, holes,
-        parPerHole:   parPerHole.length   === holes ? parPerHole   : Array(holes).fill(4),
-        indexPerHole: indexPerHole.length === holes ? indexPerHole : Array.from({length:holes},(_,i)=>i+1),
-        tees: []
-      };
+      courseMap[key] = { name, holes, parPerHole, indexPerHole, tees: [] };
+    } else {
+      // Update parPerHole/indexPerHole if current entry still has defaults
+      if (parPerHole.length === holes && courseMap[key].parPerHole.every(p => p === 4)) {
+        courseMap[key].parPerHole = parPerHole;
+      }
+      if (indexPerHole.length === holes && courseMap[key].indexPerHole.every((v,i) => v === i+1)) {
+        courseMap[key].indexPerHole = indexPerHole;
+      }
     }
-    // Avoid duplicate tee labels
     if (!courseMap[key].tees.find(t => t.label.toLowerCase() === tee.label.toLowerCase())) {
       courseMap[key].tees.push(tee);
-    }
-    // Keep parPerHole/indexPerHole from first row with valid data
-    if (parPerHole.length === holes && courseMap[key].parPerHole.every(p => p === 4)) {
-      courseMap[key].parPerHole = parPerHole;
-    }
-    if (indexPerHole.length === holes && courseMap[key].indexPerHole.every((v,i) => v === i+1)) {
-      courseMap[key].indexPerHole = indexPerHole;
     }
   });
 
   return Object.values(courseMap).map(c => ({
     ...c,
-    // Set top-level rating/slope/par from first tee for backward compat
     rating: c.tees[0]?.rating ?? 0,
     slope:  c.tees[0]?.slope  ?? 113,
     par:    c.tees[0]?.par    ?? (c.holes * 4)
@@ -5264,8 +5633,12 @@ function numpadConfirm() {
       });
     }
 
-    // Auto-advance carousel when both scores on this hole are entered
-    if (_sc.isCarousel && _sc.scores[holeIdx] > 0 && _sc.oppScores[holeIdx] > 0) {
+    // Auto-advance carousel:
+    // Single mode — advance after any score entry
+    // Match mode — advance only when both scores entered
+    const singleAdvance = _sc.isCarousel && !_sc.isMatch && _sc.scores[holeIdx] > 0;
+    const matchAdvance  = _sc.isCarousel && _sc.isMatch  && _sc.scores[holeIdx] > 0 && _sc.oppScores[holeIdx] > 0;
+    if (singleAdvance || matchAdvance) {
       numpadCancel();
       carouselAutoAdvance(holeIdx);
       return;
