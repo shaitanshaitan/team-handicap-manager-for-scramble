@@ -77,7 +77,7 @@ body {
   background: var(--bg);
   color: var(--cream);
   font-family: 'Roboto', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   min-height: 100vh; min-height:100dvh;
   overflow: hidden; /* tabs handle scroll */
 }
@@ -572,10 +572,52 @@ input { transition:border-color 0.4s, background 0.2s; }
 .ms-par-btn.active { background:var(--gold); border-color:var(--gold); color:#000; }
 .ms-par-total-row { display:flex; justify-content:space-between; align-items:center; padding:8px 4px 0; border-top:1px solid var(--border); margin-top:4px; }
 
+/* Course name row */
+.ms-course-name-row { display:flex; align-items:flex-end; gap:8px; margin-bottom:12px; }
+.ms-course-actions { display:flex; gap:6px; padding-bottom:1px; flex-shrink:0; }
+
+/* Reset button */
+.ms-reset-btn { background:none; border:1px solid var(--border2); border-radius:var(--radius-sm); color:var(--muted); font-size:0.7rem; padding:6px 10px; cursor:pointer; }
+.ms-reset-btn:active { color:var(--cream); border-color:var(--cream); }
+
+/* Course dropdown */
+.ms-course-dropdown { position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-sm); margin-top:4px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+.ms-course-dropdown-item { padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); }
+.ms-course-dropdown-item:last-child { border-bottom:none; }
+.ms-course-dropdown-item:active { background:var(--surface2); }
+.ms-course-dropdown-name { font-size:0.85rem; font-weight:600; color:var(--white); }
+.ms-course-dropdown-meta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+.ms-course-dropdown-empty { padding:12px; font-size:0.8rem; color:var(--muted); text-align:center; }
+
+/* Dual course */
+.ms-dual-course-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); margin-bottom:6px; margin-top:4px; }
+.ms-combined-par-row { display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:var(--radius-sm); padding:8px 12px; margin-top:10px; }
+.ms-combined-par-label { font-size:0.8rem; color:var(--muted); }
+.ms-combined-par-val { font-size:0.95rem; font-weight:700; color:var(--gold); }
+
+/* SI input */
+.ms-par-index-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:4px; color:var(--cream); font-size:0.65rem; font-weight:600; padding:3px 2px; text-align:center; outline:none; -moz-appearance:textfield; }
+.ms-par-index-input::-webkit-outer-spin-button,
+.ms-par-index-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.ms-par-index-input:focus { border-color:var(--gold); }
+.ms-par-index-label { font-size:0.52rem; color:var(--muted); text-align:center; margin-top:2px; }
+
+/* Edit button in saved card */
+.btn-card-edit { background:none; border:1px solid var(--border2); border-radius:var(--radius-sm); color:var(--muted); font-size:0.72rem; padding:6px 10px; cursor:pointer; }
+.btn-card-edit:active { background:var(--surface2); color:var(--cream); }
+
 /* Par summary in review */
 .ms-par-summary { display:flex; flex-wrap:wrap; gap:4px; }
 .ms-par-summary-hole { font-size:0.72rem; color:var(--muted); background:var(--surface2); border-radius:4px; padding:2px 5px; }
 .ms-par-summary-hole strong { color:var(--white); margin-left:2px; }
+.ms-par-summary-hole em { color:var(--muted); font-style:normal; font-size:0.65rem; margin-left:2px; opacity:0.7; }
+
+/* Par/SI review table */
+.ms-par-table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+.ms-par-table th { background:var(--surface2); color:var(--muted); font-weight:600; text-align:center; padding:4px 2px; border:1px solid var(--border); font-size:0.65rem; }
+.ms-par-table td { text-align:center; padding:4px 2px; border:1px solid var(--border); color:var(--muted); }
+.ms-par-table td strong { color:var(--white); font-weight:700; }
+.ms-par-table-label { color:var(--muted); font-size:0.65rem; font-weight:600; text-transform:uppercase; background:var(--surface2); white-space:nowrap; padding:4px 6px !important; }
 
 /* Live match return banner */
 .live-match-banner { position:fixed; top:0; left:0; right:0; z-index:90; background:var(--green); color:#fff; display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; font-size:0.82rem; font-weight:600; }
@@ -791,6 +833,10 @@ input { transition:border-color 0.4s, background 0.2s; }
   color: rgba(0,0,0,0.25);
   text-align: center;
   line-height: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 .sc-hole-row.complete .sc-hole-num { color: var(--gold); }
 
@@ -1204,11 +1250,13 @@ input { transition:border-color 0.4s, background 0.2s; }
 
 /* Match hole row — dual score columns */
 .sc-hole-row.match {
-  grid-template-columns: 24px auto 1fr 1fr auto;
+  grid-template-columns: 28px auto 1fr 1fr 28px;
   gap: 8px;
+  padding: 10px 12px;
+  align-items: center;
 }
-.sc-score-tap.my-team  { border-color: rgba(74,130,216,0.35); min-width: 52px; }
-.sc-score-tap.opp-team { border-color: rgba(200,90,74,0.25);  min-width: 52px; }
+.sc-score-tap.my-team  { border-color: rgba(74,130,216,0.35); width:100%; }
+.sc-score-tap.opp-team { border-color: rgba(200,90,74,0.25);  width:100%; }
 .sc-score-tap.my-team:active  { border-color: var(--tee1); background: rgba(74,130,216,0.1); }
 .sc-score-tap.opp-team:active { border-color: var(--red);  background: rgba(200,90,74,0.08); }
 .sc-score-tap.my-team.active-input  { border-color: var(--tee1); background: rgba(74,130,216,0.1); }
@@ -1226,10 +1274,26 @@ input { transition:border-color 0.4s, background 0.2s; }
 
 /* Match col header */
 .sc-col-header.match {
-  grid-template-columns: 24px auto 1fr 1fr auto;
+  grid-template-columns: 28px auto 1fr 1fr 28px;
   gap: 8px;
+  padding: 6px 12px 6px;
+  margin: 0 16px 4px;
 }
-.sc-col-label.dual { text-align: center; min-width: 52px; }
+.sc-col-label.dual { text-align: center; }
+
+/* Stroke indicator dot on hole number */
+.sc-stroke-dot {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-align: center;
+  margin-top: 3px;
+  line-height: 1;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.sc-stroke-dot.my  { color: #fff; background: var(--tee1); }
+.sc-stroke-dot.opp { color: #fff; background: var(--red); }
 </style>
 </head>
 <body>
@@ -1494,10 +1558,10 @@ input { transition:border-color 0.4s, background 0.2s; }
       <!-- COURSES -->
       <div class="mydata-section-label">
         <span class="mydata-section-label-text">📍 Courses</span>
-        <span class="mydata-section-label-count" id="courseCount">0 / 5</span>
+        <span class="mydata-section-label-count" id="courseCount">0 / 20</span>
       </div>
       <div class="slots-full-note" id="coursesFull">
-        You've saved 5 courses — delete one before saving a new course.
+        You've saved 20 courses — delete one before saving a new course.
       </div>
       <div id="coursesList">
         <div class="saved-empty">
@@ -1689,6 +1753,75 @@ input { transition:border-color 0.4s, background 0.2s; }
   </div>
 </div>
 
+<!-- EDIT COURSE MODAL -->
+<div id="editCourseModal" class="end-match-modal" style="display:none;">
+  <div class="end-match-backdrop" onclick="closeEditCourse()"></div>
+  <div class="end-match-sheet" style="max-height:90vh;overflow-y:auto;padding-bottom:40px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="end-match-title" style="margin:0;">✏️ Edit Course</div>
+      <button class="btn-back" onclick="closeEditCourse()">✕</button>
+    </div>
+
+    <!-- Holes toggle -->
+    <div class="match-holes-toggle" style="margin-bottom:14px;">
+      <button class="holes-toggle-btn" id="ec_btn9" onclick="ecSetHoles(9)">9</button>
+      <button class="holes-toggle-btn" id="ec_btn18" onclick="ecSetHoles(18)">18</button>
+    </div>
+
+    <div class="field"><label>Course Name</label><input type="text" id="ec_name" placeholder="e.g. Amsteldijk (9)"></div>
+
+    <!-- 9-hole fields -->
+    <div id="ec9holeFields">
+      <div class="grid-3" style="margin-top:8px;">
+        <div class="field"><label>Rating</label><input type="number" id="ec_rating" placeholder="34.5" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Slope</label><input type="number" id="ec_slope" placeholder="124" step="1" inputmode="numeric"></div>
+        <div class="field"><label>Total Par</label><input type="number" id="ec_par" placeholder="36" step="1" inputmode="numeric" oninput="ecUpdateParGrid()"></div>
+      </div>
+    </div>
+
+    <!-- 18-hole fields -->
+    <div id="ec18holeFields" style="display:none;">
+      <div class="ms-dual-course-label" style="margin-top:10px;">Front 9</div>
+      <div class="field"><label>Course Name</label><input type="text" id="ec_front_name" placeholder="e.g. Amsteldijk A"></div>
+      <div class="grid-3">
+        <div class="field"><label>Rating</label><input type="number" id="ec_front_rating" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Slope</label><input type="number" id="ec_front_slope" step="1" inputmode="numeric"></div>
+        <div class="field"><label>Par</label><input type="number" id="ec_front_par" step="1" inputmode="numeric" oninput="ecUpdateCombinedPar()"></div>
+      </div>
+      <div class="ms-dual-course-label" style="margin-top:10px;">Back 9</div>
+      <div class="field"><label>Course Name</label><input type="text" id="ec_back_name" placeholder="e.g. Amsteldijk B"></div>
+      <div class="grid-3">
+        <div class="field"><label>Rating</label><input type="number" id="ec_back_rating" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Slope</label><input type="number" id="ec_back_slope" step="1" inputmode="numeric"></div>
+        <div class="field"><label>Par</label><input type="number" id="ec_back_par" step="1" inputmode="numeric" oninput="ecUpdateCombinedPar()"></div>
+      </div>
+      <div class="ms-combined-par-row">
+        <span class="ms-combined-par-label">Total Par</span>
+        <span id="ecCombinedParTotal" class="ms-combined-par-val">—</span>
+      </div>
+      <div class="grid-2" style="margin-top:8px;">
+        <div class="field"><label>Combined Rating</label><input type="number" id="ec_combined_rating" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Combined Slope</label><input type="number" id="ec_combined_slope" step="1" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <!-- Par + SI grid -->
+    <div style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="match-step-sublabel" style="margin:0;">Par &amp; Stroke Index Per Hole</div>
+        <span style="font-size:0.68rem;color:var(--muted);">SI = 1–18</span>
+      </div>
+      <div id="ecParGrid" class="ms-par-grid"></div>
+      <div class="ms-par-total-row">
+        <span style="color:var(--muted);font-size:0.8rem;">Total Par</span>
+        <span id="ecParGridTotal" style="color:var(--gold);font-weight:700;font-size:0.9rem;">—</span>
+      </div>
+    </div>
+
+    <button class="btn-calc" style="margin-top:20px;" onclick="saveEditCourse()">💾 Save Changes</button>
+  </div>
+</div>
+
 <!-- NUMBER KEYBOARD OVERLAY -->
 <div class="numpad-overlay" id="numpadOverlay">
   <div class="numpad-backdrop" onclick="numpadCancel()"></div>
@@ -1795,12 +1928,12 @@ input { transition:border-color 0.4s, background 0.2s; }
 // STATE
 // ═══════════════════════════════════
 const FORMATS = { '35_15':[0.35,0.15], '25_20':[0.25,0.20], '20_15':[0.20,0.15], '50_50':[0.50,0.50] };
-const MAX_COURSES = 5;
+const MAX_COURSES = 20;
 const MAX_TEAMS   = 2;
 
 let _holes       = 18;
 let _gameMode    = 'single'; // 'single' | 'match'
-let _savedCourses = []; // array, max 5
+let _savedCourses = []; // array, max 20
 let _savedTeams   = []; // array, max 2
 let _savedRounds  = []; // loaded from Firestore, newest first
 let _activeTab   = 'calc';
@@ -1907,13 +2040,15 @@ function openMatchGate() {
   requestAnimationFrame(() => el.classList.add('open'));
 }
 
-function closeMatchGate() {
+function closeMatchGate(keepActive) {
   const el = document.getElementById('matchGateOverlay');
   el.classList.remove('open');
   setTimeout(() => { el.style.display = 'none'; }, 350);
-  // Reset match button to inactive since we're cancelling
-  document.getElementById('modeMatch').classList.remove('active');
-  document.getElementById('modeSingle').classList.add('active');
+  // Only reset mode buttons when fully cancelling — not when navigating to setup
+  if (!keepActive) {
+    document.getElementById('modeMatch').classList.remove('active');
+    document.getElementById('modeSingle').classList.add('active');
+  }
 }
 
 // ═══════════════════════════════════
@@ -1922,7 +2057,7 @@ function closeMatchGate() {
 let _joinMatchData = null;
 
 function openJoinMatch() {
-  closeMatchGate();
+  closeMatchGate(true); // keepActive — stay in match mode
 
   // Reset state
   _joinMatchData = null;
@@ -2141,47 +2276,60 @@ function joinScanQR() {
 let _msHoles = 9;
 let _msMatchData = null;
 
-function openMatchSetup() {
-  closeMatchGate();
-  _msHoles = 9;
-  _msMatchData = null;
+function openMatchSetup(forceReset) {
+  closeMatchGate(true);
 
-  // Pre-fill course fields from calculator if already filled
-  const courseName = document.getElementById('course_name')?.value || '';
-  const rating     = document.getElementById('course_rating')?.value || '';
-  const slope      = document.getElementById('course_slope')?.value || '';
-  const par        = document.getElementById('course_par')?.value || '';
-  if (courseName) document.getElementById('ms_course_name').value = courseName;
-  if (rating)     document.getElementById('ms_rating').value = rating;
-  if (slope)      document.getElementById('ms_slope').value = slope;
-  if (par)        document.getElementById('ms_par').value = par;
+  const shouldReset = forceReset || !_msPreserveData;
+  _msPreserveData = false; // always clear the flag
 
-  // Pre-fill team fields from calculator if already filled
-  const t1name = document.getElementById('team1_name')?.value || '';
-  const t1p1   = document.getElementById('t1p1_name')?.value || '';
-  const t1p1h  = document.getElementById('t1p1_hcp')?.value || '';
-  const t1p2   = document.getElementById('t1p2_name')?.value || '';
-  const t1p2h  = document.getElementById('t1p2_hcp')?.value || '';
-  if (t1name) document.getElementById('ms_t1_name').value = t1name;
-  if (t1p1)   document.getElementById('ms_t1p1_name').value = t1p1;
-  if (t1p1h)  document.getElementById('ms_t1p1_hcp').value = t1p1h;
-  if (t1p2)   document.getElementById('ms_t1p2_name').value = t1p2;
-  if (t1p2h)  document.getElementById('ms_t1p2_hcp').value = t1p2h;
+  if (shouldReset) {
+    _msHoles = 9;
+    _msMatchData = null;
+    window._msParValues   = null;
+    window._msIndexValues = null;
 
-  const t2name = document.getElementById('team2_name')?.value || '';
-  const t2p1   = document.getElementById('t2p1_name')?.value || '';
-  const t2p1h  = document.getElementById('t2p1_hcp')?.value || '';
-  const t2p2   = document.getElementById('t2p2_name')?.value || '';
-  const t2p2h  = document.getElementById('t2p2_hcp')?.value || '';
-  if (t2name) document.getElementById('ms_t2_name').value = t2name;
-  if (t2p1)   document.getElementById('ms_t2p1_name').value = t2p1;
-  if (t2p1h)  document.getElementById('ms_t2p1_hcp').value = t2p1h;
-  if (t2p2)   document.getElementById('ms_t2p2_name').value = t2p2;
-  if (t2p2h)  document.getElementById('ms_t2p2_hcp').value = t2p2h;
+    // Show 9-hole fields, hide 18-hole fields
+    const f9  = document.getElementById('ms9holeFields');
+    const f18 = document.getElementById('ms18holeFields');
+    if (f9)  f9.style.display  = '';
+    if (f18) f18.style.display = 'none';
+    document.getElementById('ms_btn9').classList.add('active');
+    document.getElementById('ms_btn18').classList.remove('active');
+
+    // Pre-fill from calculator
+    const courseName = document.getElementById('course_name')?.value || '';
+    const rating     = document.getElementById('course_rating')?.value || '';
+    const slope      = document.getElementById('course_slope')?.value || '';
+    if (courseName) document.getElementById('ms_course_name').value = courseName;
+    if (rating)     document.getElementById('ms_rating').value = rating;
+    if (slope)      document.getElementById('ms_slope').value = slope;
+
+    const t1name = document.getElementById('team1_name')?.value || '';
+    const t1p1   = document.getElementById('t1p1_name')?.value || '';
+    const t1p1h  = document.getElementById('t1p1_hcp')?.value || '';
+    const t1p2   = document.getElementById('t1p2_name')?.value || '';
+    const t1p2h  = document.getElementById('t1p2_hcp')?.value || '';
+    if (t1name) document.getElementById('ms_t1_name').value = t1name;
+    if (t1p1)   document.getElementById('ms_t1p1_name').value = t1p1;
+    if (t1p1h)  document.getElementById('ms_t1p1_hcp').value = t1p1h;
+    if (t1p2)   document.getElementById('ms_t1p2_name').value = t1p2;
+    if (t1p2h)  document.getElementById('ms_t1p2_hcp').value = t1p2h;
+
+    const t2name = document.getElementById('team2_name')?.value || '';
+    const t2p1   = document.getElementById('t2p1_name')?.value || '';
+    const t2p1h  = document.getElementById('t2p1_hcp')?.value || '';
+    const t2p2   = document.getElementById('t2p2_name')?.value || '';
+    const t2p2h  = document.getElementById('t2p2_hcp')?.value || '';
+    if (t2name) document.getElementById('ms_t2_name').value = t2name;
+    if (t2p1)   document.getElementById('ms_t2p1_name').value = t2p1;
+    if (t2p1h)  document.getElementById('ms_t2p1_hcp').value = t2p1h;
+    if (t2p2)   document.getElementById('ms_t2p2_name').value = t2p2;
+    if (t2p2h)  document.getElementById('ms_t2p2_hcp').value = t2p2h;
+  }
 
   msGoToStep(1);
-  window._msParValues = null; // reset par values
-  msRenderParGrid();          // render fresh grid
+  setTimeout(() => msRenderParGrid(), 50);
+
   const el = document.getElementById('matchSetupOverlay');
   el.style.display = '';
   requestAnimationFrame(() => el.classList.add('open'));
@@ -2190,15 +2338,34 @@ function openMatchSetup() {
 function closeMatchSetup() {
   const el = document.getElementById('matchSetupOverlay');
   el.classList.remove('open');
-  setTimeout(() => { el.style.display = 'none'; }, 350);
+  setTimeout(() => {
+    el.style.display = 'none';
+    // Full reset of state on explicit close
+    _msHoles = 9;
+    _msMatchData = null;
+    window._msParValues   = null;
+    window._msIndexValues = null;
+  }, 350);
   document.getElementById('modeMatch').classList.remove('active');
   document.getElementById('modeSingle').classList.add('active');
 }
 
+let _msPreserveData = false; // true when returning to gate from step 1
+
 function matchSetupBack() {
-  const current = parseInt(document.querySelector('.match-setup-step:not([style*="display:none"])').id.replace('msStep',''));
+  let current = 1;
+  for (let i = 4; i >= 1; i--) {
+    const el = document.getElementById('msStep' + i);
+    if (el && el.style.display !== 'none') { current = i; break; }
+  }
+
   if (current === 1) {
-    closeMatchSetup();
+    // Close setup but preserve all entered data
+    _msPreserveData = true;
+    const el = document.getElementById('matchSetupOverlay');
+    el.classList.remove('open');
+    setTimeout(() => { el.style.display = 'none'; }, 350);
+    // Show gate
     openMatchGate();
   } else {
     msGoToStep(current - 1);
@@ -2209,6 +2376,12 @@ function msSetHoles(n) {
   _msHoles = n;
   document.getElementById('ms_btn9').classList.toggle('active', n === 9);
   document.getElementById('ms_btn18').classList.toggle('active', n === 18);
+  const f9 = document.getElementById('ms9holeFields');
+  const f18 = document.getElementById('ms18holeFields');
+  if (f9)  f9.style.display  = n === 9  ? '' : 'none';
+  if (f18) f18.style.display = n === 18 ? '' : 'none';
+  window._msParValues   = null;
+  window._msIndexValues = null;
   msRenderParGrid();
 }
 
@@ -2216,56 +2389,142 @@ function msUpdateParGrid() {
   msRenderParGrid();
 }
 
-function msRenderParGrid() {
-  const n         = _msHoles;
-  const totalPar  = parseInt(document.getElementById('ms_par').value);
-  const basePar   = (!isNaN(totalPar) && totalPar > 0) ? Math.round(totalPar / n) : 4;
+function msUpdateCombinedPar() {
+  const fp = parseInt(document.getElementById('ms_front_par')?.value || '0');
+  const bp = parseInt(document.getElementById('ms_back_par')?.value  || '0');
+  const total = (isNaN(fp) ? 0 : fp) + (isNaN(bp) ? 0 : bp);
+  const el = document.getElementById('msCombinedParTotal');
+  if (el) el.textContent = total > 0 ? total : '—';
+}
 
-  // Init _msParValues if needed or if holes count changed
-  if (!window._msParValues || window._msParValues.length !== n) {
-    window._msParValues = Array(n).fill(basePar);
+function msResetStep1() {
+  // Reset course name + fields
+  ['ms_course_name','ms_rating','ms_slope','ms_par',
+   'ms_front_name','ms_front_rating','ms_front_slope','ms_front_par',
+   'ms_back_name','ms_back_rating','ms_back_slope','ms_back_par',
+   'ms_combined_rating','ms_combined_slope'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const cpEl = document.getElementById('msCombinedParTotal');
+  if (cpEl) cpEl.textContent = '—';
+  // Reset to 9 holes
+  _msHoles = 9;
+  document.getElementById('ms_btn9').classList.add('active');
+  document.getElementById('ms_btn18').classList.remove('active');
+  const f9  = document.getElementById('ms9holeFields');
+  const f18 = document.getElementById('ms18holeFields');
+  if (f9)  f9.style.display  = '';
+  if (f18) f18.style.display = 'none';
+  // Reset grids
+  window._msParValues   = null;
+  window._msIndexValues = null;
+  msRenderParGrid();
+  showToast('Course fields reset.', 'info');
+}
+
+function msRenderParGrid(gridId, parValues, indexValues, n) {
+  // Defaults for match setup use
+  gridId     = gridId     || 'msParGrid';
+  n          = n          || _msHoles;
+  parValues  = parValues  || window._msParValues;
+  indexValues= indexValues|| window._msIndexValues;
+
+  const totalParEl = gridId === 'msParGrid'
+    ? document.getElementById('ms_par')
+    : document.getElementById('ec_par');
+  const totalPar = parseInt(totalParEl?.value || '0');
+  // Only use totalPar if it's reasonable for the number of holes
+  const minPar = n * 3;
+  const maxPar = n * 5;
+  const validPar = !isNaN(totalPar) && totalPar >= minPar && totalPar <= maxPar;
+  const basePar  = validPar ? Math.round(totalPar / n) : 4;
+
+  // Init par
+  if (!parValues || parValues.length !== n) {
+    parValues = Array(n).fill(basePar);
   } else if (!isNaN(totalPar) && totalPar > 0) {
-    // Re-fill only if total par just changed and all values are same (user hasn't customised yet)
-    const allSame = window._msParValues.every(v => v === window._msParValues[0]);
-    if (allSame) window._msParValues = Array(n).fill(basePar);
+    const allSame = parValues.every(v => v === parValues[0]);
+    if (allSame) parValues = Array(n).fill(basePar);
   }
 
-  const grid = document.getElementById('msParGrid');
-  if (!grid) return;
+  // Init index — default sequential 1..n
+  if (!indexValues || indexValues.length !== n) {
+    indexValues = Array.from({length: n}, (_, i) => i + 1);
+  }
 
-  // Render in two rows of 9 for 18 holes, one row for 9 holes
-  const cols = n === 9 ? 9 : 9;
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  // Store back to correct source
+  if (gridId === 'msParGrid') {
+    window._msParValues   = parValues;
+    window._msIndexValues = indexValues;
+  } else {
+    window._ecParValues   = parValues;
+    window._ecIndexValues = indexValues;
+  }
+
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.style.gridTemplateColumns = `repeat(9, 1fr)`;
+
+  const totalId = gridId === 'msParGrid' ? 'msParGridTotal' : 'ecParGridTotal';
 
   grid.innerHTML = Array.from({length: n}, (_, i) => {
-    const p = window._msParValues[i];
+    const p   = parValues[i];
+    const idx = indexValues[i];
+    const pfx = gridId === 'msParGrid' ? 'ms' : 'ec';
     return `
       <div class="ms-par-hole">
         <div class="ms-par-hole-num">${i + 1}</div>
         <div class="ms-par-btn-group">
-          ${[3,4,5].map(v => `<button class="ms-par-btn${p===v?' active':''}" onclick="msSetHolePar(${i},${v})">${v}</button>`).join('')}
+          ${[3,4,5].map(v => `<button class="ms-par-btn${p===v?' active':''}" onclick="${pfx}SetHolePar(${i},${v},'${gridId}')">${v}</button>`).join('')}
         </div>
+        <div class="ms-par-index-label">SI</div>
+        <input class="ms-par-index-input" type="number" min="1" max="18" value="${idx}"
+          oninput="${pfx}SetHoleIndex(${i}, this.value, '${gridId}')"
+          onblur="${pfx}ValidateIndex(${i}, this, '${gridId}')">
       </div>`;
   }).join('');
 
-  msUpdateParTotal();
+  // Update total
+  const total = parValues.reduce((a, b) => a + b, 0);
+  const totalEl = document.getElementById(totalId);
+  if (totalEl) totalEl.textContent = total > 0 ? total : '—';
 }
 
-function msSetHolePar(holeIdx, val) {
-  if (!window._msParValues) return;
-  window._msParValues[holeIdx] = val;
-
-  // Update button states for this hole
-  const grid = document.getElementById('msParGrid');
-  if (!grid) return;
-  const holes = grid.querySelectorAll('.ms-par-hole');
-  if (holes[holeIdx]) {
+function msSetHolePar(holeIdx, val, gridId) {
+  const arr = gridId === 'ecParGrid' ? window._ecParValues : window._msParValues;
+  if (!arr) return;
+  arr[holeIdx] = val;
+  const holes = document.getElementById(gridId)?.querySelectorAll('.ms-par-hole');
+  if (holes?.[holeIdx]) {
     holes[holeIdx].querySelectorAll('.ms-par-btn').forEach(btn => {
       btn.classList.toggle('active', parseInt(btn.textContent) === val);
     });
   }
-  msUpdateParTotal();
+  const total = arr.reduce((a, b) => a + b, 0);
+  const totalId = gridId === 'ecParGrid' ? 'ecParGridTotal' : 'msParGridTotal';
+  const totalEl = document.getElementById(totalId);
+  if (totalEl) totalEl.textContent = total > 0 ? total : '—';
 }
+// Aliases for edit modal
+function ecSetHolePar(holeIdx, val, gridId) { msSetHolePar(holeIdx, val, gridId); }
+
+function msSetHoleIndex(holeIdx, val, gridId) {
+  const arr = (gridId === 'ecParGrid') ? window._ecIndexValues : window._msIndexValues;
+  if (!arr) return;
+  arr[holeIdx] = parseInt(val) || holeIdx + 1;
+}
+function ecSetHoleIndex(holeIdx, val, gridId) { msSetHoleIndex(holeIdx, val, gridId); }
+
+function msValidateIndex(holeIdx, input, gridId) {
+  let v = parseInt(input.value);
+  if (isNaN(v) || v < 1) v = 1;
+  if (v > 18) v = 18;
+  input.value = v;
+  const arr = (gridId === 'ecParGrid') ? window._ecIndexValues : window._msIndexValues;
+  if (arr) arr[holeIdx] = v;
+}
+function ecValidateIndex(holeIdx, input, gridId) { msValidateIndex(holeIdx, input, gridId); }
 
 function msUpdateParTotal() {
   const total = (window._msParValues || []).reduce((a, b) => a + b, 0);
@@ -2288,14 +2547,25 @@ function msGoToStep(n) {
 
 function msNext(fromStep) {
   if (fromStep === 1) {
-    const name   = document.getElementById('ms_course_name').value.trim();
-    const rating = parseFloat(document.getElementById('ms_rating').value);
-    const slope  = parseInt(document.getElementById('ms_slope').value);
-    const par    = parseInt(document.getElementById('ms_par').value);
-    if (!name)            { showToast('Please enter a course name.', 'error'); return; }
-    if (isNaN(rating))    { showToast('Please enter a course rating.', 'error'); return; }
-    if (isNaN(slope))     { showToast('Please enter a slope rating.', 'error'); return; }
-    if (isNaN(par))       { showToast('Please enter course par.', 'error'); return; }
+    const name = document.getElementById('ms_course_name').value.trim();
+    if (!name) { showToast('Please enter a course name.', 'error'); return; }
+    if (_msHoles === 9) {
+      const rating = parseFloat(document.getElementById('ms_rating').value);
+      const slope  = parseInt(document.getElementById('ms_slope').value);
+      const par    = parseInt(document.getElementById('ms_par').value);
+      if (isNaN(rating)) { showToast('Please enter a course rating.', 'error'); return; }
+      if (isNaN(slope))  { showToast('Please enter a slope rating.', 'error'); return; }
+      if (isNaN(par))    { showToast('Please enter course par.', 'error'); return; }
+    } else {
+      const cr = parseFloat(document.getElementById('ms_combined_rating').value);
+      const cs = parseInt(document.getElementById('ms_combined_slope').value);
+      const fp = parseInt(document.getElementById('ms_front_par').value);
+      const bp = parseInt(document.getElementById('ms_back_par').value);
+      if (isNaN(cr)) { showToast('Please enter a combined rating.', 'error'); return; }
+      if (isNaN(cs)) { showToast('Please enter a combined slope.', 'error'); return; }
+      if (isNaN(fp)) { showToast('Please enter Front 9 par.', 'error'); return; }
+      if (isNaN(bp)) { showToast('Please enter Back 9 par.', 'error'); return; }
+    }
     msGoToStep(2);
   } else if (fromStep === 2) {
     const p1 = document.getElementById('ms_t1p1_name').value.trim();
@@ -2314,22 +2584,49 @@ function msNext(fromStep) {
 }
 
 function msCalcHcp(p1hcp, p1tee, p1g, p2hcp, p2tee, p2g) {
-  const rating = parseFloat(document.getElementById('ms_rating').value);
-  const slope  = parseInt(document.getElementById('ms_slope').value);
-  const par    = parseInt(document.getElementById('ms_par').value);
+  let rating, slope, par;
+  if (_msHoles === 9) {
+    rating = parseFloat(document.getElementById('ms_rating').value);
+    slope  = parseInt(document.getElementById('ms_slope').value);
+    par    = parseInt(document.getElementById('ms_par').value);
+  } else {
+    rating = parseFloat(document.getElementById('ms_combined_rating').value);
+    slope  = parseInt(document.getElementById('ms_combined_slope').value);
+    const fp = parseInt(document.getElementById('ms_front_par').value);
+    const bp = parseInt(document.getElementById('ms_back_par').value);
+    par = (isNaN(fp)?0:fp) + (isNaN(bp)?0:bp);
+  }
   function ch(idx) { return idx * (slope / 113) + (rating - par); }
   const fmt = document.querySelector('input[name="fmt"]:checked')?.value || '35_15';
   const [pct1, pct2] = fmt.split('_').map(Number);
-  const ch1 = isNaN(p1hcp) ? 0 : ch(p1hcp);
-  const ch2 = isNaN(p2hcp) ? 0 : ch(p2hcp);
-  return Math.round(ch1 * (pct1 / 100) + ch2 * (pct2 / 100));
+
+  // Sort by course handicap ascending — lower CH always gets higher percentage (WHS correct)
+  const players = [];
+  if (!isNaN(p1hcp)) players.push(ch(p1hcp));
+  if (!isNaN(p2hcp)) players.push(ch(p2hcp));
+  players.sort((a, b) => a - b);
+
+  const total = (players[0] ?? 0) * (pct1 / 100) + (players[1] ?? 0) * (pct2 / 100);
+  return Math.round(total);
 }
 
 function msBuildReview() {
   const courseName = document.getElementById('ms_course_name').value.trim();
-  const rating     = parseFloat(document.getElementById('ms_rating').value);
-  const slope      = parseInt(document.getElementById('ms_slope').value);
-  const par        = parseInt(document.getElementById('ms_par').value);
+  let rating, slope, par, displayName;
+
+  if (_msHoles === 9) {
+    rating = parseFloat(document.getElementById('ms_rating').value);
+    slope  = parseInt(document.getElementById('ms_slope').value);
+    par    = parseInt(document.getElementById('ms_par').value);
+    displayName = courseName;
+  } else {
+    rating = parseFloat(document.getElementById('ms_combined_rating').value);
+    slope  = parseInt(document.getElementById('ms_combined_slope').value);
+    const fp = parseInt(document.getElementById('ms_front_par').value);
+    const bp = parseInt(document.getElementById('ms_back_par').value);
+    par = (isNaN(fp)?0:fp) + (isNaN(bp)?0:bp);
+    displayName = courseName; // always use the main course name field
+  }
 
   const t1name  = document.getElementById('ms_t1_name').value.trim() || 'My Team';
   const t1p1n   = document.getElementById('ms_t1p1_name').value.trim();
@@ -2353,15 +2650,20 @@ function msBuildReview() {
 
   const t1hcp = msCalcHcp(t1p1h, t1p1tee, t1p1g, t1p2h, t1p2tee, t1p2g);
   const t2hcp = msCalcHcp(t2p1h, t2p1tee, t2p1g, t2p2h, t2p2tee, t2p2g);
-
   const teeLabel = { champ:'Championship', main:'Standard', fwd:'Forward' };
 
+  const parArr = (window._msParValues && window._msParValues.length === _msHoles)
+    ? window._msParValues.slice()
+    : Array(_msHoles).fill(Math.round(par / _msHoles));
+  const idxArr = (window._msIndexValues && window._msIndexValues.length === _msHoles)
+    ? window._msIndexValues.slice()
+    : Array.from({length: _msHoles}, (_, i) => i + 1);
+
   _msMatchData = {
-    holes: _msHoles,
-    course: { name: courseName, rating, slope, par },
-    par: window._msParValues && window._msParValues.length === _msHoles
-      ? window._msParValues.slice()
-      : Array(_msHoles).fill(Math.round(par / _msHoles)),
+    holes:  _msHoles,
+    course: { name: displayName, rating, slope, par },
+    par:    parArr,
+    index:  idxArr,
     teamA: {
       teamName: t1name, teamHcp: t1hcp,
       players: [
@@ -2378,29 +2680,66 @@ function msBuildReview() {
     }
   };
 
-  const parArr = window._msParValues && window._msParValues.length === _msHoles
-    ? window._msParValues.slice()
-    : Array(_msHoles).fill(Math.round(par / _msHoles));
-  const parSummary = parArr.map((p, i) => `<span class="ms-par-summary-hole">${i+1}:<strong>${p}</strong></span>`).join('');
+  const parSummary = `
+    <table class="ms-par-table">
+      <thead>
+        <tr>
+          <th>Hole</th>
+          ${Array.from({length: Math.min(9, _msHoles)}, (_, i) => `<th>${i+1}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="ms-par-table-label">Par</td>
+          ${parArr.slice(0,9).map(p => `<td><strong>${p}</strong></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="ms-par-table-label">SI</td>
+          ${idxArr.slice(0,9).map(s => `<td>${s}</td>`).join('')}
+        </tr>
+      </tbody>
+    </table>
+    ${_msHoles === 18 ? `
+    <table class="ms-par-table" style="margin-top:6px;">
+      <thead>
+        <tr>
+          <th>Hole</th>
+          ${Array.from({length: 9}, (_, i) => `<th>${i+10}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="ms-par-table-label">Par</td>
+          ${parArr.slice(9).map(p => `<td><strong>${p}</strong></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="ms-par-table-label">SI</td>
+          ${idxArr.slice(9).map(s => `<td>${s}</td>`).join('')}
+        </tr>
+      </tbody>
+    </table>` : ''}`;
 
   document.getElementById('msReviewContent').innerHTML = `
     <div class="ms-review-card">
       <div class="ms-review-card-title">Course</div>
-      <div class="ms-review-row"><span>Name</span><span>${courseName}</span></div>
+      <div class="ms-review-row"><span>Name</span><span>${displayName}</span></div>
       <div class="ms-review-row"><span>Holes</span><span>${_msHoles}</span></div>
       <div class="ms-review-row"><span>Rating / Slope / Par</span><span>${rating} / ${slope} / ${par}</span></div>
-      <div style="margin-top:8px;"><div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Par per hole</div><div class="ms-par-summary">${parSummary}</div></div>
+      <div style="margin-top:10px;">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Par &amp; Stroke Index</div>
+        ${parSummary}
+      </div>
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Your Team — ${t1name}</div>
-      <div class="ms-review-row"><span>${t1p1n}</span><span>${isNaN(t1p1h) ? '—' : t1p1h} · ${teeLabel[t1p1tee]}</span></div>
-      <div class="ms-review-row"><span>${t1p2n}</span><span>${isNaN(t1p2h) ? '—' : t1p2h} · ${teeLabel[t1p2tee]}</span></div>
+      <div class="ms-review-row"><span>${t1p1n}</span><span>${isNaN(t1p1h)?'—':t1p1h} · ${teeLabel[t1p1tee]}</span></div>
+      <div class="ms-review-row"><span>${t1p2n}</span><span>${isNaN(t1p2h)?'—':t1p2h} · ${teeLabel[t1p2tee]}</span></div>
       <div><span class="ms-review-hcp">Team HCP: ${t1hcp}</span></div>
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Opponent — ${t2name}</div>
-      <div class="ms-review-row"><span>${t2p1n}</span><span>${isNaN(t2p1h) ? '—' : t2p1h} · ${teeLabel[t2p1tee]}</span></div>
-      <div class="ms-review-row"><span>${t2p2n}</span><span>${isNaN(t2p2h) ? '—' : t2p2h} · ${teeLabel[t2p2tee]}</span></div>
+      <div class="ms-review-row"><span>${t2p1n}</span><span>${isNaN(t2p1h)?'—':t2p1h} · ${teeLabel[t2p1tee]}</span></div>
+      <div class="ms-review-row"><span>${t2p2n}</span><span>${isNaN(t2p2h)?'—':t2p2h} · ${teeLabel[t2p2tee]}</span></div>
       <div><span class="ms-review-hcp">Team HCP: ${t2hcp}</span></div>
     </div>`;
 }
@@ -2625,6 +2964,280 @@ function resetAll() {
 // ═══════════════════════════════════
 // SAVE COURSE (multi-slot)
 // ═══════════════════════════════════
+// ── MATCH COURSE SAVE / LOAD / EDIT ───────────────────────
+
+async function msSaveCourse() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+
+  const name = document.getElementById('ms_course_name').value.trim();
+  if (!name) { showToast('Please enter a course name first.', 'error'); return; }
+
+  // Duplicate name check
+  if (_savedCourses.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    showToast(`"${name}" is already saved. Edit it instead.`, 'error'); return;
+  }
+  if (_savedCourses.length >= MAX_COURSES) {
+    showToast(`Maximum ${MAX_COURSES} courses — delete one first.`, 'error'); return;
+  }
+
+  let rating, slope, par, frontName, backName, combinedRating, combinedSlope, frontPar, backPar;
+  if (_msHoles === 9) {
+    rating = parseFloat(document.getElementById('ms_rating').value);
+    slope  = parseInt(document.getElementById('ms_slope').value);
+    par    = parseInt(document.getElementById('ms_par').value);
+  } else {
+    combinedRating = parseFloat(document.getElementById('ms_combined_rating').value);
+    combinedSlope  = parseInt(document.getElementById('ms_combined_slope').value);
+    frontPar = parseInt(document.getElementById('ms_front_par').value);
+    backPar  = parseInt(document.getElementById('ms_back_par').value);
+    par      = (isNaN(frontPar)?0:frontPar) + (isNaN(backPar)?0:backPar);
+    rating   = combinedRating;
+    slope    = combinedSlope;
+    frontName = document.getElementById('ms_front_name').value.trim();
+    backName  = document.getElementById('ms_back_name').value.trim();
+  }
+
+  if (isNaN(rating) || isNaN(slope)) {
+    showToast('Please fill in Rating and Slope before saving.', 'error'); return;
+  }
+
+  const parPerHole   = (window._msParValues   && window._msParValues.length   === _msHoles) ? window._msParValues.slice()   : Array(_msHoles).fill(4);
+  const indexPerHole = (window._msIndexValues && window._msIndexValues.length === _msHoles) ? window._msIndexValues.slice() : Array.from({length:_msHoles},(_,i)=>i+1);
+
+  const data = {
+    id: Date.now().toString(),
+    name, rating, slope, par,
+    holes: _msHoles,
+    frontName: frontName || null,
+    backName:  backName  || null,
+    parPerHole, indexPerHole,
+    savedAt: new Date().toISOString()
+  };
+
+  try {
+    _savedCourses.push(data);
+    await persistCourses(uid);
+    showToast(`"${name}" saved!`, 'success');
+    renderMyData();
+  } catch(e) {
+    _savedCourses.pop();
+    showToast('Could not save: ' + e.message, 'error');
+  }
+}
+
+function msShowCourseDropdown(slot) {
+  const dropId  = slot === 'front' ? 'msFrontCourseDropdown' : slot === 'back' ? 'msBackCourseDropdown' : 'msCourseDropdown';
+  const inputId = slot === 'front' ? 'ms_front_name' : slot === 'back' ? 'ms_back_name' : 'ms_course_name';
+  msRenderCourseDropdown(dropId, inputId, slot);
+  ['msCourseDropdown','msFrontCourseDropdown','msBackCourseDropdown'].forEach(id => {
+    if (id !== dropId) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+  });
+  setTimeout(() => {
+    document.addEventListener('click', function handler(e) {
+      const drop = document.getElementById(dropId);
+      const inp  = document.getElementById(inputId);
+      if (drop && !drop.contains(e.target) && e.target !== inp) {
+        drop.style.display = 'none';
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 0);
+}
+
+function msFilterCourseDropdown(slot) {
+  const dropId  = slot === 'front' ? 'msFrontCourseDropdown' : slot === 'back' ? 'msBackCourseDropdown' : 'msCourseDropdown';
+  const inputId = slot === 'front' ? 'ms_front_name' : slot === 'back' ? 'ms_back_name' : 'ms_course_name';
+  msRenderCourseDropdown(dropId, inputId, slot);
+}
+
+function msRenderCourseDropdown(dropId, inputId, slot) {
+  const drop  = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  if (!drop || !input) return;
+  const query    = input.value.trim().toLowerCase();
+  const filtered = _savedCourses.filter(c => !query || c.name.toLowerCase().includes(query));
+  if (filtered.length === 0) {
+    drop.innerHTML = `<div class="ms-course-dropdown-empty">No saved courses found</div>`;
+  } else {
+    drop.innerHTML = filtered.map(c => `
+      <div class="ms-course-dropdown-item" onclick="msLoadCourseIntoSetup('${c.id}','${slot||''}')">
+        <div class="ms-course-dropdown-name">${esc(c.name)}</div>
+        <div class="ms-course-dropdown-meta">${c.holes===9?'9 holes':'18 holes'} · Par ${c.par} · ${c.rating}/${c.slope}</div>
+      </div>`).join('');
+  }
+  drop.style.display = '';
+}
+
+function msLoadCourseIntoSetup(id, slot) {
+  const c = _savedCourses.find(x => x.id === id);
+  if (!c) return;
+  ['msCourseDropdown','msFrontCourseDropdown','msBackCourseDropdown'].forEach(dropId => {
+    const el = document.getElementById(dropId); if (el) el.style.display = 'none';
+  });
+  if (!slot || slot === '') {
+    document.getElementById('ms_course_name').value = c.name;
+    if (_msHoles !== c.holes) { _msHoles = c.holes; msSetHoles(c.holes); }
+    if (c.holes === 9) {
+      document.getElementById('ms_rating').value = c.rating;
+      document.getElementById('ms_slope').value  = c.slope;
+      document.getElementById('ms_par').value    = c.par;
+    } else {
+      document.getElementById('ms_combined_rating').value = c.rating;
+      document.getElementById('ms_combined_slope').value  = c.slope;
+    }
+    if (c.parPerHole   && c.parPerHole.length   === c.holes) window._msParValues   = c.parPerHole.slice();
+    if (c.indexPerHole && c.indexPerHole.length === c.holes) window._msIndexValues = c.indexPerHole.slice();
+    msRenderParGrid();
+    showToast(`"${c.name}" loaded!`, 'success');
+  } else if (slot === 'front') {
+    document.getElementById('ms_front_name').value   = c.name;
+    document.getElementById('ms_front_rating').value = c.rating;
+    document.getElementById('ms_front_slope').value  = c.slope;
+    document.getElementById('ms_front_par').value    = c.par;
+    msUpdateCombinedPar();
+    msMerge18HoleGrid();
+    showToast(`Front 9: "${c.name}" loaded!`, 'success');
+  } else if (slot === 'back') {
+    document.getElementById('ms_back_name').value   = c.name;
+    document.getElementById('ms_back_rating').value = c.rating;
+    document.getElementById('ms_back_slope').value  = c.slope;
+    document.getElementById('ms_back_par').value    = c.par;
+    msUpdateCombinedPar();
+    msMerge18HoleGrid();
+    showToast(`Back 9: "${c.name}" loaded!`, 'success');
+  }
+}
+
+function msMerge18HoleGrid() {
+  const frontName = document.getElementById('ms_front_name')?.value;
+  const backName  = document.getElementById('ms_back_name')?.value;
+  const frontC    = _savedCourses.find(c => c.name === frontName);
+  const backC     = _savedCourses.find(c => c.name === backName);
+  const frontPar  = frontC?.parPerHole   || Array(9).fill(4);
+  const backPar   = backC?.parPerHole    || Array(9).fill(4);
+  const frontIdx  = frontC?.indexPerHole || Array.from({length:9},(_,i)=>i*2+1);
+  const backIdx   = backC?.indexPerHole  || Array.from({length:9},(_,i)=>i*2+2);
+  window._msParValues   = [...frontPar, ...backPar];
+  window._msIndexValues = [...frontIdx, ...backIdx];
+  msRenderParGrid();
+}
+
+// ── EDIT COURSE ────────────────────────────────────────────
+let _editCourseId = null;
+let _ecHoles = 9;
+
+function openEditCourse(id) {
+  const c = _savedCourses.find(x => x.id === id);
+  if (!c) return;
+  _editCourseId = id;
+  _ecHoles = c.holes || 9;
+  window._ecParValues   = c.parPerHole   ? c.parPerHole.slice()   : Array(_ecHoles).fill(4);
+  window._ecIndexValues = c.indexPerHole ? c.indexPerHole.slice() : Array.from({length:_ecHoles},(_,i)=>i+1);
+
+  document.getElementById('ec_name').value = c.name;
+  ecSetHoles(_ecHoles);
+
+  if (_ecHoles === 9) {
+    document.getElementById('ec_rating').value = c.rating || '';
+    document.getElementById('ec_slope').value  = c.slope  || '';
+    document.getElementById('ec_par').value    = c.par    || '';
+  } else {
+    document.getElementById('ec_front_name').value    = c.frontName || '';
+    document.getElementById('ec_front_rating').value  = '';
+    document.getElementById('ec_front_slope').value   = '';
+    document.getElementById('ec_front_par').value     = '';
+    document.getElementById('ec_back_name').value     = c.backName  || '';
+    document.getElementById('ec_back_rating').value   = '';
+    document.getElementById('ec_back_slope').value    = '';
+    document.getElementById('ec_back_par').value      = '';
+    document.getElementById('ec_combined_rating').value = c.rating || '';
+    document.getElementById('ec_combined_slope').value  = c.slope  || '';
+  }
+
+  msRenderParGrid('ecParGrid', window._ecParValues, window._ecIndexValues, _ecHoles);
+  document.getElementById('editCourseModal').style.display = 'flex';
+}
+
+function closeEditCourse() {
+  document.getElementById('editCourseModal').style.display = 'none';
+  _editCourseId = null;
+}
+
+function ecSetHoles(n) {
+  _ecHoles = n;
+  document.getElementById('ec_btn9').classList.toggle('active', n === 9);
+  document.getElementById('ec_btn18').classList.toggle('active', n === 18);
+  document.getElementById('ec9holeFields').style.display  = n === 9  ? '' : 'none';
+  document.getElementById('ec18holeFields').style.display = n === 18 ? '' : 'none';
+}
+
+function ecUpdateParGrid() {
+  msRenderParGrid('ecParGrid', window._ecParValues, window._ecIndexValues, _ecHoles);
+}
+
+function ecUpdateCombinedPar() {
+  const fp = parseInt(document.getElementById('ec_front_par')?.value || '0');
+  const bp = parseInt(document.getElementById('ec_back_par')?.value  || '0');
+  const total = (isNaN(fp)?0:fp) + (isNaN(bp)?0:bp);
+  const el = document.getElementById('ecCombinedParTotal');
+  if (el) el.textContent = total > 0 ? total : '—';
+}
+
+async function saveEditCourse() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid || !_editCourseId) return;
+
+  const name = document.getElementById('ec_name').value.trim();
+  if (!name) { showToast('Please enter a course name.', 'error'); return; }
+
+  // Duplicate check — allow same name for the course being edited
+  const dupExists = _savedCourses.some(c => c.id !== _editCourseId && c.name.toLowerCase() === name.toLowerCase());
+  if (dupExists) { showToast(`Another course named "${name}" already exists.`, 'error'); return; }
+
+  let rating, slope, par, frontName, backName;
+  if (_ecHoles === 9) {
+    rating = parseFloat(document.getElementById('ec_rating').value);
+    slope  = parseInt(document.getElementById('ec_slope').value);
+    par    = parseInt(document.getElementById('ec_par').value);
+  } else {
+    rating    = parseFloat(document.getElementById('ec_combined_rating').value);
+    slope     = parseInt(document.getElementById('ec_combined_slope').value);
+    const fp  = parseInt(document.getElementById('ec_front_par').value);
+    const bp  = parseInt(document.getElementById('ec_back_par').value);
+    par       = (isNaN(fp)?0:fp) + (isNaN(bp)?0:bp);
+    frontName = document.getElementById('ec_front_name').value.trim() || null;
+    backName  = document.getElementById('ec_back_name').value.trim()  || null;
+  }
+
+  if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Rating and Slope.', 'error'); return; }
+
+  const parPerHole   = (window._ecParValues   && window._ecParValues.length   === _ecHoles) ? window._ecParValues.slice()   : Array(_ecHoles).fill(4);
+  const indexPerHole = (window._ecIndexValues && window._ecIndexValues.length === _ecHoles) ? window._ecIndexValues.slice() : Array.from({length:_ecHoles},(_,i)=>i+1);
+
+  const idx = _savedCourses.findIndex(c => c.id === _editCourseId);
+  if (idx === -1) { showToast('Course not found.', 'error'); return; }
+
+  _savedCourses[idx] = {
+    ..._savedCourses[idx],
+    name, rating, slope, par,
+    holes: _ecHoles,
+    frontName: frontName || null,
+    backName:  backName  || null,
+    parPerHole, indexPerHole,
+    savedAt: new Date().toISOString()
+  };
+
+  try {
+    await persistCourses(uid);
+    showToast(`"${name}" updated!`, 'success');
+    renderMyData();
+    closeEditCourse();
+  } catch(e) {
+    showToast('Could not save: ' + e.message, 'error');
+  }
+}
+
 async function saveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
@@ -2789,6 +3402,7 @@ function renderMyData() {
             </div>
           </div>
           <div class="saved-card-actions">
+            <button class="btn-card-edit" onclick="openEditCourse('${c.id}')">✏️</button>
             <button class="btn-card-load" onclick="loadCourseIntoCalc('${c.id}')">Load</button>
             <button class="btn-card-delete" onclick="deleteCourse('${c.id}')" title="Delete">🗑</button>
           </div>
@@ -2878,10 +3492,11 @@ function renderMyData() {
       const scores    = r.scores    || Array(r.holes).fill(0);
       const oppScores = r.oppScores || Array(r.holes).fill(0);
       const hcpDiff   = (r.oppHcp || 0) - (r.teamHcp || 0);
+      const indexArr  = r.index || null;
       let myWins = 0, oppWins = 0;
       for (let i = 0; i < r.holes; i++) {
         if (scores[i] > 0 && oppScores[i] > 0) {
-          const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+          const s = strokeOnHoleWithIndex(i, hcpDiff, indexArr, r.holes);
           const myNet  = scores[i]    + (s < 0 ? s : 0);
           const oppNet = oppScores[i] + (s > 0 ? -s : 0);
           if      (myNet < oppNet) myWins++;
@@ -3110,6 +3725,7 @@ function openRoundView(id) {
   } else {
     // ── Match mode banner ──
     const hcpDiff = (r.oppHcp || 0) - (r.teamHcp || 0);
+    const indexArr = r.index || null;
     let myGross = 0, oppGross = 0, myParPlayed = 0, oppParPlayed = 0;
     let myWins = 0, oppWins = 0, holesPlayed = 0;
 
@@ -3120,7 +3736,7 @@ function openRoundView(id) {
       if (oppS > 0) { oppGross += oppS; oppParPlayed += par[i]; }
       if (myS > 0 && oppS > 0) {
         holesPlayed++;
-        const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+        const s = strokeOnHoleWithIndex(i, hcpDiff, indexArr, r.holes);
         const myNet  = myS  + (s < 0 ? s : 0);
         const oppNet = oppS + (s > 0 ? -s : 0);
         if      (myNet < oppNet) myWins++;
@@ -3158,13 +3774,22 @@ function openRoundView(id) {
       labelEl.textContent  = leader.length > 10 ? leader.slice(0, 10) + '…' : leader;
     }
 
-    // Match col header — 5 columns
+    // Stroke legend
+    const rvLegend = hcpDiff !== 0 ? `
+      <div style="grid-column:1/-1;font-size:0.6rem;color:var(--muted);padding-top:4px;border-top:1px solid var(--border);margin-top:2px;">
+        ${hcpDiff > 0
+          ? `<span style="color:var(--red);">+1</span> = stroke to <strong>${esc(r.oppName || 'Opponent')}</strong>`
+          : `<span style="color:var(--tee1);">+1</span> = stroke to <strong>${esc(r.teamName || 'My Team')}</strong>`}
+      </div>` : '';
+
+    // Match col header
     document.getElementById('rv_colHeader').innerHTML = `
       <div class="sc-col-label" style="font-size:0.48rem;">Hole</div>
       <div class="sc-col-label" style="font-size:0.48rem;">Par</div>
       <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(r.teamName || 'My Team')}</div>
       <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(r.oppName  || 'Opponent')}</div>
-      <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>`;
+      <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>
+      ${rvLegend}`;
     document.getElementById('rv_colHeader').className = 'rv-col-header match';
 
     // Match hole rows
@@ -3176,9 +3801,13 @@ function openRoundView(id) {
       const mySC    = myDone  ? (myS  <= p-2 ? 'eagle' : myS  === p-1 ? 'birdie' : myS  === p+1 ? 'bogey' : myS  >= p+2 ? 'double' : '') : 'empty';
       const oppSC   = oppDone ? (oppS <= p-2 ? 'eagle' : oppS === p-1 ? 'birdie' : oppS === p+1 ? 'bogey' : oppS >= p+2 ? 'double' : '') : 'empty';
 
+      const s = strokeOnHoleWithIndex(i, hcpDiff, indexArr, r.holes);
+      let strokeDot = '';
+      if (s > 0)      strokeDot = `<span class="sc-stroke-dot opp">+${s}</span>`;
+      else if (s < 0) strokeDot = `<span class="sc-stroke-dot my">+${Math.abs(s)}</span>`;
+
       let resultLabel = '', resultClass = '';
       if (myDone && oppDone) {
-        const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
         const myNet  = myS  + (s < 0 ? s : 0);
         const oppNet = oppS + (s > 0 ? -s : 0);
         if      (myNet < oppNet) { resultLabel = 'W'; resultClass = 'win'; }
@@ -3188,7 +3817,7 @@ function openRoundView(id) {
 
       return `
         <div class="rv-hole-row match${(myDone || oppDone) ? ' complete' : ''}">
-          <div class="rv-hole-num">${i + 1}</div>
+          <div class="rv-hole-num" style="display:flex;flex-direction:column;align-items:center;gap:2px;">${i + 1}${strokeDot}</div>
           <div class="rv-par">${p}</div>
           <div class="rv-score ${mySC}">${myDone  ? myS  : '–'}</div>
           <div class="rv-score ${oppSC}">${oppDone ? oppS : '–'}</div>
@@ -3233,8 +3862,9 @@ let _sc = {
   oppHcp:      0,
   courseName:  '',
   par:         [],
-  scores:      [],   // my team gross per hole
-  oppScores:   [],   // opponent gross per hole
+  index:       [],  // stroke index per hole (1–18)
+  scores:      [],  // my team gross per hole
+  oppScores:   [],  // opponent gross per hole
 };
 
 // Numpad state — track which team we're entering for
@@ -3275,12 +3905,20 @@ function openScorecard() {
     document.getElementById('sc_oppTeamName').textContent = _sc.oppName;
     document.getElementById('sc_myHcpLabel').textContent  = `HCP ${_sc.teamHcp}`;
     document.getElementById('sc_oppHcpLabel').textContent = `HCP ${_sc.oppHcp}`;
+    const hcpDiffR = _sc.oppHcp - _sc.teamHcp;
+    const legendR  = hcpDiffR !== 0 ? `
+      <div style="grid-column:1/-1;font-size:0.6rem;color:var(--muted);padding-top:4px;border-top:1px solid var(--border);margin-top:2px;">
+        ${hcpDiffR > 0
+          ? `<span style="color:var(--red);">●</span> = stroke to <strong>${esc(_sc.oppName)}</strong> (${Math.abs(hcpDiffR)} hole${Math.abs(hcpDiffR)>1?'s':''})`
+          : `<span style="color:var(--tee1);">●</span> = stroke to <strong>${esc(_sc.teamName)}</strong> (${Math.abs(hcpDiffR)} hole${Math.abs(hcpDiffR)>1?'s':''})`}
+      </div>` : '';
     document.getElementById('sc_colHeader').innerHTML = `
       <div class="sc-col-label" style="font-size:0.48rem;">Hole</div>
       <div class="sc-col-label" style="font-size:0.48rem;">Par</div>
       <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.teamName)}</div>
       <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.oppName)}</div>
-      <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>`;
+      <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>
+      ${legendR}`;
     document.getElementById('sc_colHeader').className = 'sc-col-header match';
   } else {
     document.getElementById('sc_colHeader').innerHTML = `
@@ -3452,6 +4090,7 @@ function openLiveScorecard(matchData, role) {
   _sc.oppHcp     = isA ? matchData.teamB.teamHcp  : matchData.teamA.teamHcp;
   _sc.courseName = matchData.course.name;
   _sc.par        = matchData.par.length === n ? matchData.par.slice() : Array(n).fill(Math.floor((matchData.course.par || (n === 9 ? 36 : 72)) / n));
+  _sc.index      = (matchData.index && matchData.index.length === n) ? matchData.index.slice() : Array.from({length: n}, (_, i) => i + 1);
   _sc.scores     = isA ? matchData.teamA.scores.slice() : matchData.teamB.scores.slice();
   _sc.oppScores  = isA ? matchData.teamB.scores.slice() : matchData.teamA.scores.slice();
 
@@ -3467,12 +4106,21 @@ function openLiveScorecard(matchData, role) {
   document.getElementById('sc_oppTeamName').textContent    = _sc.oppName;
   document.getElementById('sc_myHcpLabel').textContent     = `HCP ${_sc.teamHcp}`;
   document.getElementById('sc_oppHcpLabel').textContent    = `HCP ${_sc.oppHcp}`;
+  const hcpDiff = _sc.oppHcp - _sc.teamHcp;
+  const strokeLegend = hcpDiff !== 0 ? `
+    <div style="grid-column:1/-1;font-size:0.6rem;color:var(--muted);padding-top:4px;border-top:1px solid var(--border);margin-top:2px;">
+      ${hcpDiff > 0
+        ? `<span style="color:var(--red);">●</span> = stroke to <strong>${esc(_sc.oppName)}</strong> (${Math.abs(hcpDiff)} hole${Math.abs(hcpDiff)>1?'s':''})`
+        : `<span style="color:var(--tee1);">●</span> = stroke to <strong>${esc(_sc.teamName)}</strong> (${Math.abs(hcpDiff)} hole${Math.abs(hcpDiff)>1?'s':''})`}
+    </div>` : '';
+
   document.getElementById('sc_colHeader').innerHTML = `
     <div class="sc-col-label" style="font-size:0.48rem;">Hole</div>
     <div class="sc-col-label" style="font-size:0.48rem;">Par</div>
     <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.teamName)}</div>
     <div class="sc-col-label dual" style="font-size:0.48rem;">${esc(_sc.oppName)}</div>
-    <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>`;
+    <div class="sc-col-label badge-col" style="font-size:0.48rem;">Result</div>
+    ${strokeLegend}`;
   document.getElementById('sc_colHeader').className = 'sc-col-header match';
 
   renderScorecardHoles();
@@ -3564,20 +4212,32 @@ function renderMatchHoleRow(i, p) {
   const oppDone  = oppScore > 0;
   const complete = myDone || oppDone;
   let resultLabel = '', resultClass = '';
+
+  const hcpDiff = _sc.oppHcp - _sc.teamHcp;
+  const s = strokeOnHole(i, hcpDiff);
+
   if (myDone && oppDone) {
-    const hcpDiff = _sc.oppHcp - _sc.teamHcp;
-    const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
     const myNet  = myScore  + (s < 0 ? s : 0);
     const oppNet = oppScore + (s > 0 ? -s : 0);
     if      (myNet < oppNet) { resultLabel = 'W'; resultClass = 'win'; }
     else if (myNet > oppNet) { resultLabel = 'L'; resultClass = 'loss'; }
     else                     { resultLabel = 'H'; resultClass = 'half'; }
   }
+
   const mySC  = scoreColorClass(myScore,  p, myDone);
   const oppSC = scoreColorClass(oppScore, p, oppDone);
+
+  // Stroke dot — show who gets the stroke on this hole
+  let strokeDot = '';
+  if (s > 0) {
+    strokeDot = `<span class="sc-stroke-dot opp">+${s}</span>`;
+  } else if (s < 0) {
+    strokeDot = `<span class="sc-stroke-dot my">+${Math.abs(s)}</span>`;
+  }
+
   return `
     <div class="sc-hole-row match${complete ? ' complete' : ''}" id="sc_row_${i}">
-      <div class="sc-hole-num">${i + 1}</div>
+      <div class="sc-hole-num">${i + 1}${strokeDot}</div>
       <div class="sc-par-btns">
         ${[3,4,5].map(v => `<button class="sc-par-btn${p===v?' active':''}" onclick="setHolePar(${i},${v})">${v}</button>`).join('')}
       </div>
@@ -3601,6 +4261,24 @@ function scoreColorClass(score, par, complete) {
   if (score === par + 1) return 'bogey';
   if (score >= par + 2)  return 'double';
   return '';
+}
+
+// Stroke allocation based on hole SI and handicap difference
+// Uses _sc.index for live scorecard
+function strokeOnHole(holeIdx, hcpDiff) {
+  return strokeOnHoleWithIndex(holeIdx, hcpDiff, _sc.index, _sc.holes);
+}
+
+// Standalone version — accepts explicit index array and hole count
+// Used by round view where _sc is not available
+function strokeOnHoleWithIndex(holeIdx, hcpDiff, indexArr, n) {
+  if (hcpDiff === 0) return 0;
+  const si  = (indexArr && indexArr[holeIdx]) ? indexArr[holeIdx] : holeIdx + 1;
+  const abs = Math.abs(hcpDiff);
+  const fullStrokes  = abs >= si ? 1 : 0;
+  const extraStrokes = abs > n && (si <= abs - n) ? 1 : 0;
+  const total = fullStrokes + extraStrokes;
+  return hcpDiff > 0 ? total : -total;
 }
 
 function setHolePar(holeIdx, parVal) {
@@ -3749,7 +4427,7 @@ function updateMatchHoleDisplay(holeIdx) {
   if (resultEl) {
     if (myDone && oppDone) {
       const hcpDiff = _sc.oppHcp - _sc.teamHcp;
-      const s = hcpDiff > 0 ? (holeIdx < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (holeIdx < -hcpDiff ? -1 : 0) : 0;
+      const s = strokeOnHole(holeIdx, hcpDiff);
       const myNet  = myScore  + (s < 0 ? s : 0);
       const oppNet = oppScore + (s > 0 ? -s : 0);
       if      (myNet < oppNet) { resultEl.textContent = 'W'; resultEl.className = 'sc-hole-result win'; }
@@ -3792,7 +4470,7 @@ function updateMatchBanner() {
     if (oppS > 0) { oppGross += oppS; oppParPlayed += _sc.par[i]; }
     if (myS > 0 && oppS > 0) {
       holesPlayed++;
-      const s = hcpDiff > 0 ? (i < hcpDiff ? 1 : 0) : hcpDiff < 0 ? (i < -hcpDiff ? -1 : 0) : 0;
+      const s = strokeOnHole(i, hcpDiff);
       const myNet  = myS  + (s < 0 ? s : 0);
       const oppNet = oppS + (s > 0 ? -s : 0);
       if      (myNet < oppNet) myWins++;
@@ -3845,6 +4523,7 @@ async function saveRound() {
     isMatch:    _sc.isMatch,
     holes: _sc.holes, holesPlayed: played,
     par: _sc.par.slice(), scores: _sc.scores.slice(), oppScores: _sc.oppScores.slice(),
+    index: _sc.index && _sc.index.length ? _sc.index.slice() : null,
     totalPar, gross, oppGross, vsPar,
     playedAt: new Date().toISOString(),
   };
@@ -3901,7 +4580,8 @@ async function createMatch(matchData) {
     completedAt: null,
     holes: matchData.holes,
     course: matchData.course,
-    par: matchData.par,
+    par:   matchData.par,
+    index: matchData.index || Array.from({length: matchData.holes}, (_, i) => i + 1),
     teamA: {
       uid: uid,
       teamName: matchData.teamA.teamName,
@@ -4073,25 +4753,98 @@ if ('serviceWorker' in navigator) {
 
     <!-- Step 1: Course -->
     <div class="match-setup-step" id="msStep1">
-      <div class="match-step-label">Course Details</div>
-      <div class="field"><label>Course Name</label><input type="text" id="ms_course_name" placeholder="e.g. Haagsche Golf"></div>
-      <div class="match-holes-toggle">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="match-step-label" style="margin:0;">Course Details</div>
+        <button class="ms-reset-btn" onclick="msResetStep1()" title="Reset all fields">↺ Reset</button>
+      </div>
+
+      <!-- Course name + save/load -->
+      <div class="ms-course-name-row">
+        <div class="field" style="flex:1;margin-bottom:0;">
+          <label>Course Name</label>
+          <div style="position:relative;">
+            <input type="text" id="ms_course_name" placeholder="e.g. Amsteldijk (9)" autocomplete="off"
+              oninput="msFilterCourseDropdown()" onfocus="msShowCourseDropdown()">
+            <div id="msCourseDropdown" class="ms-course-dropdown" style="display:none;"></div>
+          </div>
+        </div>
+        <div class="ms-course-actions">
+          <button class="btn-save-inline" onclick="msSaveCourse()" title="Save course">💾</button>
+          <button class="btn-save-inline" onclick="msShowCourseDropdown()" title="Load course">📍</button>
+        </div>
+      </div>
+
+      <!-- Holes toggle -->
+      <div class="match-holes-toggle" style="margin-top:14px;">
         <button class="holes-toggle-btn active" id="ms_btn9" onclick="msSetHoles(9)">9</button>
         <button class="holes-toggle-btn" id="ms_btn18" onclick="msSetHoles(18)">18</button>
       </div>
-      <div class="grid-3" style="margin-top:12px;">
-        <div class="field"><label>Rating</label><input type="number" id="ms_rating" placeholder="70.5" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Slope</label><input type="number" id="ms_slope" placeholder="128" step="1" inputmode="numeric"></div>
-        <div class="field"><label>Total Par</label><input type="number" id="ms_par" placeholder="36" step="1" inputmode="numeric" oninput="msUpdateParGrid()"></div>
+
+      <!-- 9-hole fields -->
+      <div id="ms9holeFields">
+        <div class="grid-3" style="margin-top:12px;">
+          <div class="field"><label>Rating</label><input type="number" id="ms_rating" placeholder="34.5" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Slope</label><input type="number" id="ms_slope" placeholder="124" step="1" inputmode="numeric"></div>
+          <div class="field"><label>Total Par</label><input type="number" id="ms_par" placeholder="36" step="1" inputmode="numeric" oninput="msUpdateParGrid()"></div>
+        </div>
       </div>
 
-      <!-- Per-hole par grid -->
+      <!-- 18-hole dual picker -->
+      <div id="ms18holeFields" style="display:none;">
+        <div class="ms-dual-course-label" style="margin-top:12px;">Front 9</div>
+        <div class="ms-course-name-row">
+          <div class="field" style="flex:1;margin-bottom:0;">
+            <label>Course Name</label>
+            <div style="position:relative;">
+              <input type="text" id="ms_front_name" placeholder="e.g. Amsteldijk A" autocomplete="off"
+                oninput="msFilterCourseDropdown('front')" onfocus="msShowCourseDropdown('front')">
+              <div id="msFrontCourseDropdown" class="ms-course-dropdown" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:8px;">
+          <div class="field"><label>Rating</label><input type="number" id="ms_front_rating" placeholder="34.5" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Slope</label><input type="number" id="ms_front_slope" placeholder="124" step="1" inputmode="numeric"></div>
+          <div class="field"><label>Par</label><input type="number" id="ms_front_par" placeholder="36" step="1" inputmode="numeric" oninput="msUpdateCombinedPar()"></div>
+        </div>
+
+        <div class="ms-dual-course-label" style="margin-top:14px;">Back 9</div>
+        <div class="ms-course-name-row">
+          <div class="field" style="flex:1;margin-bottom:0;">
+            <label>Course Name</label>
+            <div style="position:relative;">
+              <input type="text" id="ms_back_name" placeholder="e.g. Amsteldijk B" autocomplete="off"
+                oninput="msFilterCourseDropdown('back')" onfocus="msShowCourseDropdown('back')">
+              <div id="msBackCourseDropdown" class="ms-course-dropdown" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:8px;">
+          <div class="field"><label>Rating</label><input type="number" id="ms_back_rating" placeholder="34.5" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Slope</label><input type="number" id="ms_back_slope" placeholder="124" step="1" inputmode="numeric"></div>
+          <div class="field"><label>Par</label><input type="number" id="ms_back_par" placeholder="36" step="1" inputmode="numeric" oninput="msUpdateCombinedPar()"></div>
+        </div>
+
+        <div class="ms-combined-par-row">
+          <span class="ms-combined-par-label">Total Par</span>
+          <span id="msCombinedParTotal" class="ms-combined-par-val">—</span>
+        </div>
+
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="field"><label>Combined Rating</label><input type="number" id="ms_combined_rating" placeholder="70.1" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Combined Slope</label><input type="number" id="ms_combined_slope" placeholder="128" step="1" inputmode="numeric"></div>
+        </div>
+      </div>
+
+      <!-- Par + SI grid -->
       <div id="msParGridWrap" style="margin-top:16px;">
-        <div class="match-step-sublabel">Par Per Hole</div>
-        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">Tap to set each hole's par. Pre-filled from total par.</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div class="match-step-sublabel" style="margin:0;">Par &amp; Stroke Index Per Hole</div>
+          <span style="font-size:0.68rem;color:var(--muted);">Par = 3/4/5 · SI = 1–18</span>
+        </div>
         <div id="msParGrid" class="ms-par-grid"></div>
         <div class="ms-par-total-row">
-          <span style="color:var(--muted);font-size:0.8rem;">Total</span>
+          <span style="color:var(--muted);font-size:0.8rem;">Total Par</span>
           <span id="msParGridTotal" style="color:var(--gold);font-weight:700;font-size:0.9rem;">—</span>
         </div>
       </div>
