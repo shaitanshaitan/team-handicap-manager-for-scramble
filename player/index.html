@@ -588,6 +588,10 @@ input { transition:border-color 0.4s, background 0.2s; }
 .ms-course-dropdown-name { font-size:0.85rem; font-weight:600; color:var(--white); }
 .ms-course-dropdown-meta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
 .ms-course-dropdown-empty { padding:12px; font-size:0.8rem; color:var(--muted); text-align:center; }
+.ms-course-dropdown-divider { padding:6px 12px; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); background:var(--surface2); border-bottom:1px solid var(--border); }
+.ms-course-badge { font-size:0.7rem; margin-right:3px; }
+.ms-course-badge.shared   { opacity:1; }
+.ms-course-badge.personal { opacity:0.5; }
 
 /* Dual course */
 .ms-dual-course-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); margin-bottom:6px; margin-top:4px; }
@@ -1665,6 +1669,13 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
       </div>
 
+      <!-- Admin import button — only shown to admin UID -->
+      <div id="adminImportBtn" style="display:none;margin-top:12px;text-align:center;">
+        <button class="btn-save-inline" style="width:100%;padding:12px;font-size:0.8rem;" onclick="openCsvImport()">
+          🗂 Import Courses to Shared DB (Admin)
+        </button>
+      </div>
+
       <div class="mydata-spacer"></div>
 
       <!-- TEAMS -->
@@ -1876,6 +1887,41 @@ input { transition:border-color 0.4s, background 0.2s; }
       <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()">💾 Save Round</button>
     </div>
 
+  </div>
+</div>
+
+<!-- CSV IMPORT OVERLAY (admin only) -->
+<div class="match-overlay" id="csvImportOverlay" style="display:none;">
+  <div class="match-overlay-inner">
+    <div class="match-overlay-header">
+      <button class="btn-back" onclick="closeCsvImport()">← Back</button>
+      <div class="match-overlay-title">Import Courses</div>
+    </div>
+
+    <div style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Paste CSV data below. One row per tee. Multiple tees for the same course name are merged automatically.
+    </div>
+
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;font-size:0.72rem;color:var(--muted);font-family:monospace;line-height:1.8;overflow-x:auto;">
+      name,holes,tee,rating,slope,par,p1..p9,si1..si9<br>
+      Golf Amsteldijk (9a),9,Medal,33,119,34,3,4,5,3,5,4,3,4,3,17,1,3,11,13,7,9,5,15<br>
+      Golf Amsteldijk (9a),9,Forward,31.5,112,34,3,4,5,3,5,4,3,4,3,17,1,3,11,13,7,9,5,15
+    </div>
+
+    <div class="field">
+      <label>CSV Data</label>
+      <textarea id="csvImportInput" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--cream);padding:10px;font-size:0.72rem;font-family:monospace;resize:vertical;" placeholder="Paste CSV here..."></textarea>
+    </div>
+
+    <button class="btn-calc" style="margin-top:8px;" onclick="parseCsvPreview()">Preview Import →</button>
+
+    <div id="csvPreviewArea" style="margin-top:16px;display:none;">
+      <div style="font-size:0.82rem;font-weight:700;color:var(--white);margin-bottom:8px;">Preview — <span id="csvPreviewCount">0</span> courses</div>
+      <div id="csvPreviewList"></div>
+      <button class="btn-calc" id="csvImportConfirmBtn" style="margin-top:12px;background:var(--green);" onclick="confirmCsvImport()">✅ Import All to Shared DB</button>
+    </div>
+
+    <div id="csvImportStatus" style="margin-top:12px;font-size:0.82rem;"></div>
   </div>
 </div>
 
@@ -2098,9 +2144,14 @@ const MAX_TEAMS   = 2;
 
 let _holes       = 18;
 let _gameMode    = 'single'; // 'single' | 'match'
-let _savedCourses = []; // array, max 20
-let _savedTeams   = []; // array, max 2
-let _savedRounds  = []; // loaded from Firestore, newest first
+let _savedCourses  = []; // array, max 20
+let _sharedCourses = []; // shared course DB — loaded on sign-in
+let _msCourseTees  = []; // tees for currently loaded match setup course
+let _savedTeams    = []; // array, max 2
+let _savedRounds   = []; // loaded from Firestore, newest first
+
+// Your UID — gates the CSV import tool
+const ADMIN_UID = 'exzpUxVP7MeiXPUfsMPiaDlL1tg2';
 let _activeTab   = 'calc';
 
 // ═══════════════════════════════════
@@ -2795,27 +2846,40 @@ function msNext(fromStep) {
   }
 }
 
-function msCalcHcp(p1hcp, p1tee, p1g, p2hcp, p2tee, p2g) {
-  let rating, slope, par;
-  if (_msHoles === 9) {
-    rating = parseFloat(document.getElementById('ms_rating').value);
-    slope  = parseInt(document.getElementById('ms_slope').value);
-    par    = parseInt(document.getElementById('ms_par').value);
-  } else {
-    rating = parseFloat(document.getElementById('ms_combined_rating').value);
-    slope  = parseInt(document.getElementById('ms_combined_slope').value);
-    const fp = parseInt(document.getElementById('ms_front_par').value);
-    const bp = parseInt(document.getElementById('ms_back_par').value);
-    par = (isNaN(fp)?0:fp) + (isNaN(bp)?0:bp);
+function msCalcHcp(p1hcp, p1teeIdx, p1g, p2hcp, p2teeIdx, p2g) {
+  // Get tee data per player — use index into _msCourseTees
+  function getTeeForPlayer(teeIdx) {
+    if (_msCourseTees && _msCourseTees.length > 0) {
+      const t = _msCourseTees[parseInt(teeIdx) || 0];
+      if (t) return t;
+    }
+    // Fallback to course fields
+    if (_msHoles === 9) {
+      return {
+        rating: parseFloat(document.getElementById('ms_rating').value),
+        slope:  parseInt(document.getElementById('ms_slope').value),
+        par:    parseInt(document.getElementById('ms_par').value)
+      };
+    }
+    return {
+      rating: parseFloat(document.getElementById('ms_combined_rating').value),
+      slope:  parseInt(document.getElementById('ms_combined_slope').value),
+      par:    (parseInt(document.getElementById('ms_front_par').value)||0) + (parseInt(document.getElementById('ms_back_par').value)||0)
+    };
   }
-  function ch(idx) { return idx * (slope / 113) + (rating - par); }
+
+  function ch(idx, teeData) {
+    const { rating, slope, par } = teeData;
+    if (isNaN(rating) || isNaN(slope) || isNaN(par)) return 0;
+    return idx * (slope / 113) + (rating - par);
+  }
+
   const fmt = document.querySelector('input[name="fmt"]:checked')?.value || '35_15';
   const [pct1, pct2] = fmt.split('_').map(Number);
 
-  // Sort by course handicap ascending — lower CH always gets higher percentage (WHS correct)
   const players = [];
-  if (!isNaN(p1hcp)) players.push(ch(p1hcp));
-  if (!isNaN(p2hcp)) players.push(ch(p2hcp));
+  if (!isNaN(p1hcp)) players.push(ch(p1hcp, getTeeForPlayer(p1teeIdx)));
+  if (!isNaN(p2hcp)) players.push(ch(p2hcp, getTeeForPlayer(p2teeIdx)));
   players.sort((a, b) => a - b);
 
   const total = (players[0] ?? 0) * (pct1 / 100) + (players[1] ?? 0) * (pct2 / 100);
@@ -2862,7 +2926,15 @@ function msBuildReview() {
 
   const t1hcp = msCalcHcp(t1p1h, t1p1tee, t1p1g, t1p2h, t1p2tee, t1p2g);
   const t2hcp = msCalcHcp(t2p1h, t2p1tee, t2p1g, t2p2h, t2p2tee, t2p2g);
-  const teeLabel = { champ:'Championship', main:'Standard', fwd:'Forward' };
+
+  // Dynamic tee label lookup
+  function teeName(idx) {
+    if (_msCourseTees && _msCourseTees.length) {
+      const t = _msCourseTees[parseInt(idx)];
+      if (t) return t.label;
+    }
+    return { champ:'Championship', main:'Standard', fwd:'Forward' }[idx] || idx;
+  }
 
   const parArr = (window._msParValues && window._msParValues.length === _msHoles)
     ? window._msParValues.slice()
@@ -2944,14 +3016,14 @@ function msBuildReview() {
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Your Team — ${t1name}</div>
-      <div class="ms-review-row"><span>${t1p1n}</span><span>${isNaN(t1p1h)?'—':t1p1h} · ${teeLabel[t1p1tee]}</span></div>
-      <div class="ms-review-row"><span>${t1p2n}</span><span>${isNaN(t1p2h)?'—':t1p2h} · ${teeLabel[t1p2tee]}</span></div>
+      <div class="ms-review-row"><span>${t1p1n}</span><span>${isNaN(t1p1h)?'—':t1p1h} · ${teeName(t1p1tee)}</span></div>
+      <div class="ms-review-row"><span>${t1p2n}</span><span>${isNaN(t1p2h)?'—':t1p2h} · ${teeName(t1p2tee)}</span></div>
       <div><span class="ms-review-hcp">Team HCP: ${t1hcp}</span></div>
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Opponent — ${t2name}</div>
-      <div class="ms-review-row"><span>${t2p1n}</span><span>${isNaN(t2p1h)?'—':t2p1h} · ${teeLabel[t2p1tee]}</span></div>
-      <div class="ms-review-row"><span>${t2p2n}</span><span>${isNaN(t2p2h)?'—':t2p2h} · ${teeLabel[t2p2tee]}</span></div>
+      <div class="ms-review-row"><span>${t2p1n}</span><span>${isNaN(t2p1h)?'—':t2p1h} · ${teeName(t2p1tee)}</span></div>
+      <div class="ms-review-row"><span>${t2p2n}</span><span>${isNaN(t2p2h)?'—':t2p2h} · ${teeName(t2p2tee)}</span></div>
       <div><span class="ms-review-hcp">Team HCP: ${t2hcp}</span></div>
     </div>`;
 }
@@ -3178,6 +3250,86 @@ function resetAll() {
 // ═══════════════════════════════════
 // ── MATCH COURSE SAVE / LOAD / EDIT ───────────────────────
 
+function msCollectCourseData() {
+  const name = document.getElementById('ms_course_name').value.trim();
+  if (!name) return null;
+  let rating, slope, par, frontName = null, backName = null, frontPar = null, backPar = null;
+  if (_msHoles === 9) {
+    rating = parseFloat(document.getElementById('ms_rating').value);
+    slope  = parseInt(document.getElementById('ms_slope').value);
+    par    = parseInt(document.getElementById('ms_par').value);
+  } else {
+    rating    = parseFloat(document.getElementById('ms_combined_rating').value);
+    slope     = parseInt(document.getElementById('ms_combined_slope').value);
+    frontPar  = parseInt(document.getElementById('ms_front_par').value) || null;
+    backPar   = parseInt(document.getElementById('ms_back_par').value)  || null;
+    par       = (frontPar || 0) + (backPar || 0);
+    frontName = document.getElementById('ms_front_name').value.trim() || null;
+    backName  = document.getElementById('ms_back_name').value.trim()  || null;
+  }
+  if (isNaN(rating) || isNaN(slope)) return null;
+  const parPerHole   = (window._msParValues   && window._msParValues.length   === _msHoles) ? window._msParValues.slice()   : Array(_msHoles).fill(4);
+  const indexPerHole = (window._msIndexValues && window._msIndexValues.length === _msHoles) ? window._msIndexValues.slice() : Array.from({length:_msHoles},(_,i)=>i+1);
+
+  // Build tees array — use existing _msCourseTees if available, else create single tee from current fields
+  let tees;
+  if (_msCourseTees && _msCourseTees.length > 0) {
+    tees = _msCourseTees.map(t => ({ label: t.label, rating: t.rating, slope: t.slope, par: t.par }));
+    // Update the tee that matches current rating/slope (in case user edited it)
+    const matchIdx = tees.findIndex(t => t.rating === rating && t.slope === slope);
+    if (matchIdx < 0) tees.push({ label: 'Medal', rating, slope, par });
+  } else {
+    tees = [{ label: 'Medal', rating, slope, par }];
+  }
+
+  const data = { name, rating, slope, par, holes: _msHoles, parPerHole, indexPerHole, tees };
+  if (frontName !== null) data.frontName = frontName;
+  if (backName  !== null) data.backName  = backName;
+  if (frontPar  !== null) data.frontPar  = frontPar;
+  if (backPar   !== null) data.backPar   = backPar;
+  return data;
+}
+
+async function msShareCourse() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  const data = msCollectCourseData();
+  if (!data) { showToast('Please fill in course name, rating and slope first.', 'error'); return; }
+
+  // Check if already in shared DB by name
+  const existing = _sharedCourses.find(c => c.name.toLowerCase() === data.name.toLowerCase());
+
+  try {
+    if (existing) {
+      // Update existing shared entry
+      await window._fbDb.collection('courses_shared').doc(existing._docId).update({
+        ...data,
+        lastEditedBy: uid,
+        lastEditedAt: new Date().toISOString()
+      });
+      // Update local cache
+      const idx = _sharedCourses.findIndex(c => c._docId === existing._docId);
+      if (idx >= 0) _sharedCourses[idx] = { ..._sharedCourses[idx], ...data, lastEditedBy: uid };
+      showToast(`"${data.name}" updated in shared database`, 'success');
+    } else {
+      // Create new shared entry
+      const courseId = 'c_' + Date.now().toString(36);
+      const docRef   = await window._fbDb.collection('courses_shared').add({
+        ...data,
+        courseId,
+        addedBy:      uid,
+        lastEditedBy: uid,
+        lastEditedAt: new Date().toISOString()
+      });
+      _sharedCourses.push({ ...data, courseId, _docId: docRef.id, addedBy: uid });
+      window._msCurrentSharedCourseId = courseId;
+      showToast(`"${data.name}" added to shared database!`, 'success');
+    }
+  } catch(e) {
+    showToast('Could not save to shared DB: ' + e.message, 'error');
+  }
+}
+
 async function msSaveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
@@ -3193,44 +3345,25 @@ async function msSaveCourse() {
     showToast(`Maximum ${MAX_COURSES} courses — delete one first.`, 'error'); return;
   }
 
-  let rating, slope, par, frontName, backName, combinedRating, combinedSlope, frontPar, backPar;
-  if (_msHoles === 9) {
-    rating = parseFloat(document.getElementById('ms_rating').value);
-    slope  = parseInt(document.getElementById('ms_slope').value);
-    par    = parseInt(document.getElementById('ms_par').value);
-  } else {
-    combinedRating = parseFloat(document.getElementById('ms_combined_rating').value);
-    combinedSlope  = parseInt(document.getElementById('ms_combined_slope').value);
-    frontPar = parseInt(document.getElementById('ms_front_par').value);
-    backPar  = parseInt(document.getElementById('ms_back_par').value);
-    par      = (isNaN(frontPar)?0:frontPar) + (isNaN(backPar)?0:backPar);
-    rating   = combinedRating;
-    slope    = combinedSlope;
-    frontName = document.getElementById('ms_front_name').value.trim();
-    backName  = document.getElementById('ms_back_name').value.trim();
-  }
+  const data = msCollectCourseData();
+  if (!data) { showToast('Please fill in Rating and Slope before saving.', 'error'); return; }
 
-  if (isNaN(rating) || isNaN(slope)) {
-    showToast('Please fill in Rating and Slope before saving.', 'error'); return;
-  }
+  // Link to shared course if loaded from shared DB
+  const sharedMatch = _sharedCourses.find(c => c.name.toLowerCase() === name.toLowerCase());
+  const courseId = window._msCurrentSharedCourseId || sharedMatch?.courseId || null;
 
-  const parPerHole   = (window._msParValues   && window._msParValues.length   === _msHoles) ? window._msParValues.slice()   : Array(_msHoles).fill(4);
-  const indexPerHole = (window._msIndexValues && window._msIndexValues.length === _msHoles) ? window._msIndexValues.slice() : Array.from({length:_msHoles},(_,i)=>i+1);
-
-  const data = {
+  const entry = {
     id: Date.now().toString(),
-    name, rating, slope, par,
-    holes: _msHoles,
-    frontName: frontName || null,
-    backName:  backName  || null,
-    parPerHole, indexPerHole,
+    ...data,
+    courseId,
     savedAt: new Date().toISOString()
   };
 
   try {
-    _savedCourses.push(data);
+    _savedCourses.push(entry);
     await persistCourses(uid);
-    showToast(`"${name}" saved!`, 'success');
+    showToast(`"${name}" saved to My Courses!`, 'success');
+    window._msCurrentSharedCourseId = null;
     renderMyData();
   } catch(e) {
     _savedCourses.pop();
@@ -3267,20 +3400,111 @@ function msRenderCourseDropdown(dropId, inputId, slot) {
   const drop  = document.getElementById(dropId);
   const input = document.getElementById(inputId);
   if (!drop || !input) return;
-  const query    = input.value.trim().toLowerCase();
-  const filtered = _savedCourses.filter(c => !query || c.name.toLowerCase().includes(query));
-  if (filtered.length === 0) {
-    drop.innerHTML = `<div class="ms-course-dropdown-empty">No saved courses found</div>`;
+  const query = input.value.trim().toLowerCase();
+
+  // Shared courses first, then personal saves not already in shared
+  const filteredShared   = _sharedCourses.filter(c => !query || c.name.toLowerCase().includes(query));
+  const filteredPersonal = _savedCourses.filter(c =>
+    (!query || c.name.toLowerCase().includes(query)) &&
+    !_sharedCourses.some(s => s.courseId === c.courseId && c.courseId)
+  );
+
+  if (filteredShared.length === 0 && filteredPersonal.length === 0) {
+    const msg = query
+      ? `No courses matching "${query}" — tap 🌐 to add to shared DB`
+      : 'No courses yet — tap 🌐 to add a course to the shared database';
+    drop.innerHTML = `<div class="ms-course-dropdown-empty">${msg}</div>`;
   } else {
-    drop.innerHTML = filtered.map(c => `
-      <div class="ms-course-dropdown-item" onclick="msLoadCourseIntoSetup('${c.id}','${slot||''}')">
-        <div class="ms-course-dropdown-name">${esc(c.name)}</div>
-        <div class="ms-course-dropdown-meta">${c.holes===9?'9 holes':'18 holes'} · Par ${c.par} · ${c.rating}/${c.slope}</div>
-      </div>`).join('');
+    let html = '';
+    if (filteredShared.length > 0) {
+      html += filteredShared.map(c => `
+        <div class="ms-course-dropdown-item" onclick="msLoadSharedCourse('${c.courseId}','${slot||''}')">
+          <div class="ms-course-dropdown-name"><span class="ms-course-badge shared">🌐</span>${esc(c.name)}</div>
+          <div class="ms-course-dropdown-meta">${c.holes===9?'9 holes':'18 holes'} · Par ${c.par} · ${c.rating}/${c.slope}</div>
+        </div>`).join('');
+    }
+    if (filteredPersonal.length > 0) {
+      if (filteredShared.length > 0) html += `<div class="ms-course-dropdown-divider">My Courses</div>`;
+      html += filteredPersonal.map(c => `
+        <div class="ms-course-dropdown-item" onclick="msLoadCourseIntoSetup('${c.id}','${slot||''}')">
+          <div class="ms-course-dropdown-name"><span class="ms-course-badge personal">👤</span>${esc(c.name)}</div>
+          <div class="ms-course-dropdown-meta">${c.holes===9?'9 holes':'18 holes'} · Par ${c.par} · ${c.rating}/${c.slope}</div>
+        </div>`).join('');
+    }
+    drop.innerHTML = html;
   }
   drop.style.display = '';
 }
 
+function msLoadSharedCourse(courseId, slot) {
+  const c = _sharedCourses.find(s => s.courseId === courseId);
+  if (!c) return;
+  msLoadCourseIntoSetupData(c, slot);
+  ['msCourseDropdown','msFrontCourseDropdown','msBackCourseDropdown'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  // Store tees for Step 2 tee selector
+  if (!slot) {
+    _msCourseTees = c.tees && c.tees.length ? c.tees : [{ label: 'Medal', rating: c.rating, slope: c.slope, par: c.par }];
+    msUpdateTeePills();
+  }
+  window._msCurrentSharedCourseId = courseId;
+  showToast(`Loaded "${c.name}" from shared database`, 'success');
+}
+
+function msLoadCourseIntoSetupData(c, slot) {
+  if (slot === 'front') {
+    document.getElementById('ms_front_name').value   = c.name;
+    document.getElementById('ms_front_rating').value = c.rating || '';
+    document.getElementById('ms_front_slope').value  = c.slope  || '';
+    document.getElementById('ms_front_par').value    = c.par    || '';
+    if (c.parPerHole   && c.parPerHole.length   === 9) window._msFrontParValues   = c.parPerHole.slice();
+    if (c.indexPerHole && c.indexPerHole.length === 9) window._msFrontIndexValues = c.indexPerHole.slice();
+    msUpdateCombinedPar();
+    msMerge18HoleGrid();
+    ['msCourseDropdown','msFrontCourseDropdown','msBackCourseDropdown'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    showToast(`Front 9: "${c.name}" loaded!`, 'success');
+    return;
+  }
+  if (slot === 'back') {
+    document.getElementById('ms_back_name').value   = c.name;
+    document.getElementById('ms_back_rating').value = c.rating || '';
+    document.getElementById('ms_back_slope').value  = c.slope  || '';
+    document.getElementById('ms_back_par').value    = c.par    || '';
+    if (c.parPerHole   && c.parPerHole.length   === 9) window._msBackParValues   = c.parPerHole.slice();
+    if (c.indexPerHole && c.indexPerHole.length === 9) window._msBackIndexValues = c.indexPerHole.slice();
+    msUpdateCombinedPar();
+    msMerge18HoleGrid();
+    ['msCourseDropdown','msFrontCourseDropdown','msBackCourseDropdown'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    showToast(`Back 9: "${c.name}" loaded!`, 'success');
+    return;
+  }
+  // Main course slot
+  msSetHoles(c.holes || 9);
+  document.getElementById('ms_course_name').value = c.name;
+  if (c.holes === 9) {
+    document.getElementById('ms_rating').value = c.rating || '';
+    document.getElementById('ms_slope').value  = c.slope  || '';
+    document.getElementById('ms_par').value    = c.par    || '';
+  } else {
+    document.getElementById('ms_combined_rating').value = c.rating || '';
+    document.getElementById('ms_combined_slope').value  = c.slope  || '';
+    document.getElementById('ms_front_par').value  = c.frontPar || '';
+    document.getElementById('ms_back_par').value   = c.backPar  || '';
+    document.getElementById('ms_front_name').value = c.frontName || '';
+    document.getElementById('ms_back_name').value  = c.backName  || '';
+  }
+  if (c.parPerHole   && c.parPerHole.length   === c.holes) window._msParValues   = c.parPerHole.slice();
+  if (c.indexPerHole && c.indexPerHole.length === c.holes) window._msIndexValues = c.indexPerHole.slice();
+  msRenderParGrid();
+  ['msCourseDropdown','msFrontCourseDropdown','msBackCourseDropdown'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+}
 function msLoadCourseIntoSetup(id, slot) {
   const c = _savedCourses.find(x => x.id === id);
   if (!c) return;
@@ -3300,6 +3524,9 @@ function msLoadCourseIntoSetup(id, slot) {
     }
     if (c.parPerHole   && c.parPerHole.length   === c.holes) window._msParValues   = c.parPerHole.slice();
     if (c.indexPerHole && c.indexPerHole.length === c.holes) window._msIndexValues = c.indexPerHole.slice();
+    // Set tees for Step 2
+    _msCourseTees = c.tees && c.tees.length ? c.tees : [{ label: 'Medal', rating: c.rating, slope: c.slope, par: c.par }];
+    msUpdateTeePills();
     msRenderParGrid();
     showToast(`"${c.name}" loaded!`, 'success');
   } else if (slot === 'front') {
@@ -3321,11 +3548,53 @@ function msLoadCourseIntoSetup(id, slot) {
   }
 }
 
+// ── TEE SELECTOR ────────────────────────────────────────────
+
+function msUpdateTeePills() {
+  // Render dynamic tee pills for all 4 players based on _msCourseTees
+  const players = ['ms_t1p1','ms_t1p2','ms_t2p1','ms_t2p2'];
+  players.forEach(pfx => {
+    const container = document.getElementById(`${pfx}_tee_pills`);
+    if (!container) return;
+    const tees = _msCourseTees && _msCourseTees.length
+      ? _msCourseTees
+      : [{ label: 'Medal', rating: 0, slope: 113, par: 72 }];
+    container.innerHTML = tees.map((t, i) => `
+      <div class="tee-pill">
+        <input type="radio" name="${pfx}_tee" id="${pfx}_tee${i}" value="${i}" ${i===0?'checked':''}>
+        <label for="${pfx}_tee${i}">${esc(t.label)}</label>
+      </div>`).join('');
+  });
+}
+
+function msGetTeeData(playerPrefix) {
+  // Get rating/slope/par for a player based on their selected tee index
+  const selected = document.querySelector(`input[name="${playerPrefix}_tee"]:checked`);
+  const idx = selected ? parseInt(selected.value) : 0;
+  if (_msCourseTees && _msCourseTees[idx]) return _msCourseTees[idx];
+  // Fallback to course fields
+  if (_msHoles === 9) {
+    return {
+      rating: parseFloat(document.getElementById('ms_rating').value),
+      slope:  parseInt(document.getElementById('ms_slope').value),
+      par:    parseInt(document.getElementById('ms_par').value)
+    };
+  }
+  return {
+    rating: parseFloat(document.getElementById('ms_combined_rating').value),
+    slope:  parseInt(document.getElementById('ms_combined_slope').value),
+    par:    parseInt(document.getElementById('ms_front_par').value||0) + parseInt(document.getElementById('ms_back_par').value||0)
+  };
+}
+
 function msMerge18HoleGrid() {
   const frontName = document.getElementById('ms_front_name')?.value;
   const backName  = document.getElementById('ms_back_name')?.value;
-  const frontC    = _savedCourses.find(c => c.name === frontName);
-  const backC     = _savedCourses.find(c => c.name === backName);
+  // Look in personal saves first, then shared DB
+  const frontC = _savedCourses.find(c => c.name === frontName)
+              || _sharedCourses.find(c => c.name === frontName);
+  const backC  = _savedCourses.find(c => c.name === backName)
+              || _sharedCourses.find(c => c.name === backName);
   const frontPar  = frontC?.parPerHole   || Array(9).fill(4);
   const backPar   = backC?.parPerHole    || Array(9).fill(4);
   const frontIdx  = frontC?.indexPerHole || Array.from({length:9},(_,i)=>i*2+1);
@@ -3403,7 +3672,6 @@ async function saveEditCourse() {
   const name = document.getElementById('ec_name').value.trim();
   if (!name) { showToast('Please enter a course name.', 'error'); return; }
 
-  // Duplicate check — allow same name for the course being edited
   const dupExists = _savedCourses.some(c => c.id !== _editCourseId && c.name.toLowerCase() === name.toLowerCase());
   if (dupExists) { showToast(`Another course named "${name}" already exists.`, 'error'); return; }
 
@@ -3430,19 +3698,30 @@ async function saveEditCourse() {
   const idx = _savedCourses.findIndex(c => c.id === _editCourseId);
   if (idx === -1) { showToast('Course not found.', 'error'); return; }
 
-  _savedCourses[idx] = {
-    ..._savedCourses[idx],
-    name, rating, slope, par,
-    holes: _ecHoles,
-    frontName: frontName || null,
-    backName:  backName  || null,
-    parPerHole, indexPerHole,
-    savedAt: new Date().toISOString()
-  };
+  const updatedData = { name, rating, slope, par, holes: _ecHoles, frontName: frontName||null, backName: backName||null, parPerHole, indexPerHole };
+
+  _savedCourses[idx] = { ..._savedCourses[idx], ...updatedData, savedAt: new Date().toISOString() };
 
   try {
     await persistCourses(uid);
-    showToast(`"${name}" updated!`, 'success');
+
+    // If linked to shared DB — push correction there too
+    const courseId = _savedCourses[idx].courseId;
+    if (courseId) {
+      const shared = _sharedCourses.find(c => c.courseId === courseId);
+      if (shared) {
+        await window._fbDb.collection('courses_shared').doc(shared._docId).update({
+          ...updatedData, lastEditedBy: uid, lastEditedAt: new Date().toISOString()
+        });
+        const si = _sharedCourses.findIndex(c => c.courseId === courseId);
+        if (si >= 0) _sharedCourses[si] = { ..._sharedCourses[si], ...updatedData };
+        showToast(`"${name}" updated — correction saved to shared database`, 'success');
+      } else {
+        showToast(`"${name}" updated!`, 'success');
+      }
+    } else {
+      showToast(`"${name}" updated!`, 'success');
+    }
     renderMyData();
     closeEditCourse();
   } catch(e) {
@@ -3596,19 +3875,26 @@ function renderMyData() {
   // --- Courses ---
   document.getElementById('courseCount').textContent = `${_savedCourses.length} / ${MAX_COURSES}`;
   document.getElementById('coursesFull').classList.toggle('visible', _savedCourses.length >= MAX_COURSES);
+  // Show import button for admin only
+  const uid = window._fbAuth?.currentUser?.uid;
+  const adminBtn = document.getElementById('adminImportBtn');
+  if (adminBtn) adminBtn.style.display = uid === ADMIN_UID ? '' : 'none';
   const cList = document.getElementById('coursesList');
   if (_savedCourses.length === 0) {
     cList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">📍</span>No courses saved yet.<br>Fill in course details in the Calculator tab and tap 💾 Save.</div>`;
   } else {
     cList.innerHTML = _savedCourses.map(c => {
-      const hLabel = c.holes === 9 ? '9 holes' : '18 holes';
-      const champ  = !isNaN(c.tee1_rating) ? ` · Champ ${c.tee1_rating}/${c.tee1_slope}` : '';
-      const fwd    = !isNaN(c.tee3_rating) ? ` · Fwd ${c.tee3_rating}/${c.tee3_slope}` : '';
+      const hLabel  = c.holes === 9 ? '9 holes' : '18 holes';
+      const champ   = !isNaN(c.tee1_rating) ? ` · Champ ${c.tee1_rating}/${c.tee1_slope}` : '';
+      const fwd     = !isNaN(c.tee3_rating) ? ` · Fwd ${c.tee3_rating}/${c.tee3_slope}` : '';
+      const badge   = c.courseId
+        ? `<span class="ms-course-badge shared" title="Linked to shared database">🌐</span>`
+        : `<span class="ms-course-badge personal" title="Personal save only">👤</span>`;
       return `
         <div class="saved-card">
           <div class="saved-card-icon">📍</div>
           <div class="saved-card-body">
-            <div class="saved-card-name">${esc(c.name)}</div>
+            <div class="saved-card-name">${badge} ${esc(c.name)}</div>
             <div class="saved-card-meta">
               <strong>${hLabel}</strong> · Medal ${c.rating}/${c.slope} · Par ${c.par}${champ}${fwd}
             </div>
@@ -3768,6 +4054,29 @@ async function loadSavedData(uid) {
     _savedRounds = [];
     snap.forEach(doc => _savedRounds.push(doc.data()));
   } catch(e) { console.warn('Could not load rounds:', e); }
+
+  // Load shared course database
+  try {
+    const snap = await window._fbDb.collection('courses_shared')
+      .limit(200)
+      .get();
+    _sharedCourses = [];
+    snap.forEach(doc => _sharedCourses.push({ ...doc.data(), _docId: doc.id }));
+    // Sort alphabetically in JS — no index needed
+    _sharedCourses.sort((a, b) => a.name.localeCompare(b.name));
+  } catch(e) { console.warn('Could not load shared courses:', e); }
+
+  // Auto-update personal saves that are linked to shared courses
+  let didUpdate = false;
+  _savedCourses = _savedCourses.map(c => {
+    if (!c.courseId) return c;
+    const shared = _sharedCourses.find(s => s.courseId === c.courseId);
+    if (!shared) return c;
+    // Update personal save with latest shared data (preserving id and savedAt)
+    didUpdate = true;
+    return { ...c, ...shared, id: c.id, savedAt: c.savedAt, courseId: c.courseId };
+  });
+  if (didUpdate) persistCourses(uid).catch(() => {});
 
   renderMyData();
 }
@@ -4710,6 +5019,170 @@ function showAllHoles() {
   requestAnimationFrame(() => overlay.classList.add('open'));
 }
 
+// ── CSV IMPORT (admin only) ──────────────────────────────────
+
+function openCsvImport() {
+  const el = document.getElementById('csvImportOverlay');
+  el.style.display = '';
+  requestAnimationFrame(() => el.classList.add('open'));
+  document.getElementById('csvPreviewArea').style.display = 'none';
+  document.getElementById('csvImportStatus').textContent = '';
+  document.getElementById('csvImportInput').value = '';
+}
+
+function closeCsvImport() {
+  const el = document.getElementById('csvImportOverlay');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.display = 'none'; }, 350);
+}
+
+function parseCsvRows(raw) {
+  // Parse CSV into course objects, merging rows with same name into tees array
+  const lines = raw.trim().split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('name,'));
+  const courseMap = {};
+
+  lines.forEach(line => {
+    // Handle quoted fields
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur.trim());
+
+    if (cols.length < 6) return;
+    const [name, holesRaw, teeLabel, ratingRaw, slopeRaw, parRaw, ...rest] = cols;
+    const holes   = parseInt(holesRaw);
+    const rating  = parseFloat(ratingRaw);
+    const slope   = parseInt(slopeRaw);
+    const par     = parseInt(parRaw);
+    if (!name || isNaN(holes) || isNaN(rating) || isNaN(slope) || isNaN(par)) return;
+
+    // Parse par per hole and SI — rest should have holes*2 values
+    const parPerHole   = rest.slice(0, holes).map(Number).filter(n => !isNaN(n));
+    const indexPerHole = rest.slice(holes, holes * 2).map(Number).filter(n => !isNaN(n));
+
+    const tee = { label: teeLabel || 'Medal', rating, slope, par };
+    const key = name.toLowerCase();
+
+    if (!courseMap[key]) {
+      courseMap[key] = {
+        name, holes,
+        parPerHole:   parPerHole.length   === holes ? parPerHole   : Array(holes).fill(4),
+        indexPerHole: indexPerHole.length === holes ? indexPerHole : Array.from({length:holes},(_,i)=>i+1),
+        tees: []
+      };
+    }
+    // Avoid duplicate tee labels
+    if (!courseMap[key].tees.find(t => t.label.toLowerCase() === tee.label.toLowerCase())) {
+      courseMap[key].tees.push(tee);
+    }
+    // Keep parPerHole/indexPerHole from first row with valid data
+    if (parPerHole.length === holes && courseMap[key].parPerHole.every(p => p === 4)) {
+      courseMap[key].parPerHole = parPerHole;
+    }
+    if (indexPerHole.length === holes && courseMap[key].indexPerHole.every((v,i) => v === i+1)) {
+      courseMap[key].indexPerHole = indexPerHole;
+    }
+  });
+
+  return Object.values(courseMap).map(c => ({
+    ...c,
+    // Set top-level rating/slope/par from first tee for backward compat
+    rating: c.tees[0]?.rating ?? 0,
+    slope:  c.tees[0]?.slope  ?? 113,
+    par:    c.tees[0]?.par    ?? (c.holes * 4)
+  }));
+}
+
+let _csvParsedCourses = [];
+
+function parseCsvPreview() {
+  const raw = document.getElementById('csvImportInput').value;
+  if (!raw.trim()) { showToast('Please paste CSV data first.', 'error'); return; }
+
+  try {
+    _csvParsedCourses = parseCsvRows(raw);
+  } catch(e) {
+    document.getElementById('csvImportStatus').textContent = 'Parse error: ' + e.message;
+    return;
+  }
+
+  if (_csvParsedCourses.length === 0) {
+    document.getElementById('csvImportStatus').textContent = 'No valid courses found. Check the CSV format.';
+    return;
+  }
+
+  document.getElementById('csvPreviewCount').textContent = _csvParsedCourses.length;
+  document.getElementById('csvPreviewList').innerHTML = _csvParsedCourses.map(c => `
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;">
+      <div style="font-weight:700;color:var(--white);font-size:0.85rem;">${esc(c.name)}</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${c.holes} holes · Par ${c.par}</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">
+        ${c.tees.map(t => `${esc(t.label)}: ${t.rating}/${t.slope}`).join(' · ')}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('csvPreviewArea').style.display = '';
+  document.getElementById('csvImportStatus').textContent = '';
+}
+
+async function confirmCsvImport() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (uid !== ADMIN_UID) { showToast('Admin only.', 'error'); return; }
+  if (!_csvParsedCourses.length) return;
+
+  const btn = document.getElementById('csvImportConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Importing…';
+  const status = document.getElementById('csvImportStatus');
+  let success = 0, updated = 0, failed = 0;
+
+  for (const course of _csvParsedCourses) {
+    try {
+      // Check if course already exists in shared DB by name
+      const existing = _sharedCourses.find(c => c.name.toLowerCase() === course.name.toLowerCase());
+      if (existing) {
+        await window._fbDb.collection('courses_shared').doc(existing._docId).update({
+          ...course,
+          lastEditedBy: uid,
+          lastEditedAt: new Date().toISOString()
+        });
+        const idx = _sharedCourses.findIndex(c => c._docId === existing._docId);
+        if (idx >= 0) _sharedCourses[idx] = { ..._sharedCourses[idx], ...course };
+        updated++;
+      } else {
+        const courseId = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
+        const docRef = await window._fbDb.collection('courses_shared').add({
+          ...course,
+          courseId,
+          addedBy:      uid,
+          lastEditedBy: uid,
+          lastEditedAt: new Date().toISOString()
+        });
+        _sharedCourses.push({ ...course, courseId, _docId: docRef.id, addedBy: uid });
+        success++;
+      }
+      status.innerHTML = `<span style="color:var(--green)">Imported ${success} new, updated ${updated}…</span>`;
+      await new Promise(r => setTimeout(r, 100)); // small delay to avoid rate limit
+    } catch(e) {
+      console.error('Import failed for', course.name, e);
+      failed++;
+    }
+  }
+
+  _sharedCourses.sort((a, b) => a.name.localeCompare(b.name));
+  btn.disabled = false;
+  btn.textContent = '✅ Import All to Shared DB';
+  status.innerHTML = `<span style="color:var(--green)">Done! ${success} added, ${updated} updated${failed ? `, ${failed} failed` : ''}.</span>`;
+  _csvParsedCourses = [];
+  document.getElementById('csvPreviewArea').style.display = 'none';
+  showToast(`Import complete: ${success + updated} courses`, 'success');
+}
+
 function closeAllHoles() {
   const overlay = document.getElementById('allHolesOverlay');
   overlay.classList.remove('open');
@@ -5214,7 +5687,8 @@ if ('serviceWorker' in navigator) {
           </div>
         </div>
         <div class="ms-course-actions">
-          <button class="btn-save-inline" onclick="msSaveCourse()" title="Save course">💾</button>
+          <button class="btn-save-inline" onclick="msSaveCourse()" title="Save to My Courses">💾</button>
+          <button class="btn-save-inline" onclick="msShareCourse()" title="Add/update in shared database">🌐</button>
           <button class="btn-save-inline" onclick="msShowCourseDropdown()" title="Load course">📍</button>
         </div>
       </div>
@@ -5303,18 +5777,12 @@ if ('serviceWorker' in navigator) {
       <div class="field"><label>Team Name</label><input type="text" id="ms_t1_name" placeholder="e.g. Team Eagles"></div>
       <div class="match-step-sublabel">Player 1</div>
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t1p1_name" placeholder="Required"></div>
-      <div class="grid-2">
-        <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p1_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="ms_t1p1_g" id="ms_t1p1_gM" value="M" checked><label for="ms_t1p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="ms_t1p1_g" id="ms_t1p1_gF" value="F"><label for="ms_t1p1_gF">♀ F</label></div></div></div>
-      </div>
-      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="ms_t1p1_tee" id="ms_t1p1_tee1" value="champ"><label for="ms_t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="ms_t1p1_tee" id="ms_t1p1_tee2" value="main" checked><label for="ms_t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="ms_t1p1_tee" id="ms_t1p1_tee3" value="fwd"><label for="ms_t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+      <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p1_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+      <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t1p1_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t1p1_tee" id="ms_t1p1_tee0" value="0" checked><label for="ms_t1p1_tee0">Medal</label></div></div></div>
       <div class="match-step-sublabel" style="margin-top:12px;">Player 2</div>
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t1p2_name" placeholder="Required"></div>
-      <div class="grid-2">
-        <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="ms_t1p2_g" id="ms_t1p2_gM" value="M" checked><label for="ms_t1p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="ms_t1p2_g" id="ms_t1p2_gF" value="F"><label for="ms_t1p2_gF">♀ F</label></div></div></div>
-      </div>
-      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="ms_t1p2_tee" id="ms_t1p2_tee1" value="champ"><label for="ms_t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="ms_t1p2_tee" id="ms_t1p2_tee2" value="main" checked><label for="ms_t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="ms_t1p2_tee" id="ms_t1p2_tee3" value="fwd"><label for="ms_t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+      <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+      <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t1p2_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t1p2_tee" id="ms_t1p2_tee0" value="0" checked><label for="ms_t1p2_tee0">Medal</label></div></div></div>
       <button class="btn-calc" style="margin-top:20px;" onclick="msNext(2)">Next: Opponent Team →</button>
     </div>
 
@@ -5324,18 +5792,12 @@ if ('serviceWorker' in navigator) {
       <div class="field"><label>Team Name</label><input type="text" id="ms_t2_name" placeholder="e.g. Team Birdies"></div>
       <div class="match-step-sublabel">Player 1</div>
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t2p1_name" placeholder="Required"></div>
-      <div class="grid-2">
-        <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p1_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="ms_t2p1_g" id="ms_t2p1_gM" value="M" checked><label for="ms_t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="ms_t2p1_g" id="ms_t2p1_gF" value="F"><label for="ms_t2p1_gF">♀ F</label></div></div></div>
-      </div>
-      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="ms_t2p1_tee" id="ms_t2p1_tee1" value="champ"><label for="ms_t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="ms_t2p1_tee" id="ms_t2p1_tee2" value="main" checked><label for="ms_t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="ms_t2p1_tee" id="ms_t2p1_tee3" value="fwd"><label for="ms_t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+      <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p1_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+      <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t2p1_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t2p1_tee" id="ms_t2p1_tee0" value="0" checked><label for="ms_t2p1_tee0">Medal</label></div></div></div>
       <div class="match-step-sublabel" style="margin-top:12px;">Player 2</div>
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t2p2_name" placeholder="Required"></div>
-      <div class="grid-2">
-        <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="ms_t2p2_g" id="ms_t2p2_gM" value="M" checked><label for="ms_t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="ms_t2p2_g" id="ms_t2p2_gF" value="F"><label for="ms_t2p2_gF">♀ F</label></div></div></div>
-      </div>
-      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="ms_t2p2_tee" id="ms_t2p2_tee1" value="champ"><label for="ms_t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="ms_t2p2_tee" id="ms_t2p2_tee2" value="main" checked><label for="ms_t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="ms_t2p2_tee" id="ms_t2p2_tee3" value="fwd"><label for="ms_t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+      <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+      <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t2p2_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t2p2_tee" id="ms_t2p2_tee0" value="0" checked><label for="ms_t2p2_tee0">Medal</label></div></div></div>
       <button class="btn-calc" style="margin-top:20px;" onclick="msNext(3)">Next: Review →</button>
     </div>
 
