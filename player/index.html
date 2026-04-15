@@ -257,23 +257,23 @@ body::before {
   position: absolute; inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0,0,0,0.25) 0%,
-    rgba(0,0,0,0.15) 40%,
-    rgba(0,0,0,0.55) 75%,
-    rgba(0,0,0,0.75) 100%
+    rgba(0,0,0,0.10) 0%,
+    rgba(0,0,0,0.05) 35%,
+    rgba(0,0,0,0.45) 70%,
+    rgba(0,0,0,0.70) 100%
   );
   z-index: 0;
 }
 .locked-hero > * { position: relative; z-index: 1; }
 .locked-hero-flag { font-size:3rem; filter:drop-shadow(0 0 16px rgba(200,168,75,0.3)); margin-bottom:4px; }
-.locked-hero h1 { font-family:'Inter',sans-serif; font-size:2.4rem; font-weight:700; color:#ffffff; line-height:1; letter-spacing:-0.02em; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-.locked-hero h1 em { color:var(--gold); font-style:italic; }
+.locked-hero h1 { font-family:'Inter',sans-serif; font-size:2.4rem; font-weight:700; color:#ffffff; line-height:1; letter-spacing:-0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+.locked-hero h1 em { color:#ffffff; font-style:italic; }
 .locked-hero-sub { font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.85); }
 .locked-hero-desc { font-size:0.78rem; color:rgba(255,255,255,0.85); line-height:1.8; max-width:280px; }
 .locked-features { display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left; width:100%; max-width:280px; }
 .locked-feature { display:flex; align-items:center; gap:10px; font-size:0.72rem; color:rgba(255,255,255,0.9); }
 .locked-feature-icon { width:28px; height:28px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
-.btn-locked-signin { width:100%; max-width:280px; padding:16px; background:var(--gold); border:none; border-radius:var(--radius); font-family:'Roboto',sans-serif; font-size:0.78rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:#0a1a10; cursor:pointer; transition:all 0.2s; box-shadow:0 8px 32px rgba(0,0,0,0.3); margin-top:8px; }
+.btn-locked-signin { width:100%; max-width:280px; padding:16px; background:var(--gold); border:none; border-radius:var(--radius); font-family:'Roboto',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#ffffff; cursor:pointer; transition:all 0.2s; box-shadow:0 8px 32px rgba(0,0,0,0.3); margin-top:8px; }
 .btn-locked-signin:active { transform:scale(0.98); background:var(--gold2); }
 .locked-terms { font-size:0.58rem; color:rgba(255,255,255,0.6); line-height:1.6; }
 
@@ -346,6 +346,23 @@ input { transition:border-color 0.4s, background 0.2s; }
 .tee-pill label:active { transform:scale(0.97); }
 
 .player-card { background:#ffffff; border:1px solid rgba(0,0,0,0.10); border-radius:var(--radius-sm); padding:16px; margin-bottom:10px; position:relative; }
+/* Player add/remove controls */
+.player-count-controls { display:flex; align-items:center; justify-content:center; gap:10px; margin:20px; }
+.btn-player-add, .btn-player-remove { width:28px; height:28px; border-radius:50%; border:none; font-size:0.80rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; }
+.btn-player-add    { background:var(--green); color:#fff; }
+.btn-player-add:active    { background:var(--gold2); transform:scale(0.95); }
+.btn-player-remove { background:var(--red); color:#fff; }
+.btn-player-remove:active { opacity:0.8; transform:scale(0.95); }
+.btn-player-add:disabled, .btn-player-remove:disabled { opacity:0.3; cursor:default; transform:none; }
+.player-count-label { font-size:0.72rem; color:var(--muted); font-weight:600; }
+/* Player name dropdown */
+.player-name-wrap { position:relative; }
+.player-suggestions { position:absolute; top:100%; left:0; right:0; z-index:40; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-sm); margin-top:2px; max-height:180px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.12); display:none; }
+.player-suggestion-item { padding:9px 12px; cursor:pointer; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.player-suggestion-item:last-child { border-bottom:none; }
+.player-suggestion-item:active { background:var(--surface2); }
+.player-suggestion-name { font-size:0.84rem; font-weight:600; color:var(--white); }
+.player-suggestion-hcp  { font-size:0.72rem; color:var(--muted); }
 .player-card:last-child { margin-bottom:0; }
 .player-card-num { position:absolute; top:10px; right:14px; font-family:'Inter',sans-serif; font-size:2.2rem; font-weight:700; color:rgba(0,0,0,0.06); line-height:1; pointer-events:none; user-select:none; }
 
@@ -829,8 +846,8 @@ input { transition:border-color 0.4s, background 0.2s; }
 .auth-sheet-icon { text-align:center; font-size:1.8rem; margin-bottom:10px; }
 .auth-sheet-title { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:700; color:var(--white); text-align:center; margin-bottom:4px; }
 .auth-sheet-sub { font-size:0.58rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:24px; }
-.btn-google { width:100%; padding:14px 16px; background:#fff; border:none; border-radius:var(--radius-sm); font-family:'Roboto',sans-serif; font-size:0.72rem; letter-spacing:0.04em; color:#3c4043; cursor:pointer; transition:all 0.18s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
-.btn-google:active { background:#f0f0f0; transform:scale(0.98); }
+.btn-google { width:100%; padding:14px 16px; background:#fff; border:none; border-radius:var(--radius-sm); font-family:'Roboto',sans-serif; font-size:0.72rem; letter-spacing:0.04em; color:#ffffff; cursor:pointer; transition:all 0.18s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; background:#4285F4; }
+.btn-google:active { background:#3367D6; transform:scale(0.98); }
 .auth-divider { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
 .auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border2); }
 .auth-divider span { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
@@ -1527,14 +1544,14 @@ input { transition:border-color 0.4s, background 0.2s; }
         <span class="locked-hero-flag">⛳</span>
         <h1><em>Parmate</em></h1>
         <div class="locked-hero-sub">Scramble Handicap Calculator</div>
-        <div class="locked-hero-desc">Sign in to calculate team handicaps and save your courses & teams.</div>
+        <div class="locked-hero-desc">Sign in to calculate team handicaps.</div>
         <div class="locked-features">
           <div class="locked-feature"><div class="locked-feature-icon">🏌️</div>WHS scramble handicap calculator</div>
           <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save courses & teams & scorecards</div>
-          <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 or 18 hole support</div>
+          <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 and 18 hole support</div>
         </div>
         <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
-        <div class="locked-terms">Free to use · No payment required</div>
+        <div class="locked-terms">Free to use · InApp purchases available</div>
       </div>
 
       <!-- App content (revealed on login) -->
@@ -1663,11 +1680,28 @@ input { transition:border-color 0.4s, background 0.2s; }
             <span class="section-toggle" id="sec_format_toggle">−</span>
           </div>
           <div class="section-body" id="sec_format_body">
-            <div class="fmt-grid">
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong>2-player scramble</label></div>
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fB" value="25_20"><label for="fB"><strong>25% / 20%</strong>Higher allowance</label></div>
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fC" value="20_15"><label for="fC"><strong>20% / 15%</strong>Lower allowance</label></div>
-              <div class="fmt-pill"><input type="radio" name="fmt" id="fD" value="50_50"><label for="fD"><strong>50% / 50%</strong>Equal / casual</label></div>
+            <div id="fmt_2p_section">
+              <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">2-Player Formats</div>
+              <div class="fmt-grid">
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fA" value="35_15" checked><label for="fA"><strong>35% / 15%</strong>2-player scramble</label></div>
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fB" value="25_20"><label for="fB"><strong>25% / 20%</strong>Higher allowance</label></div>
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fC" value="20_15"><label for="fC"><strong>20% / 15%</strong>Lower allowance</label></div>
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fD" value="50_50"><label for="fD"><strong>50% / 50%</strong>Equal / casual</label></div>
+              </div>
+            </div>
+            <div id="fmt_3p_section" style="display:none;margin-top:12px;">
+              <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">3-Player Formats</div>
+              <div class="fmt-grid">
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fE" value="20_15_10"><label for="fE"><strong>20% / 15% / 10%</strong>Standard 3-player</label></div>
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fF" value="15_12_10"><label for="fF"><strong>15% / 12% / 10%</strong>Lower allowance</label></div>
+              </div>
+            </div>
+            <div id="fmt_4p_section" style="display:none;margin-top:12px;">
+              <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">4-Player Formats</div>
+              <div class="fmt-grid">
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fG" value="20_15_10_5"><label for="fG"><strong>20% / 15% / 10% / 5%</strong>Standard 4-player</label></div>
+                <div class="fmt-pill"><input type="radio" name="fmt" id="fH" value="15_12_10_7"><label for="fH"><strong>15% / 12% / 10% / 7%</strong>Lower allowance</label></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1685,23 +1719,12 @@ input { transition:border-color 0.4s, background 0.2s; }
               <div class="team-label-num">1</div>
               <input class="team-name-input" type="text" id="team1_name" placeholder="enter team name…">
             </div>
-            <div class="player-card">
-              <div class="player-card-num">1</div>
-              <div class="field"><label>Your Name <span style="color:var(--gold)">*</span></label><input type="text" id="t1p1_name" placeholder="Required"></div>
-              <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t1p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gM" value="M" checked><label for="t1p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p1_g" id="t1p1_gF" value="F"><label for="t1p1_gF">♀ F</label></div></div></div>
-              </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p1_tee" id="t1p1_tee1" value="champ"><label for="t1p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t1p1_tee" id="t1p1_tee2" value="main" checked><label for="t1p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t1p1_tee" id="t1p1_tee3" value="fwd"><label for="t1p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
-            </div>
-            <div class="player-card">
-              <div class="player-card-num">2</div>
-              <div class="field"><label>Partner Name <span style="color:var(--gold)">*</span></label><input type="text" id="t1p2_name" placeholder="Required"></div>
-              <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t1p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gM" value="M" checked><label for="t1p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t1p2_g" id="t1p2_gF" value="F"><label for="t1p2_gF">♀ F</label></div></div></div>
-              </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t1p2_tee" id="t1p2_tee1" value="champ"><label for="t1p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t1p2_tee" id="t1p2_tee2" value="main" checked><label for="t1p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t1p2_tee" id="t1p2_tee3" value="fwd"><label for="t1p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+            <!-- Dynamic player cards rendered by renderTeamPlayers() -->
+            <div id="t1_players_wrap"></div>
+            <div class="player-count-controls">
+              <button class="btn-player-remove" id="t1_remove_btn" onclick="removePlayer(1)" title="Remove player">−</button>
+              <span class="player-count-label" id="t1_count_label">2 players</span>
+              <button class="btn-player-add" id="t1_add_btn" onclick="addPlayer(1)" title="Add player">+</button>
             </div>
           </div>
         </div>
@@ -1714,23 +1737,11 @@ input { transition:border-color 0.4s, background 0.2s; }
               <div class="team-label-num">2</div>
               <input class="team-name-input" type="text" id="team2_name" placeholder="enter team name…">
             </div>
-            <div class="player-card">
-              <div class="player-card-num">1</div>
-              <div class="field"><label>Player 1 Name <span style="color:var(--gold)">*</span></label><input type="text" id="t2p1_name" placeholder="Required"></div>
-              <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t2p1_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gM" value="M" checked><label for="t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p1_g" id="t2p1_gF" value="F"><label for="t2p1_gF">♀ F</label></div></div></div>
-              </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p1_tee" id="t2p1_tee1" value="champ"><label for="t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t2p1_tee" id="t2p1_tee2" value="main" checked><label for="t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t2p1_tee" id="t2p1_tee3" value="fwd"><label for="t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
-            </div>
-            <div class="player-card">
-              <div class="player-card-num">2</div>
-              <div class="field"><label>Player 2 Name <span style="color:var(--gold)">*</span></label><input type="text" id="t2p2_name" placeholder="Required"></div>
-              <div class="grid-2">
-                <div class="field"><label>Handicap Index</label><input type="number" id="t2p2_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal"></div>
-                <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gM" value="M" checked><label for="t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="t2p2_g" id="t2p2_gF" value="F"><label for="t2p2_gF">♀ F</label></div></div></div>
-              </div>
-              <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="t2p2_tee" id="t2p2_tee1" value="champ"><label for="t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="t2p2_tee" id="t2p2_tee2" value="main" checked><label for="t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="t2p2_tee" id="t2p2_tee3" value="fwd"><label for="t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+            <div id="t2_players_wrap"></div>
+            <div class="player-count-controls">
+              <button class="btn-player-remove" id="t2_remove_btn" onclick="removePlayer(2)" title="Remove player">−</button>
+              <span class="player-count-label" id="t2_count_label">2 players</span>
+              <button class="btn-player-add" id="t2_add_btn" onclick="addPlayer(2)" title="Add player">+</button>
             </div>
           </div>
         </div>
@@ -2347,7 +2358,9 @@ input { transition:border-color 0.4s, background 0.2s; }
 // ═══════════════════════════════════
 // STATE
 // ═══════════════════════════════════
-const FORMATS = { '35_15':[0.35,0.15], '25_20':[0.25,0.20], '20_15':[0.20,0.15], '50_50':[0.50,0.50] };
+const FORMATS = { '35_15':[0.35,0.15], '25_20':[0.25,0.20], '20_15':[0.20,0.15], '50_50':[0.50,0.50],
+                  '20_15_10':[0.20,0.15,0.10], '15_12_10':[0.15,0.12,0.10],
+                  '20_15_10_5':[0.20,0.15,0.10,0.05], '15_12_10_7':[0.15,0.12,0.10,0.07] };
 const MAX_COURSES = 20;
 const MAX_TEAMS   = 2;
 
@@ -2357,6 +2370,8 @@ let _savedCourses  = []; // array, max 20
 let _calcCourseTees  = []; // tees for currently loaded calc course
 let _calcParValues   = null; // par per hole for calc course
 let _calcIndexValues = null; // SI per hole for calc course
+let _t1PlayerCount   = 2;   // My Team player count (1–4)
+let _t2PlayerCount   = 2;   // Opponent Team player count (1–4)
 
 // Profile state
 let _profile = null; // { displayName, hcpIndex, homeCourse, avatarId }
@@ -3441,38 +3456,35 @@ function calculate() {
   const rating = numVal('course_rating'), slope = numVal('course_slope');
   if (isNaN(rating) || isNaN(slope)) { showToast('Please fill in Course Rating and Slope first.', 'error'); return; }
 
-  // Validate player names — always require My Team names; require opponent names only in match mode
-  const myTeamFields = [
-    { id: 't1p1_name', label: 'Your Name (My Team, Player 1)' },
-    { id: 't1p2_name', label: 'Partner Name (My Team, Player 2)' },
-  ];
-  const oppFields = [
-    { id: 't2p1_name', label: 'Player 1 Name (Opponent Team)' },
-    { id: 't2p2_name', label: 'Player 2 Name (Opponent Team)' },
-  ];
-  const nameFields = _gameMode === 'match'
-    ? [...myTeamFields, ...oppFields]
-    : myTeamFields;
-
-  for (const f of nameFields) {
-    const el = document.getElementById(f.id);
-    if (!el || !el.value.trim()) {
-      el.focus();
-      el.style.borderColor = 'var(--red)';
-      setTimeout(() => { el.style.borderColor = ''; }, 2000);
-      showToast(`Please enter: ${f.label}`, 'error');
-      return;
+  // Validate — always require My Team P1; require opp P1 only in match mode
+  const p1el = document.getElementById('t1p1_name');
+  if (!p1el || !p1el.value.trim()) {
+    if (p1el) { p1el.focus(); p1el.style.borderColor = 'var(--red)'; setTimeout(() => { p1el.style.borderColor = ''; }, 2000); }
+    showToast('Please enter your name (My Team, Player 1)', 'error'); return;
+  }
+  if (_gameMode === 'match') {
+    const op1 = document.getElementById('t2p1_name');
+    if (!op1 || !op1.value.trim()) {
+      if (op1) { op1.focus(); op1.style.borderColor = 'var(--red)'; setTimeout(() => { op1.style.borderColor = ''; }, 2000); }
+      showToast('Please enter Opponent Player 1 name', 'error'); return;
     }
   }
 
   const pcts = FORMATS[radio('fmt') || '35_15'];
+
+  // Collect players dynamically
+  const t1players = [];
+  for (let pi = 1; pi <= _t1PlayerCount; pi++) t1players.push(getPlayer(1, pi));
+  const t2players = [];
+  for (let pi = 1; pi <= _t2PlayerCount; pi++) t2players.push(getPlayer(2, pi));
+
   const teams = _gameMode === 'match'
     ? [
-        { name: val('team1_name') || 'My Team',   players: [getPlayer(1,1), getPlayer(1,2)] },
-        { name: val('team2_name') || 'Opponents', players: [getPlayer(2,1), getPlayer(2,2)] }
+        { name: val('team1_name') || 'My Team',   players: t1players },
+        { name: val('team2_name') || 'Opponents', players: t2players }
       ]
     : [
-        { name: val('team1_name') || 'My Team', players: [getPlayer(1,1), getPlayer(1,2)] }
+        { name: val('team1_name') || 'My Team', players: t1players }
       ];
 
   const results = []; let any = false;
@@ -3511,16 +3523,19 @@ function closeResults() { document.getElementById('resultsOverlay').classList.re
 
 function resetAll() {
   if (!confirm('Reset all fields?')) return;
-  ['course_name','course_rating','course_slope','tee1_rating','tee1_slope','tee3_rating','tee3_slope',
-   't1p1_name','t1p1_hcp','t1p2_name','t1p2_hcp',
-   't2p1_name','t2p1_hcp','t2p2_name','t2p2_hcp'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // Clear course fields
+  ['course_name','course_rating','course_slope','tee1_rating','tee1_slope','tee3_rating','tee3_slope']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   setVal('course_par','72'); setVal('tee1_par','72'); setVal('tee3_par','72');
   setVal('team1_name','add your team name'); setVal('team2_name','add your team name');
-  ['t1p1_g','t1p2_g','t2p1_g','t2p2_g'].forEach(n => setRadio(n,'M'));
-  ['t1p1_tee','t1p2_tee','t2p1_tee','t2p2_tee'].forEach(n => setRadio(n,'main'));
   document.getElementById('fA').checked = true;
   setHoles(18);
   setGameMode('single');
+  // Reset player counts and re-render (clears all player fields)
+  _t1PlayerCount = 2;
+  _t2PlayerCount = 2;
+  renderTeamPlayers(1);
+  renderTeamPlayers(2);
   // Clear calc course state
   _calcParValues   = null;
   _calcIndexValues = null;
@@ -4309,9 +4324,198 @@ function loadCourseIntoCalc(id) {
   showToast(`"${c.name}" loaded!`, 'success');
 }
 
-// ═══════════════════════════════════
-// SAVE TEAM (multi-slot)
-// ═══════════════════════════════════
+// ── DYNAMIC PLAYER CARDS ────────────────────────────────────
+
+function renderPlayerCard(ti, pi) {
+  const pfx   = `t${ti}p${pi}`;
+  const label = ti === 1 ? (pi === 1 ? 'Your Name' : `Player ${pi} Name`) : `Player ${pi} Name`;
+  const req   = pi === 1 ? `<span style="color:var(--gold)">*</span>` : '';
+  return `
+    <div class="player-card" id="${pfx}_card">
+      <div class="player-card-num">${pi}</div>
+      <div class="field">
+        <label>${label} ${req}</label>
+        <div class="player-name-wrap">
+          <input type="text" id="${pfx}_name" placeholder="${pi===1?'Required':'Optional'}"
+            oninput="onPlayerNameInput(${ti},${pi},this)"
+            onfocus="onPlayerNameFocus(${ti},${pi},this)"
+            autocomplete="off">
+          <div class="player-suggestions" id="${pfx}_suggestions"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Handicap Index</label>
+          <input type="number" id="${pfx}_hcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
+        </div>
+        <div class="field"><label>Gender</label>
+          <div class="gender-pills">
+            <div class="gender-pill"><input type="radio" name="${pfx}_g" id="${pfx}_gM" value="M" checked><label for="${pfx}_gM">♂ M</label></div>
+            <div class="gender-pill"><input type="radio" name="${pfx}_g" id="${pfx}_gF" value="F"><label for="${pfx}_gF">♀ F</label></div>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Tee</label>
+        <div class="tee-pills">
+          <div class="tee-pill t1"><input type="radio" name="${pfx}_tee" id="${pfx}_tee1" value="champ"><label for="${pfx}_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
+          <div class="tee-pill t2"><input type="radio" name="${pfx}_tee" id="${pfx}_tee2" value="main" checked><label for="${pfx}_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
+          <div class="tee-pill t3"><input type="radio" name="${pfx}_tee" id="${pfx}_tee3" value="fwd"><label for="${pfx}_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderTeamPlayers(ti) {
+  const count = ti === 1 ? _t1PlayerCount : _t2PlayerCount;
+  const wrap  = document.getElementById(`t${ti}_players_wrap`);
+  if (!wrap) return;
+  // Save existing values before re-rendering
+  const saved = {};
+  for (let pi = 1; pi <= 4; pi++) {
+    const pfx = `t${ti}p${pi}`;
+    const nameEl = document.getElementById(pfx + '_name');
+    const hcpEl  = document.getElementById(pfx + '_hcp');
+    const gEl    = document.querySelector(`input[name="${pfx}_g"]:checked`);
+    const teeEl  = document.querySelector(`input[name="${pfx}_tee"]:checked`);
+    if (nameEl) saved[pi] = { name: nameEl.value, hcp: hcpEl?.value, g: gEl?.value || 'M', tee: teeEl?.value || 'main' };
+  }
+  // Render cards
+  let html = '';
+  for (let pi = 1; pi <= count; pi++) html += renderPlayerCard(ti, pi);
+  wrap.innerHTML = html;
+  // Restore values
+  for (let pi = 1; pi <= count; pi++) {
+    if (!saved[pi]) continue;
+    const pfx = `t${ti}p${pi}`;
+    setVal(pfx + '_name', saved[pi].name);
+    setVal(pfx + '_hcp',  saved[pi].hcp);
+    setRadio(pfx + '_g',   saved[pi].g);
+    setRadio(pfx + '_tee', saved[pi].tee);
+  }
+  // Update controls
+  const countLabel = document.getElementById(`t${ti}_count_label`);
+  const addBtn     = document.getElementById(`t${ti}_add_btn`);
+  const removeBtn  = document.getElementById(`t${ti}_remove_btn`);
+  if (countLabel) countLabel.textContent = `${count} player${count > 1 ? 's' : ''}`;
+  if (addBtn)     addBtn.disabled    = count >= 4;
+  if (removeBtn)  removeBtn.disabled = count <= 1;
+  // Update format visibility
+  updateFormatVisibility();
+}
+
+function addPlayer(ti) {
+  if (ti === 1) { if (_t1PlayerCount < 4) { _t1PlayerCount++; renderTeamPlayers(1); } }
+  else          { if (_t2PlayerCount < 4) { _t2PlayerCount++; renderTeamPlayers(2); } }
+}
+
+function removePlayer(ti) {
+  if (ti === 1) { if (_t1PlayerCount > 1) { _t1PlayerCount--; renderTeamPlayers(1); } }
+  else          { if (_t2PlayerCount > 1) { _t2PlayerCount--; renderTeamPlayers(2); } }
+}
+
+function updateFormatVisibility() {
+  // Show format sections based on max player count across both teams
+  const max = Math.max(_t1PlayerCount, _t2PlayerCount);
+  const show2 = document.getElementById('fmt_2p_section');
+  const show3 = document.getElementById('fmt_3p_section');
+  const show4 = document.getElementById('fmt_4p_section');
+  if (show2) show2.style.display = max <= 2 ? '' : 'none';
+  if (show3) show3.style.display = max === 3 ? '' : 'none';
+  if (show4) show4.style.display = max >= 4 ? '' : 'none';
+  // Auto-select appropriate default format when switching
+  const curFmt = radio('fmt');
+  const is2p = ['35_15','25_20','20_15','50_50'].includes(curFmt);
+  const is3p = ['20_15_10','15_12_10'].includes(curFmt);
+  const is4p = ['20_15_10_5','15_12_10_7'].includes(curFmt);
+  if (max <= 2 && !is2p) document.getElementById('fA').checked = true;
+  if (max === 3 && !is3p) { const el = document.getElementById('fE'); if(el) el.checked = true; }
+  if (max >= 4 && !is4p) { const el = document.getElementById('fG'); if(el) el.checked = true; }
+}
+
+function initTeamPlayers() {
+  renderTeamPlayers(1);
+  renderTeamPlayers(2);
+  // Prefill player 1 from profile
+  prefillFromProfile();
+}
+
+// ── PLAYER NAME DROPDOWN ─────────────────────────────────────
+
+function getPlayerSuggestions() {
+  const pool = [];
+  // From My Scramble saved teams
+  _savedTeams.forEach(t => {
+    const players = getTeamPlayers(t);
+    players.forEach(p => {
+      if (p.name && !pool.find(x => x.name.toLowerCase() === p.name.toLowerCase()))
+        pool.push({ name: p.name, hcp: p.hcp });
+    });
+  });
+  // From Profile buddy teams
+  _teams.forEach(t => {
+    if (t.buddyName && !pool.find(x => x.name.toLowerCase() === t.buddyName.toLowerCase()))
+      pool.push({ name: t.buddyName, hcp: null });
+  });
+  // From profile itself
+  if (_profile?.displayName && !pool.find(x => x.name.toLowerCase() === _profile.displayName.toLowerCase()))
+    pool.push({ name: _profile.displayName, hcp: _profile.hcpIndex ?? null });
+  return pool;
+}
+
+function getTeamPlayers(t) {
+  // Support both old 2-player format and new multi-player format
+  const players = [];
+  if (t.players && Array.isArray(t.players)) return t.players;
+  for (let i = 1; i <= 4; i++) {
+    const name = t[`p${i}Name`];
+    const hcp  = t[`p${i}Hcp`];
+    if (name) players.push({ name, hcp });
+  }
+  return players;
+}
+
+function onPlayerNameInput(ti, pi, el) {
+  const q = el.value.trim().toLowerCase();
+  showPlayerSuggestions(ti, pi, q);
+}
+
+function onPlayerNameFocus(ti, pi, el) {
+  showPlayerSuggestions(ti, pi, el.value.trim().toLowerCase());
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function handler(e) {
+      const sugEl = document.getElementById(`t${ti}p${pi}_suggestions`);
+      if (sugEl && !sugEl.contains(e.target) && e.target !== el) {
+        sugEl.style.display = 'none';
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 0);
+}
+
+function showPlayerSuggestions(ti, pi, q) {
+  const sugEl = document.getElementById(`t${ti}p${pi}_suggestions`);
+  if (!sugEl) return;
+  const pool = getPlayerSuggestions();
+  const matches = q
+    ? pool.filter(p => p.name.toLowerCase().includes(q))
+    : pool;
+  if (!matches.length) { sugEl.style.display = 'none'; return; }
+  sugEl.innerHTML = matches.slice(0, 6).map(p => `
+    <div class="player-suggestion-item" onclick="selectPlayerSuggestion(${ti},${pi},'${esc(p.name)}',${p.hcp !== null && p.hcp !== undefined ? p.hcp : 'null'})">
+      <span class="player-suggestion-name">${esc(p.name)}</span>
+      <span class="player-suggestion-hcp">${p.hcp !== null && p.hcp !== undefined ? 'HCP '+p.hcp : ''}</span>
+    </div>`).join('');
+  sugEl.style.display = '';
+}
+
+function selectPlayerSuggestion(ti, pi, name, hcp) {
+  setVal(`t${ti}p${pi}_name`, name);
+  if (hcp !== null && hcp !== undefined) setVal(`t${ti}p${pi}_hcp`, hcp);
+  const sugEl = document.getElementById(`t${ti}p${pi}_suggestions`);
+  if (sugEl) sugEl.style.display = 'none';
+}
+
+// ── SAVE TEAM (updated for multi-player) ────────────────────
 async function saveTeam() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
@@ -4319,17 +4523,24 @@ async function saveTeam() {
     showToast(`Maximum ${MAX_TEAMS} teams — delete one in My Scramble first.`, 'error');
     return;
   }
+  // Collect players dynamically
+  const players = [];
+  for (let pi = 1; pi <= _t1PlayerCount; pi++) {
+    const pfx = `t1p${pi}`;
+    players.push({
+      name:   val(pfx + '_name'),
+      hcp:    numVal(pfx + '_hcp'),
+      gender: radio(pfx + '_g') || 'M',
+      tee:    radio(pfx + '_tee') || 'main',
+    });
+  }
   const data = {
     id:        Date.now().toString(),
     teamName:  val('team1_name') || 'My Team',
-    p1Name:    val('t1p1_name'),
-    p1Hcp:     numVal('t1p1_hcp'),
-    p1Gender:  radio('t1p1_g') || 'M',
-    p1Tee:     radio('t1p1_tee') || 'main',
-    p2Name:    val('t1p2_name'),
-    p2Hcp:     numVal('t1p2_hcp'),
-    p2Gender:  radio('t1p2_g') || 'M',
-    p2Tee:     radio('t1p2_tee') || 'main',
+    players,
+    // Legacy keys for backwards-compat display
+    p1Name:    players[0]?.name,    p1Hcp: players[0]?.hcp,
+    p2Name:    players[1]?.name,    p2Hcp: players[1]?.hcp,
     savedAt:   new Date().toISOString(),
   };
   const btn = document.getElementById('saveTeamBtn');
@@ -4364,14 +4575,23 @@ function loadTeamIntoCalc(id) {
   const t = _savedTeams.find(x => x.id === id);
   if (!t) return;
   setVal('team1_name', t.teamName);
-  setVal('t1p1_name',  t.p1Name);
-  setVal('t1p1_hcp',   isNaN(t.p1Hcp) ? '' : t.p1Hcp);
-  setRadio('t1p1_g',   t.p1Gender || 'M');
-  setRadio('t1p1_tee', t.p1Tee    || 'main');
-  setVal('t1p2_name',  t.p2Name);
-  setVal('t1p2_hcp',   isNaN(t.p2Hcp) ? '' : t.p2Hcp);
-  setRadio('t1p2_g',   t.p2Gender || 'M');
-  setRadio('t1p2_tee', t.p2Tee    || 'main');
+  // Build players array from new or legacy format
+  const players = t.players && t.players.length
+    ? t.players
+    : [
+        { name: t.p1Name, hcp: t.p1Hcp, gender: t.p1Gender || 'M', tee: t.p1Tee || 'main' },
+        { name: t.p2Name, hcp: t.p2Hcp, gender: t.p2Gender || 'M', tee: t.p2Tee || 'main' },
+      ].filter(p => p.name);
+  _t1PlayerCount = Math.max(2, Math.min(4, players.length));
+  renderTeamPlayers(1);
+  players.forEach((p, i) => {
+    const pi  = i + 1;
+    const pfx = `t1p${pi}`;
+    setVal(pfx + '_name', p.name || '');
+    setVal(pfx + '_hcp',  isNaN(p.hcp) ? '' : p.hcp);
+    setRadio(pfx + '_g',   p.gender || 'M');
+    setRadio(pfx + '_tee', p.tee    || 'main');
+  });
   switchTab('calc');
   document.getElementById('pageCalc').scrollTop = 0;
   showToast(`"${t.teamName}" loaded!`, 'success');
@@ -4425,18 +4645,24 @@ function renderMyData() {
     tList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">🏌️</span>No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.</div>`;
   } else {
     tList.innerHTML = _savedTeams.map(t => {
-      const p1 = t.p1Name || 'Player 1';
-      const p2 = t.p2Name || 'Player 2';
-      const h1 = isNaN(t.p1Hcp) ? '–' : t.p1Hcp.toFixed(1);
-      const h2 = isNaN(t.p2Hcp) ? '–' : t.p2Hcp.toFixed(1);
+      const players = t.players && t.players.length
+        ? t.players
+        : [
+            { name: t.p1Name, hcp: t.p1Hcp },
+            { name: t.p2Name, hcp: t.p2Hcp },
+          ].filter(p => p.name);
+      const count = players.length;
+      const badge = `<span style="background:var(--green);color:#fff;font-size:0.58rem;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;">${count}P</span>`;
+      const playerMeta = players.map(p => {
+        const h = isNaN(p.hcp) ? '–' : Number(p.hcp).toFixed(1);
+        return `${esc(p.name)} <strong>${h}</strong>`;
+      }).join(' &nbsp;·&nbsp; ');
       return `
         <div class="saved-card">
           <div class="saved-card-icon">🏌️</div>
           <div class="saved-card-body">
-            <div class="saved-card-name">${esc(t.teamName)}</div>
-            <div class="saved-card-meta">
-              ${esc(p1)} <strong>${h1}</strong> &nbsp;·&nbsp; ${esc(p2)} <strong>${h2}</strong>
-            </div>
+            <div class="saved-card-name">${esc(t.teamName)}${badge}</div>
+            <div class="saved-card-meta">${playerMeta}</div>
           </div>
           <div class="saved-card-actions">
             <button class="btn-card-load" onclick="loadTeamIntoCalc('${t.id}')">Load</button>
@@ -5158,6 +5384,7 @@ function onSignedIn(user) {
   loadProfileData(user.uid);
   checkForActiveMatch(user.uid);
   initSectionState();
+  initTeamPlayers();
 }
 
 function onSignedOut() {
