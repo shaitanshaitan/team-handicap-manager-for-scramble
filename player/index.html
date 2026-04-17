@@ -89,6 +89,18 @@ body::before {
     repeating-linear-gradient(175deg, transparent, transparent 60px, rgba(255,255,255,0.005) 60px, rgba(255,255,255,0.005) 120px);
 }
 
+
+
+
+
+
+
+/* Remove old bg from appContent — let body handle it */
+.app-content.unlocked {
+  background-image: none;
+  background-color: transparent;
+}
+
 /* ═══════════════════════════════════
    TAB SYSTEM
 ═══════════════════════════════════ */
@@ -221,6 +233,47 @@ body::before {
 .team-buddy-status { font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:10px; }
 .team-buddy-status.pending { background:rgba(200,120,0,0.15); color:#c87800; }
 .team-buddy-status.active  { background:rgba(42,122,72,0.15);  color:var(--green); }
+/* ── BUDDY SEARCH OVERLAY ─────────────────────────────────── */
+.buddy-overlay { position:fixed; inset:0; background:var(--bg); z-index:210; overflow-y:auto; transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.32,0,0,1); }
+.buddy-overlay.open { transform:translateY(0); }
+.buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0 16px 100px; }
+.buddy-search-bar { display:flex; align-items:center; gap:0; background:var(--surface); border:1.5px solid var(--border2); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; transition:border-color 0.2s; }
+.buddy-search-bar:focus-within { border-color:var(--gold); }
+.buddy-search-bar input { flex:1; background:transparent; border:none; color:var(--white); padding:13px 14px; font-size:0.92rem; outline:none; min-width:0; }
+.buddy-search-bar-icon { padding:0 12px 0 14px; font-size:1rem; flex-shrink:0; line-height:1; }
+.buddy-result-card { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px; cursor:pointer; transition:border-color 0.15s; }
+.buddy-result-card:active { border-color:var(--gold); }
+.buddy-result-avatar { width:48px; height:48px; border-radius:50%; overflow:hidden; flex-shrink:0; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+.buddy-result-avatar img { width:100%; height:100%; object-fit:cover; }
+.buddy-result-name { font-size:0.95rem; font-weight:700; color:var(--white); }
+.buddy-result-meta { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+.buddy-result-arrow { margin-left:auto; font-size:1.1rem; color:var(--muted); }
+/* ── PUBLIC PROFILE OVERLAY ───────────────────────────────── */
+.pub-profile-hero { display:flex; flex-direction:column; align-items:center; padding:24px 0 20px; text-align:center; }
+.pub-profile-avatar { width:88px; height:88px; border-radius:50%; overflow:hidden; border:3px solid var(--gold); background:var(--border); display:flex; align-items:center; justify-content:center; font-size:2.4rem; margin-bottom:12px; }
+.pub-profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.pub-profile-name { font-size:1.3rem; font-weight:700; color:var(--white); }
+.pub-profile-hcp  { font-size:0.88rem; color:var(--muted); margin-top:4px; }
+.pub-profile-course { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+.pub-profile-badges { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+.pub-profile-badge { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:0.72rem; color:var(--muted); }
+.btn-add-buddy { width:100%; padding:15px; background:var(--green); color:#fff; border:none; border-radius:var(--radius); font-family:'Roboto',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; margin-top:8px; transition:all 0.15s; }
+.btn-add-buddy:active { opacity:0.85; transform:scale(0.98); }
+.btn-add-buddy.sent { background:var(--surface2); color:var(--muted); cursor:default; }
+.btn-add-buddy.already { background:var(--surface2); color:var(--green); cursor:default; }
+/* ── MY BUDDIES LIST ──────────────────────────────────────── */
+.buddy-list-card { display:flex; align-items:center; gap:12px; background:var(--surface2); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px; }
+.buddy-list-name { font-size:0.9rem; font-weight:700; color:var(--white); flex:1; }
+.buddy-list-hcp  { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+.team-type-toggle { display:flex; gap:0; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--border2); margin-bottom:12px; }
+.team-type-btn { flex:1; padding:9px 0; font-size:0.75rem; font-weight:700; letter-spacing:0.06em; border:none; background:var(--surface2); color:var(--muted); cursor:pointer; transition:all 0.15s; }
+.team-type-btn.active { background:var(--green); color:#fff; }
+/* Buddy slot cards inside add-team form */
+.buddy-slot { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-top:8px; }
+.buddy-slot-label { font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.buddy-slot-selected { display:flex; align-items:center; gap:8px; background:var(--surface); padding:8px 10px; border-radius:var(--radius-sm); margin-top:6px; }
+.buddy-slot-selected-name { font-size:0.82rem; font-weight:700; color:var(--green); flex:1; }
+.buddy-slot-clear { background:none; border:none; cursor:pointer; color:var(--muted); font-size:1rem; padding:0 4px; }
 
 /* Buddy search */
 .buddy-search-input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); color:var(--white); padding:10px 12px; font-size:0.88rem; outline:none; }
@@ -2122,6 +2175,15 @@ input { transition:border-color 0.4s, background 0.2s; }
       </div>
     </div>
 
+    <!-- My Buddies -->
+    <div class="profile-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="profile-card-title" style="margin-bottom:0;">My Buddies</div>
+        <button class="btn-save-inline" style="padding:7px 14px;" onclick="openBuddySearch()">🔍 Find Buddy</button>
+      </div>
+      <div id="profileBuddiesList"></div>
+    </div>
+
     <!-- Teams -->
     <div class="profile-card">
       <div class="profile-card-title">My Teams</div>
@@ -2132,22 +2194,29 @@ input { transition:border-color 0.4s, background 0.2s; }
 
       <!-- Add team form (hidden by default) -->
       <div id="addTeamForm" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+
+        <!-- Team type toggle -->
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Team Type</div>
+        <div class="team-type-toggle">
+          <button class="team-type-btn active" id="teamTypeBtn2P" onclick="setTeamType('2P')">2-Player</button>
+          <button class="team-type-btn"        id="teamTypeBtn3P" onclick="setTeamType('3P')">3-Player</button>
+          <button class="team-type-btn"        id="teamTypeBtn4P" onclick="setTeamType('4P')">4-Player</button>
+        </div>
+
+        <!-- Team Name -->
         <div class="field">
           <label>Team Name</label>
           <input type="text" id="newTeamName" placeholder="e.g. The Eagles" maxlength="30">
         </div>
-        <div class="field" style="margin-top:12px;">
-          <label>Search Buddy</label>
-          <input type="text" id="buddySearch" class="buddy-search-input" placeholder="Type display name or email…"
-            oninput="searchBuddy()">
-          <div class="buddy-search-results" id="buddySearchResults"></div>
-          <div style="font-size:0.68rem;color:var(--muted);margin-top:4px;">
-            Type their display name to search, or enter their full email address and tap Send Request directly.
-          </div>
+
+        <!-- Buddy pickers (rendered dynamically from _buddies) -->
+        <div id="buddyPickerWrap" style="margin-top:12px;"></div>
+
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:8px;">
+          Buddies are notified when you add them to a team.
         </div>
-        <div id="selectedBuddyPreview" style="display:none;margin-top:8px;"></div>
         <div style="display:flex;gap:8px;margin-top:12px;">
-          <button class="btn-calc" style="flex:1;" onclick="sendBuddyRequest()">Send Request →</button>
+          <button class="btn-calc" style="flex:1;" onclick="createTeam()">Create Team</button>
           <button class="end-match-btn-cancel" onclick="hideAddTeamForm()">Cancel</button>
         </div>
       </div>
@@ -2167,6 +2236,68 @@ input { transition:border-color 0.4s, background 0.2s; }
     <div class="si-editor-btns">
       <button class="end-match-btn-cancel" onclick="closeSiEditor()">Cancel</button>
       <button class="end-match-btn-confirm" onclick="confirmSiEditor()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDDY SEARCH OVERLAY -->
+<div class="buddy-overlay" id="buddySearchOverlay">
+  <div class="buddy-overlay-inner">
+    <div class="profile-header">
+      <button class="btn-back" onclick="closeBuddySearch()">← Back</button>
+      <div class="profile-title">Find a Buddy</div>
+    </div>
+    <div class="buddy-search-bar">
+      <span class="buddy-search-bar-icon">🔍</span>
+      <input type="text" id="buddySearchInput" placeholder="Search by name or email…"
+        oninput="onBuddySearchInput()" autocomplete="off">
+    </div>
+    <div id="buddySearchStatus" style="font-size:0.8rem;color:var(--muted);text-align:center;padding:20px 0;display:none;">
+      Type a name or email to search
+    </div>
+    <div id="buddySearchResults"></div>
+
+    <!-- Sent requests panel -->
+    <div id="sentRequestsPanel" style="margin-top:24px;display:none;">
+      <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Pending Requests Sent</div>
+      <div id="sentRequestsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC PROFILE OVERLAY -->
+<div class="buddy-overlay" id="publicProfileOverlay">
+  <div class="buddy-overlay-inner">
+    <div class="profile-header">
+      <button class="btn-back" onclick="closePublicProfile()">← Back</button>
+      <div class="profile-title">Player Profile</div>
+    </div>
+    <div class="pub-profile-hero">
+      <div class="pub-profile-avatar" id="pubProfileAvatar">👤</div>
+      <div class="pub-profile-name"  id="pubProfileName">—</div>
+      <div class="pub-profile-hcp"   id="pubProfileHcp">—</div>
+      <div class="pub-profile-course" id="pubProfileCourse">—</div>
+      <div class="pub-profile-badges" id="pubProfileBadges"></div>
+    </div>
+    <div style="padding:0 4px;">
+      <button class="btn-add-buddy" id="addBuddyBtn" onclick="addBuddyFromProfile()">+ Add as Buddy</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM DELETE CONFIRMATION MODAL -->
+<div id="teamDeleteModal" class="end-match-modal" style="display:none;">
+  <div class="end-match-backdrop" onclick="cancelTeamDelete()"></div>
+  <div class="end-match-sheet">
+    <div class="end-match-title">🗑 Remove Team?</div>
+    <p class="end-match-body" id="teamDeleteBody">This will remove the team and notify your buddies.</p>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">Team</div>
+      <div style="font-size:0.95rem;font-weight:700;color:var(--white);" id="teamDeleteName">—</div>
+    </div>
+    <div class="end-match-btns">
+      <button class="end-match-btn-cancel" onclick="cancelTeamDelete()">Cancel</button>
+      <button class="end-match-btn-confirm" style="background:var(--red);" onclick="confirmTeamDelete()">Remove Team</button>
     </div>
   </div>
 </div>
@@ -2362,7 +2493,7 @@ const FORMATS = { '35_15':[0.35,0.15], '25_20':[0.25,0.20], '20_15':[0.20,0.15],
                   '20_15_10':[0.20,0.15,0.10], '15_12_10':[0.15,0.12,0.10],
                   '20_15_10_5':[0.20,0.15,0.10,0.05], '15_12_10_7':[0.15,0.12,0.10,0.07] };
 const MAX_COURSES = 20;
-const MAX_TEAMS   = 2;
+const MAX_TEAMS   = Infinity; // unlimited teams
 
 let _holes       = 18;
 let _gameMode    = 'single'; // 'single' | 'match'
@@ -2375,7 +2506,8 @@ let _t2PlayerCount   = 2;   // Opponent Team player count (1–4)
 
 // Profile state
 let _profile = null; // { displayName, hcpIndex, homeCourse, avatarId }
-let _teams   = [];   // [{ id, teamName, buddyUid, buddyName, buddyAvatar }]
+let _teams   = [];   // [{ id, teamName, ... }]
+let _buddies = [];   // [{ uid, name, hcp, avatarId, addedAt }]
 let _pendingRequests = []; // incoming buddy requests
 let _sharedCourses = []; // shared course DB — loaded on sign-in
 let _msCourseTees  = []; // tees for currently loaded match setup course
@@ -3534,8 +3666,8 @@ function resetAll() {
   // Reset player counts and re-render (clears all player fields)
   _t1PlayerCount = 2;
   _t2PlayerCount = 2;
-  renderTeamPlayers(1);
-  renderTeamPlayers(2);
+  renderTeamPlayers(1, true);
+  renderTeamPlayers(2, true);
   // Clear calc course state
   _calcParValues   = null;
   _calcIndexValues = null;
@@ -4364,19 +4496,21 @@ function renderPlayerCard(ti, pi) {
     </div>`;
 }
 
-function renderTeamPlayers(ti) {
+function renderTeamPlayers(ti, clearValues = false) {
   const count = ti === 1 ? _t1PlayerCount : _t2PlayerCount;
   const wrap  = document.getElementById(`t${ti}_players_wrap`);
   if (!wrap) return;
-  // Save existing values before re-rendering
+  // Save existing values before re-rendering (skip if clearing)
   const saved = {};
-  for (let pi = 1; pi <= 4; pi++) {
-    const pfx = `t${ti}p${pi}`;
-    const nameEl = document.getElementById(pfx + '_name');
-    const hcpEl  = document.getElementById(pfx + '_hcp');
-    const gEl    = document.querySelector(`input[name="${pfx}_g"]:checked`);
-    const teeEl  = document.querySelector(`input[name="${pfx}_tee"]:checked`);
-    if (nameEl) saved[pi] = { name: nameEl.value, hcp: hcpEl?.value, g: gEl?.value || 'M', tee: teeEl?.value || 'main' };
+  if (!clearValues) {
+    for (let pi = 1; pi <= 4; pi++) {
+      const pfx = `t${ti}p${pi}`;
+      const nameEl = document.getElementById(pfx + '_name');
+      const hcpEl  = document.getElementById(pfx + '_hcp');
+      const gEl    = document.querySelector(`input[name="${pfx}_g"]:checked`);
+      const teeEl  = document.querySelector(`input[name="${pfx}_tee"]:checked`);
+      if (nameEl) saved[pi] = { name: nameEl.value, hcp: hcpEl?.value, g: gEl?.value || 'M', tee: teeEl?.value || 'main' };
+    }
   }
   // Render cards
   let html = '';
@@ -4519,17 +4653,14 @@ function selectPlayerSuggestion(ti, pi, name, hcp) {
 async function saveTeam() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) { showToast('Please sign in first.', 'error'); return; }
-  if (_savedTeams.length >= MAX_TEAMS) {
-    showToast(`Maximum ${MAX_TEAMS} teams — delete one in My Scramble first.`, 'error');
-    return;
-  }
   // Collect players dynamically
   const players = [];
   for (let pi = 1; pi <= _t1PlayerCount; pi++) {
     const pfx = `t1p${pi}`;
+    const hcp = numVal(pfx + '_hcp');
     players.push({
-      name:   val(pfx + '_name'),
-      hcp:    numVal(pfx + '_hcp'),
+      name:   val(pfx + '_name') || '',
+      hcp:    isNaN(hcp) ? null : hcp,
       gender: radio(pfx + '_g') || 'M',
       tee:    radio(pfx + '_tee') || 'main',
     });
@@ -4538,9 +4669,10 @@ async function saveTeam() {
     id:        Date.now().toString(),
     teamName:  val('team1_name') || 'My Team',
     players,
-    // Legacy keys for backwards-compat display
-    p1Name:    players[0]?.name,    p1Hcp: players[0]?.hcp,
-    p2Name:    players[1]?.name,    p2Hcp: players[1]?.hcp,
+    p1Name:    players[0]?.name  || null,
+    p1Hcp:     players[0]?.hcp   ?? null,
+    p2Name:    players[1]?.name  || null,
+    p2Hcp:     players[1]?.hcp   ?? null,
     savedAt:   new Date().toISOString(),
   };
   const btn = document.getElementById('saveTeamBtn');
@@ -4560,38 +4692,63 @@ async function saveTeam() {
 }
 
 async function deleteTeam(id) {
-  const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) return;
-  _savedTeams = _savedTeams.filter(t => t.id !== id);
-  try { await persistTeams(uid); renderMyData(); showToast('Team deleted.', 'success'); }
-  catch(e) { showToast('Error: ' + e.message, 'error'); }
+  deleteTeamWithConfirm(id);
 }
 
 async function persistTeams(uid) {
-  await window._fbDb.collection('users').doc(uid).collection('saved').doc('teams_v2').set({ list: _savedTeams });
+  // Firestore rejects undefined values — sanitise the entire list first
+  const clean = JSON.parse(JSON.stringify(_savedTeams, (key, val) => {
+    if (val !== val) return null;          // NaN → null
+    if (val === undefined) return null;    // undefined → null
+    return val;
+  }));
+  await window._fbDb.collection('users').doc(uid).collection('saved').doc('teams_v2').set({ list: clean });
 }
 
 function loadTeamIntoCalc(id) {
   const t = _savedTeams.find(x => x.id === id);
   if (!t) return;
   setVal('team1_name', t.teamName);
-  // Build players array from new or legacy format
-  const players = t.players && t.players.length
+
+  // Build players from new or legacy format
+  const allPlayers = t.players && t.players.length
     ? t.players
     : [
-        { name: t.p1Name, hcp: t.p1Hcp, gender: t.p1Gender || 'M', tee: t.p1Tee || 'main' },
-        { name: t.p2Name, hcp: t.p2Hcp, gender: t.p2Gender || 'M', tee: t.p2Tee || 'main' },
+        { name: t.p1Name, hcp: t.p1Hcp, gender: 'M', tee: 'main' },
+        { name: t.p2Name, hcp: t.p2Hcp, gender: 'M', tee: 'main' },
       ].filter(p => p.name);
-  _t1PlayerCount = Math.max(2, Math.min(4, players.length));
-  renderTeamPlayers(1);
-  players.forEach((p, i) => {
-    const pi  = i + 1;
-    const pfx = `t1p${pi}`;
-    setVal(pfx + '_name', p.name || '');
-    setVal(pfx + '_hcp',  isNaN(p.hcp) ? '' : p.hcp);
-    setRadio(pfx + '_g',   p.gender || 'M');
-    setRadio(pfx + '_tee', p.tee    || 'main');
-  });
+
+  if (t.source === 'profile') {
+    // Profile teams: buddies fill slots 2, 3, 4 — slot 1 is always the user (auto-filled from profile)
+    const buddyPlayers = allPlayers; // already excludes user (see syncProfileTeamToSavedTeams)
+    _t1PlayerCount = Math.max(2, Math.min(4, buddyPlayers.length + 1)); // +1 for user in slot 1
+    renderTeamPlayers(1);
+    // Slot 1 is user — prefill from profile
+    prefillFromProfile();
+    // Fill buddy slots starting at 2
+    buddyPlayers.forEach((p, i) => {
+      const pi  = i + 2; // start at slot 2
+      if (pi > 4) return;
+      const pfx = `t1p${pi}`;
+      setVal(pfx + '_name', p.name || '');
+      setVal(pfx + '_hcp',  p.hcp != null && !isNaN(p.hcp) ? p.hcp : '');
+      setRadio(pfx + '_g',   p.gender || 'M');
+      setRadio(pfx + '_tee', p.tee    || 'main');
+    });
+  } else {
+    // Calculator-saved teams: fill all slots starting at 1
+    _t1PlayerCount = Math.max(2, Math.min(4, allPlayers.length));
+    renderTeamPlayers(1);
+    allPlayers.forEach((p, i) => {
+      const pi  = i + 1;
+      const pfx = `t1p${pi}`;
+      setVal(pfx + '_name', p.name || '');
+      setVal(pfx + '_hcp',  p.hcp != null && !isNaN(p.hcp) ? p.hcp : '');
+      setRadio(pfx + '_g',   p.gender || 'M');
+      setRadio(pfx + '_tee', p.tee    || 'main');
+    });
+  }
+
   switchTab('calc');
   document.getElementById('pageCalc').scrollTop = 0;
   showToast(`"${t.teamName}" loaded!`, 'success');
@@ -4638,8 +4795,8 @@ function renderMyData() {
   }
 
   // --- Teams ---
-  document.getElementById('teamCount').textContent = `${_savedTeams.length} / ${MAX_TEAMS}`;
-  document.getElementById('teamsFull').classList.toggle('visible', _savedTeams.length >= MAX_TEAMS);
+  document.getElementById('teamCount').textContent = `${_savedTeams.length}`;
+  document.getElementById('teamsFull').classList.remove('visible'); // unlimited — never show cap message
   const tList = document.getElementById('teamsList');
   if (_savedTeams.length === 0) {
     tList.innerHTML = `<div class="saved-empty"><span class="saved-empty-icon">🏌️</span>No teams saved yet.<br>Fill in your team in the Calculator tab and tap 💾 Save.</div>`;
@@ -4666,7 +4823,7 @@ function renderMyData() {
           </div>
           <div class="saved-card-actions">
             <button class="btn-card-load" onclick="loadTeamIntoCalc('${t.id}')">Load</button>
-            <button class="btn-card-delete" onclick="deleteTeam('${t.id}')" title="Delete">🗑</button>
+            <button class="btn-card-delete" onclick="deleteTeamWithConfirm('${t.id}')" title="Delete">🗑</button>
           </div>
         </div>`;
     }).join('');
@@ -4906,6 +5063,7 @@ function openProfile() {
   renderAvatarGrid();
   renderProfileForm();
   renderTeamsList();
+  renderBuddiesList();
   renderPendingRequests();
   // Show summary if profile exists, edit form if new user
   if (_profile && _profile.displayName) {
@@ -4969,36 +5127,6 @@ function renderProfileForm() {
   if (courseEl) courseEl.value = _profile.homeCourse  || '';
 }
 
-function renderTeamsList() {
-  const list = document.getElementById('profileTeamsList');
-  if (!list) return;
-  if (_teams.length === 0) {
-    list.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">No teams yet — add a buddy to create a team.</div>`;
-    return;
-  }
-  list.innerHTML = _teams.map(t => {
-    const avatarHtml = t.buddyAvatar
-      ? `<img src="${AVATARS[t.buddyAvatar] || ''}" alt="">`
-      : `<span>🏌️</span>`;
-    const statusBadge = t.status === 'active'
-      ? `<span class="team-buddy-status active">Active</span>`
-      : `<span class="team-buddy-status pending">Pending</span>`;
-    return `
-      <div class="team-buddy-card">
-        <div class="team-buddy-avatar">${avatarHtml}</div>
-        <div class="team-buddy-info">
-          <div class="team-buddy-name">${esc(t.teamName)}</div>
-          <div class="team-buddy-meta">Buddy: ${esc(t.buddyName || 'Pending…')}</div>
-        </div>
-        ${statusBadge}
-        <button class="btn-decline" onclick="removeTeam('${t.id}')" style="padding:5px 10px;font-size:0.65rem;">✕</button>
-      </div>`;
-  }).join('');
-  // Hide add button if max 2 teams
-  const addSection = document.getElementById('profileAddTeamSection');
-  if (addSection) addSection.style.display = _teams.length >= 2 ? 'none' : '';
-}
-
 function renderPendingRequests() {
   const banner = document.getElementById('profileRequestsBanner');
   const list   = document.getElementById('profileRequestsList');
@@ -5006,15 +5134,19 @@ function renderPendingRequests() {
   if (_pendingRequests.length === 0) { banner.style.display = 'none'; return; }
   banner.style.display = '';
   list.innerHTML = _pendingRequests.map(r => {
-    const avatarHtml = r.fromAvatar
-      ? `<img src="${AVATARS[r.fromAvatar] || ''}" alt="">`
+    const avatarHtml = r.fromAvatar && AVATARS[r.fromAvatar]
+      ? `<img src="${AVATARS[r.fromAvatar]}" alt="">`
       : `<span>🏌️</span>`;
+    const isBuddyReq = r.type === 'buddy_request';
+    const subLabel   = isBuddyReq
+      ? `<div class="team-buddy-meta">Wants to be your buddy${r.fromHcp != null ? ` · HCP ${r.fromHcp}` : ''}</div>`
+      : `<div class="team-buddy-meta">Team: ${esc(r.teamName || '—')}</div>`;
     return `
       <div class="request-card">
         <div class="team-buddy-avatar">${avatarHtml}</div>
         <div class="team-buddy-info">
-          <div class="team-buddy-name">${esc(r.fromName)}</div>
-          <div class="team-buddy-meta">Team: ${esc(r.teamName)}</div>
+          <div class="team-buddy-name">${esc(r.fromName || '—')}</div>
+          ${subLabel}
         </div>
         <div class="request-card-actions">
           <button class="btn-accept" onclick="acceptBuddyRequest('${r.id}')">✓</button>
@@ -5095,199 +5227,610 @@ function prefillFromProfile() {
   if (msH1 && !msH1.value && _profile.hcpIndex !== null) msH1.value = _profile.hcpIndex;
 }
 
-// ── BUDDY SEARCH ─────────────────────────────────────────────
+// ── BUDDY SEARCH OVERLAY ─────────────────────────────────────
 
-let _buddySearchTimer = null;
-let _selectedBuddy    = null;
+let _buddySearchTimer  = null;
+let _viewingPublicUid  = null; // uid of the public profile currently open
+
+function openBuddySearch() {
+  const ov = document.getElementById('buddySearchOverlay');
+  ov.style.display = '';
+  requestAnimationFrame(() => ov.classList.add('open'));
+  const inp = document.getElementById('buddySearchInput');
+  if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 350); }
+  document.getElementById('buddySearchResults').innerHTML = '';
+  const stat = document.getElementById('buddySearchStatus');
+  if (stat) { stat.textContent = 'Type a name or email to search'; stat.style.display = ''; }
+  renderSentRequests();
+}
+
+function closeBuddySearch() {
+  const ov = document.getElementById('buddySearchOverlay');
+  ov.classList.remove('open');
+  setTimeout(() => { ov.style.display = 'none'; }, 350);
+}
+
+function onBuddySearchInput() {
+  clearTimeout(_buddySearchTimer);
+  const q = document.getElementById('buddySearchInput')?.value.trim();
+  const stat = document.getElementById('buddySearchStatus');
+  if (!q || q.length < 2) {
+    document.getElementById('buddySearchResults').innerHTML = '';
+    if (stat) { stat.textContent = 'Type at least 2 characters to search'; stat.style.display = ''; }
+    return;
+  }
+  if (stat) { stat.textContent = 'Searching…'; stat.style.display = ''; }
+  _buddySearchTimer = setTimeout(() => _doBuddySearch(q), 400);
+}
+
+async function _doBuddySearch(q) {
+  const uid  = window._fbAuth?.currentUser?.uid;
+  const stat = document.getElementById('buddySearchStatus');
+  const res  = document.getElementById('buddySearchResults');
+  if (!uid) return;
+  try {
+    const ql      = q.toLowerCase().trim();
+    const results = [];
+    // Fetch all public profiles — small dataset, JS filter is reliable
+    const snap = await window._fbDb.collection('public_profiles').get();
+    snap.forEach(doc => {
+      if (doc.id === uid) return; // skip self
+      const d = doc.data();
+      const nameMatch  = (d.displayName || '').toLowerCase().includes(ql);
+      const emailMatch = (d.email || '').toLowerCase().includes(ql); // partial email match too
+      if (nameMatch || emailMatch) results.push({ uid: doc.id, ...d });
+    });
+    if (results.length === 0) {
+      if (stat) { stat.textContent = `No players found for "${q}". Make sure they've saved their profile first.`; stat.style.display = ''; }
+      res.innerHTML = '';
+      return;
+    }
+    if (stat) stat.style.display = 'none';
+    res.innerHTML = results.slice(0, 10).map(r => {
+      const av = r.avatarId && AVATARS[r.avatarId]
+        ? `<img src="${AVATARS[r.avatarId]}" alt="">`
+        : `<span>🏌️</span>`;
+      const hcp    = r.hcpIndex != null ? `HCP ${r.hcpIndex}` : 'HCP not set';
+      const course = r.homeCourse ? ` · ${esc(r.homeCourse)}` : '';
+      const isBuddy   = _buddies.find(b => b.uid === r.uid);
+      const isPending = _sentBuddyRequests.find(s => s.toUid === r.uid);
+      const tag = isBuddy
+        ? `<span style="font-size:0.63rem;color:var(--green);font-weight:700;background:rgba(42,122,72,0.12);padding:2px 7px;border-radius:8px;">✓ Buddy</span>`
+        : isPending
+          ? `<span style="font-size:0.63rem;color:#c87800;font-weight:700;background:rgba(200,120,0,0.10);padding:2px 7px;border-radius:8px;">⏳ Pending</span>`
+          : '';
+      return `
+        <div class="buddy-result-card" onclick="openPublicProfile('${r.uid}')">
+          <div class="buddy-result-avatar">${av}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="buddy-result-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${esc(r.displayName || '—')} ${tag}</div>
+            <div class="buddy-result-meta">${hcp}${course}</div>
+          </div>
+          <div class="buddy-result-arrow">›</div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    if (stat) { stat.textContent = 'Search failed: ' + e.message; stat.style.display = ''; }
+  }
+}
+
+// ── SENT REQUESTS PANEL ──────────────────────────────────────
+
+async function renderSentRequests() {
+  const panel = document.getElementById('sentRequestsPanel');
+  const list  = document.getElementById('sentRequestsList');
+  if (!panel || !list) return;
+
+  // Refresh from Firestore
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (uid) {
+    try {
+      const snap = await window._fbDb.collection('users').doc(uid)
+        .collection('sentRequests').where('status','==','pending').where('type','==','buddy_request').get();
+      _sentBuddyRequests = [];
+      snap.forEach(doc => _sentBuddyRequests.push({ id: doc.id, ...doc.data() }));
+    } catch(e) {}
+  }
+
+  if (_sentBuddyRequests.length === 0) { panel.style.display = 'none'; return; }
+
+  // Filter out entries already accepted (buddy now in _buddies list)
+  const pendingOnly = _sentBuddyRequests.filter(r => !_buddies.find(b => b.uid === r.toUid));
+  if (pendingOnly.length === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  // Enrich any entries missing toName by fetching from public_profiles
+  await Promise.all(pendingOnly.map(async r => {
+    if (!r.toName || r.toName === r.toUid) {
+      try {
+        const snap = await window._fbDb.collection('public_profiles').doc(r.toUid).get();
+        if (snap.exists) r.toName = snap.data().displayName || r.toUid;
+      } catch(e) {}
+    }
+  }));
+
+  list.innerHTML = pendingOnly.map(r => {
+    const name = r.toName || r.toUid;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <div style="font-size:0.88rem;font-weight:700;color:var(--white);">${esc(name)}</div>
+          <div style="margin-top:3px;font-size:0.65rem;color:#c87800;font-weight:700;">⏳ Pending</div>
+        </div>
+        <button onclick="cancelBuddyRequest('${r.id}','${r.toUid}')"
+          style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;padding:5px 10px;cursor:pointer;">
+          ✕ Cancel
+        </button>
+      </div>`;
+  }).join('');
+}
+
+async function cancelBuddyRequest(reqId, toUid) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) return;
+  const alreadyBuddy = _buddies.find(b => b.uid === toUid);
+  const confirmMsg = alreadyBuddy
+    ? 'Remove this buddy?'
+    : 'Cancel this buddy request?';
+  if (!confirm(confirmMsg)) return;
+  try {
+    // Delete sent request record
+    await window._fbDb.collection('users').doc(uid).collection('sentRequests').doc(reqId).delete();
+    // Also delete the pending request from their side if not yet accepted
+    if (!alreadyBuddy) {
+      try {
+        await window._fbDb.collection('users').doc(toUid)
+          .collection('buddyRequests').doc(reqId).delete();
+      } catch(e) {} // may already be deleted if accepted
+    } else {
+      // Remove from own buddies too
+      await window._fbDb.collection('users').doc(uid).collection('buddies').doc(toUid).delete();
+      _buddies = _buddies.filter(b => b.uid !== toUid);
+      renderBuddiesList();
+    }
+    _sentBuddyRequests = _sentBuddyRequests.filter(r => r.id !== reqId);
+    renderSentRequests();
+    showToast(alreadyBuddy ? 'Buddy removed.' : 'Request cancelled.', 'info');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function openPublicProfile(buddyUid) {
+  _viewingPublicUid = buddyUid;
+  // Show overlay immediately with loading state
+  const ov = document.getElementById('publicProfileOverlay');
+  ov.style.display = '';
+  requestAnimationFrame(() => ov.classList.add('open'));
+  _renderPublicProfileLoading();
+
+  try {
+    const snap = await window._fbDb.collection('public_profiles').doc(buddyUid).get();
+    if (!snap.exists) { showToast('Profile not found.', 'error'); return; }
+    const d = snap.data();
+
+    // Avatar
+    const avEl = document.getElementById('pubProfileAvatar');
+    if (avEl) avEl.innerHTML = d.avatarId && AVATARS[d.avatarId]
+      ? `<img src="${AVATARS[d.avatarId]}" alt="">`
+      : '🏌️';
+
+    // Name / HCP / Course
+    const nameEl   = document.getElementById('pubProfileName');
+    const hcpEl    = document.getElementById('pubProfileHcp');
+    const courseEl = document.getElementById('pubProfileCourse');
+    if (nameEl)   nameEl.textContent   = d.displayName || '—';
+    if (hcpEl)    hcpEl.textContent    = d.hcpIndex != null ? `HCP ${d.hcpIndex}` : 'HCP not set';
+    if (courseEl) courseEl.textContent = d.homeCourse || '';
+
+    // Team count badge — count from their teams subcollection
+    const badgesEl = document.getElementById('pubProfileBadges');
+    if (badgesEl) {
+      try {
+        const tSnap = await window._fbDb.collection('users').doc(buddyUid).collection('teams').get();
+        const count = tSnap.size;
+        badgesEl.innerHTML = count > 0
+          ? `<span class="pub-profile-badge">🏌️ ${count} team${count !== 1 ? 's' : ''}</span>`
+          : `<span class="pub-profile-badge">No teams yet</span>`;
+      } catch(e) { badgesEl.innerHTML = ''; }
+    }
+
+    // Add Buddy button state
+    _updateAddBuddyBtn(buddyUid);
+
+  } catch(e) { showToast('Could not load profile: ' + e.message, 'error'); }
+}
+
+function _renderPublicProfileLoading() {
+  const avEl     = document.getElementById('pubProfileAvatar');
+  const nameEl   = document.getElementById('pubProfileName');
+  const hcpEl    = document.getElementById('pubProfileHcp');
+  const courseEl = document.getElementById('pubProfileCourse');
+  const badgesEl = document.getElementById('pubProfileBadges');
+  const btn      = document.getElementById('addBuddyBtn');
+  if (avEl)     avEl.innerHTML    = '👤';
+  if (nameEl)   nameEl.textContent  = '…';
+  if (hcpEl)    hcpEl.textContent   = '';
+  if (courseEl) courseEl.textContent = '';
+  if (badgesEl) badgesEl.innerHTML  = '';
+  if (btn) { btn.textContent = 'Loading…'; btn.className = 'btn-add-buddy sent'; btn.disabled = true; }
+}
+
+function _updateAddBuddyBtn(buddyUid) {
+  const btn = document.getElementById('addBuddyBtn');
+  if (!btn) return;
+  const alreadyBuddy   = _buddies.find(b => b.uid === buddyUid);
+  const requestPending = _pendingRequests.find(r => r.fromUid === buddyUid) ||
+                         _sentBuddyRequests.find(r => r.toUid === buddyUid);
+  if (alreadyBuddy) {
+    btn.textContent = '✓ Already Buddies';
+    btn.className   = 'btn-add-buddy already';
+    btn.disabled    = true;
+  } else if (requestPending) {
+    btn.textContent = '⏳ Request Pending';
+    btn.className   = 'btn-add-buddy sent';
+    btn.disabled    = true;
+  } else {
+    btn.textContent = '+ Add as Buddy';
+    btn.className   = 'btn-add-buddy';
+    btn.disabled    = false;
+  }
+}
+
+function closePublicProfile() {
+  const ov = document.getElementById('publicProfileOverlay');
+  ov.classList.remove('open');
+  setTimeout(() => { ov.style.display = 'none'; _viewingPublicUid = null; }, 350);
+}
+
+async function addBuddyFromProfile() {
+  const uid       = window._fbAuth?.currentUser?.uid;
+  const buddyUid  = _viewingPublicUid;
+  if (!uid || !buddyUid || !_profile) { showToast('Save your profile first.', 'error'); return; }
+
+  const btn = document.getElementById('addBuddyBtn');
+  if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
+
+  try {
+    const reqId = Date.now().toString();
+    // Write request to buddy's buddyRequests
+    await window._fbDb.collection('users').doc(buddyUid)
+      .collection('buddyRequests').doc(reqId).set({
+        type:       'buddy_request',
+        fromUid:    uid,
+        fromName:   _profile.displayName,
+        fromAvatar: _profile.avatarId || null,
+        fromHcp:    _profile.hcpIndex ?? null,
+        sentAt:     new Date().toISOString(),
+        status:     'pending',
+      });
+    // Track sent request locally and in Firestore
+    const toName = document.getElementById('pubProfileName')?.textContent || buddyUid;
+    await window._fbDb.collection('users').doc(uid)
+      .collection('sentRequests').doc(reqId).set({
+        toUid: buddyUid, toName, sentAt: new Date().toISOString(), status: 'pending', type: 'buddy_request'
+      });
+    _sentBuddyRequests.push({ id: reqId, toUid: buddyUid, toName });
+
+    showToast('Buddy request sent! 🏌️', 'success');
+    _updateAddBuddyBtn(buddyUid);
+    renderSentRequests();
+    // Refresh search results to show pending state
+    onBuddySearchInput();
+  } catch(e) {
+    showToast('Could not send request: ' + e.message, 'error');
+    _updateAddBuddyBtn(buddyUid);
+  }
+}
+
+// ── MY BUDDIES LIST ──────────────────────────────────────────
+
+function renderBuddiesList() {
+  const list = document.getElementById('profileBuddiesList');
+  if (!list) return;
+  if (_buddies.length === 0) {
+    list.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);padding:4px 0 8px;">No buddies yet — tap Find Buddy to search for players.</div>`;
+    return;
+  }
+  list.innerHTML = _buddies.map(b => {
+    const av = b.avatarId && AVATARS[b.avatarId]
+      ? `<img src="${AVATARS[b.avatarId]}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+      : `<span style="font-size:1rem;">🏌️</span>`;
+    const hcp = b.hcp != null ? `HCP ${b.hcp}` : '';
+    return `
+      <div class="buddy-list-card">
+        <div class="buddy-result-avatar" style="width:36px;height:36px;font-size:1.1rem;">${av}</div>
+        <div style="flex:1;">
+          <div class="buddy-list-name">${esc(b.name || '—')}</div>
+          ${hcp ? `<div class="buddy-list-hcp">${hcp}</div>` : ''}
+        </div>
+        <button class="btn-decline" onclick="removeBuddy('${b.uid}')" style="padding:5px 10px;font-size:0.65rem;" title="Remove buddy">✕</button>
+      </div>`;
+  }).join('');
+}
+
+async function removeBuddy(buddyUid) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid || !confirm('Remove this buddy?')) return;
+  try {
+    await window._fbDb.collection('users').doc(uid).collection('buddies').doc(buddyUid).delete();
+    _buddies = _buddies.filter(b => b.uid !== buddyUid);
+    renderBuddiesList();
+    showToast('Buddy removed.', 'info');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ── ACCEPT / DECLINE BUDDY REQUESTS (updated) ────────────────
+
+async function acceptBuddyRequest(reqId) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid || !_profile) return;
+  const req = _pendingRequests.find(r => r.id === reqId);
+  if (!req) return;
+
+  try {
+    // Write buddy to OWN buddies collection only (can't write to other user's subcollection)
+    await window._fbDb.collection('users').doc(uid).collection('buddies').doc(req.fromUid).set({
+      name:     req.fromName,
+      hcp:      req.fromHcp ?? null,
+      avatarId: req.fromAvatar || null,
+      addedAt:  new Date().toISOString(),
+    });
+
+    // Notify the sender so they add us to their buddies on next load
+    // Include reqId so they can clean up their sentRequests doc
+    await window._fbDb.collection('users').doc(req.fromUid)
+      .collection('notifications').add({
+        type:      'buddy_accepted',
+        byUid:     uid,
+        byName:    _profile.displayName,
+        byAvatar:  _profile.avatarId || null,
+        byHcp:     _profile.hcpIndex ?? null,
+        reqId:     reqId,  // so sender can delete their sentRequests entry
+        at:        new Date().toISOString(),
+        read:      false,
+      });
+
+    // Delete the request
+    await window._fbDb.collection('users').doc(uid).collection('buddyRequests').doc(reqId).delete();
+
+    _pendingRequests = _pendingRequests.filter(r => r.id !== reqId);
+    _buddies.push({ uid: req.fromUid, name: req.fromName, hcp: req.fromHcp ?? null, avatarId: req.fromAvatar || null });
+    renderBuddiesList();
+    renderPendingRequests();
+    updateRequestBadge();
+    showToast(`${req.fromName} is now your buddy! 🏌️`, 'success');
+  } catch(e) { showToast('Could not accept: ' + e.message, 'error'); }
+}
+
+// ── LOAD BUDDIES ─────────────────────────────────────────────
+
+let _sentBuddyRequests = []; // track sent requests to show pending state
+
+async function loadBuddiesData(uid) {
+  try {
+    const snap = await window._fbDb.collection('users').doc(uid).collection('buddies').get();
+    _buddies = [];
+    snap.forEach(doc => _buddies.push({ uid: doc.id, ...doc.data() }));
+    renderBuddiesList();
+  } catch(e) { console.warn('Could not load buddies:', e); }
+
+  try {
+    const snap = await window._fbDb.collection('users').doc(uid).collection('sentRequests')
+      .where('status','==','pending').where('type','==','buddy_request').get();
+    _sentBuddyRequests = [];
+    snap.forEach(doc => _sentBuddyRequests.push({ id: doc.id, ...doc.data() }));
+  } catch(e) {}
+}
+let _currentTeamType   = '2P';
+let _selectedBuddy     = null; // legacy alias
+
+
+// ── PHASE B: TEAM CREATION (owner-only from buddies) ─────────
+
+function setTeamType(type) {
+  _currentTeamType = type;
+  ['2P','3P','4P'].forEach(t => {
+    const btn = document.getElementById(`teamTypeBtn${t}`);
+    if (btn) btn.classList.toggle('active', t === type);
+  });
+  renderBuddyPicker();
+}
 
 function showAddTeamForm() {
+  if (_buddies.length === 0) {
+    showToast('Add at least one buddy first — use 🔍 Find Buddy.', 'info');
+    return;
+  }
   document.getElementById('addTeamForm').style.display = '';
   document.getElementById('profileAddTeamSection').style.display = 'none';
-  _selectedBuddy = null;
+  _currentTeamType = '2P';
+  setTeamType('2P');
+  document.getElementById('newTeamName').value = '';
 }
 
 function hideAddTeamForm() {
   document.getElementById('addTeamForm').style.display = 'none';
   document.getElementById('profileAddTeamSection').style.display = '';
-  document.getElementById('buddySearch').value = '';
-  document.getElementById('buddySearchResults').style.display = 'none';
-  document.getElementById('selectedBuddyPreview').style.display = 'none';
-  _selectedBuddy = null;
+  document.getElementById('newTeamName').value = '';
 }
 
-function searchBuddy() {
-  clearTimeout(_buddySearchTimer);
-  const q = document.getElementById('buddySearch').value.trim();
-  if (q.length < 2) {
-    document.getElementById('buddySearchResults').style.display = 'none';
+function renderBuddyPicker() {
+  const wrap = document.getElementById('buddyPickerWrap');
+  if (!wrap) return;
+  const maxBuddies = _currentTeamType === '2P' ? 1 : _currentTeamType === '3P' ? 2 : 3;
+  if (_buddies.length === 0) {
+    wrap.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);">No buddies yet — find some first.</div>`;
     return;
   }
-  _buddySearchTimer = setTimeout(() => doSearchBuddy(q), 400);
-}
-
-async function doSearchBuddy(q) {
-  const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) return;
-  const resultsEl = document.getElementById('buddySearchResults');
-  resultsEl.innerHTML = `<div style="padding:10px 12px;font-size:0.8rem;color:var(--muted);">Searching…</div>`;
-  resultsEl.style.display = '';
-
-  try {
-    const ql = q.toLowerCase().trim();
-    const results = [];
-
-    // Load all public profiles and filter in JS — no index needed
-    const snap = await window._fbDb.collection('public_profiles').limit(200).get();
-    snap.forEach(doc => {
-      if (doc.id === uid) return; // skip self
-      const data = doc.data();
-      const nameMatch  = (data.displayName || '').toLowerCase().includes(ql);
-      const emailMatch = (data.email || '').toLowerCase() === ql;
-      if (nameMatch || emailMatch) results.push({ uid: doc.id, ...data });
-    });
-
-    if (results.length === 0) {
-      resultsEl.innerHTML = `<div style="padding:10px 12px;font-size:0.8rem;color:var(--muted);">No users found for "<strong>${esc(q)}</strong>"<br><span style="font-size:0.72rem;">Make sure your buddy has saved their profile first.</span></div>`;
-      return;
-    }
-
-    resultsEl.innerHTML = results.slice(0, 5).map((r, idx) => {
-      const avatarHtml = r.avatarId && AVATARS[r.avatarId]
-        ? `<img src="${AVATARS[r.avatarId]}" alt="">`
-        : `<span>🏌️</span>`;
-      const hcpText = r.hcpIndex !== null && r.hcpIndex !== undefined ? ` · HCP ${r.hcpIndex}` : '';
+  wrap.innerHTML = `
+    <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">
+      Pick ${maxBuddies} Buddy${maxBuddies > 1 ? ' (up to ' + maxBuddies + ')' : ''}
+    </div>
+    ${_buddies.map(b => {
+      const av = b.avatarId && AVATARS[b.avatarId]
+        ? `<img src="${AVATARS[b.avatarId]}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+        : `<span style="font-size:0.85rem;">🏌️</span>`;
+      const hcp = b.hcp != null ? ` HCP ${b.hcp}` : '';
       return `
-        <div class="buddy-search-result" onclick="selectBuddy('${r.uid}','${esc(r.displayName)}',${r.avatarId||'null'})">
-          <div class="buddy-search-avatar">${avatarHtml}</div>
+        <label style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" name="buddyPick" value="${b.uid}" onchange="onBuddyPickChange()" style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;">
+          <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--border);display:flex;align-items:center;justify-content:center;">${av}</div>
           <div style="flex:1;">
-            <div style="font-size:0.85rem;font-weight:700;color:var(--white);">${esc(r.displayName)}</div>
-            <div style="font-size:0.72rem;color:var(--muted);">${esc(r.homeCourse || '')}${hcpText}</div>
+            <div style="font-size:0.88rem;font-weight:700;color:var(--white);">${esc(b.name)}</div>
+            ${hcp ? `<div style="font-size:0.7rem;color:var(--muted);">${hcp}</div>` : ''}
           </div>
-          <div style="font-size:0.65rem;color:var(--green);font-weight:700;">Tap to select</div>
-        </div>`;
-    }).join('');
-
-    // Auto-select if only one result
-    if (results.length === 1) {
-      selectBuddy(results[0].uid, results[0].displayName, results[0].avatarId || null);
-    }
-  } catch(e) {
-    resultsEl.innerHTML = `<div style="padding:10px 12px;font-size:0.8rem;color:var(--muted);">Search failed.<br><span style="font-size:0.7rem;color:var(--red);">${e.message}</span></div>`;
-    console.warn('Buddy search error:', e);
-  }
-}
-
-function selectBuddy(buddyUid, buddyName, buddyAvatar) {
-  _selectedBuddy = { uid: buddyUid, name: buddyName, avatar: buddyAvatar };
-  document.getElementById('buddySearchResults').style.display = 'none';
-  document.getElementById('buddySearch').value = buddyName;
-  const avatarHtml = buddyAvatar && AVATARS[buddyAvatar]
-    ? `<img src="${AVATARS[buddyAvatar]}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
-    : `<span>🏌️</span>`;
-  const preview = document.getElementById('selectedBuddyPreview');
-  preview.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);padding:10px 12px;border-radius:var(--radius-sm);">
-      <div class="buddy-search-avatar">${avatarHtml}</div>
-      <div style="font-size:0.85rem;font-weight:700;color:var(--green);">✓ ${esc(buddyName)} selected</div>
+        </label>`;
+    }).join('')}
+    <div id="buddyPickWarning" style="font-size:0.7rem;color:var(--gold);margin-top:4px;display:none;">
+      Select exactly ${maxBuddies} buddy${maxBuddies > 1 ? 's' : ''} for a ${_currentTeamType} team.
     </div>`;
-  preview.style.display = '';
 }
 
-async function sendBuddyRequest() {
+function onBuddyPickChange() {
+  const maxBuddies = _currentTeamType === '2P' ? 1 : _currentTeamType === '3P' ? 2 : 3;
+  const checked = [...document.querySelectorAll('input[name="buddyPick"]:checked')];
+  const warn = document.getElementById('buddyPickWarning');
+  // Disable unchecked once max reached
+  document.querySelectorAll('input[name="buddyPick"]').forEach(cb => {
+    if (!cb.checked) cb.disabled = checked.length >= maxBuddies;
+  });
+  if (warn) warn.style.display = checked.length > maxBuddies ? '' : 'none';
+}
+
+async function createTeam() {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid || !_profile) { showToast('Save your profile first.', 'error'); return; }
   const teamName = document.getElementById('newTeamName').value.trim();
-  if (!teamName) { showToast('Enter a team name first.', 'error'); return; }
+  if (!teamName) { showToast('Enter a team name.', 'error'); return; }
 
-  // If no buddy selected from search results, check if typed value is an email
-  // and try to look up by email directly
-  if (!_selectedBuddy) {
-    const typed = document.getElementById('buddySearch').value.trim();
-    if (!typed) { showToast('Search for your buddy first.', 'error'); return; }
+  const maxBuddies = _currentTeamType === '2P' ? 1 : _currentTeamType === '3P' ? 2 : 3;
+  const pickedUids = [...document.querySelectorAll('input[name="buddyPick"]:checked')].map(cb => cb.value);
+  if (pickedUids.length === 0) { showToast(`Pick at least 1 buddy.`, 'error'); return; }
+  if (pickedUids.length > maxBuddies) { showToast(`Pick max ${maxBuddies} buddy${maxBuddies > 1 ? 's' : ''} for ${_currentTeamType}.`, 'error'); return; }
 
-    if (typed.includes('@')) {
-      // Try email lookup in public_profiles
-      showToast('Looking up buddy by email…', 'info');
-      try {
-        const snap = await window._fbDb.collection('public_profiles')
-          .where('email', '==', typed.toLowerCase())
-          .limit(1)
-          .get();
-        if (snap.empty) {
-          showToast('No user found with that email. Ask your buddy to save their profile first.', 'error');
-          return;
-        }
-        const doc = snap.docs[0];
-        _selectedBuddy = { uid: doc.id, name: doc.data().displayName, avatar: doc.data().avatarId || null };
-        selectBuddy(_selectedBuddy.uid, _selectedBuddy.name, _selectedBuddy.avatar);
-      } catch(e) {
-        showToast('Lookup failed: ' + e.message, 'error');
-        return;
-      }
-    } else {
-      showToast('Select a buddy from the search results, or enter their email address.', 'error');
-      return;
-    }
-  }
+  const pickedBuddies = _buddies.filter(b => pickedUids.includes(b.uid));
+  // Build members: owner first, then buddies
+  const myEntry  = { uid, name: _profile.displayName, avatarId: _profile.avatarId || null, hcp: _profile.hcpIndex ?? null };
+  const members  = [myEntry, ...pickedBuddies.map(b => ({ uid: b.uid, name: b.name, avatarId: b.avatarId || null, hcp: b.hcp ?? null }))];
+  const teamId   = Date.now().toString();
+  const teamDoc  = {
+    teamName,
+    teamType: _currentTeamType,
+    members,
+    ownerId:   uid,
+    ownerName: _profile.displayName,
+    status:    'active',
+    createdAt: new Date().toISOString(),
+  };
 
   try {
-    const reqId = Date.now().toString();
-    await window._fbDb.collection('users').doc(_selectedBuddy.uid)
-      .collection('buddyRequests').doc(reqId).set({
-        fromUid:    uid,
-        fromName:   _profile.displayName,
-        fromAvatar: _profile.avatarId || null,
-        teamName,
-        sentAt:     new Date().toISOString(),
-        status:     'pending'
-      });
+    // Save to own teams
+    await window._fbDb.collection('users').doc(uid).collection('teams').doc(teamId).set(teamDoc);
+    // Notify each buddy (write to their notifications)
+    for (const buddy of pickedBuddies) {
+      await window._fbDb.collection('users').doc(buddy.uid)
+        .collection('notifications').add({
+          type:      'added_to_team',
+          teamName,
+          teamType:  _currentTeamType,
+          byName:    _profile.displayName,
+          byAvatar:  _profile.avatarId || null,
+          at:        new Date().toISOString(),
+          read:      false,
+        });
+    }
 
-    await window._fbDb.collection('users').doc(uid)
-      .collection('sentRequests').doc(reqId).set({
-        toUid:    _selectedBuddy.uid,
-        toName:   _selectedBuddy.name,
-        teamName,
-        sentAt:   new Date().toISOString(),
-        status:   'pending'
-      });
-
-    showToast(`Request sent to ${_selectedBuddy.name}!`, 'success');
+    _teams.push({ id: teamId, ...teamDoc });
     hideAddTeamForm();
-    document.getElementById('newTeamName').value = '';
-    _selectedBuddy = null;
-  } catch(e) { showToast('Could not send request: ' + e.message, 'error'); }
+    renderTeamsList();
+    showToast(`Team "${teamName}" created! Buddies notified.`, 'success');
+  } catch(e) { showToast('Could not create team: ' + e.message, 'error'); }
 }
 
-async function acceptBuddyRequest(reqId) {
+// ── SAVE TEAM TO MY SCRAMBLE (manual, explicit) ───────────────
+
+async function saveTeamToMyScramble(teamId) {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) return;
-  const req = _pendingRequests.find(r => r.id === reqId);
-  if (!req) return;
+  const t = _teams.find(x => x.id === teamId);
+  if (!t) return;
+  if (_savedTeams.find(s => s.profileTeamId === teamId)) {
+    showToast('Already in My Scramble.', 'info'); return;
+  }
+  // Build players: buddies only (exclude owner — slot 1 pre-filled from profile)
+  const players = (t.members || [])
+    .filter(m => m.uid !== uid && m.name)
+    .map(m => ({ name: m.name, hcp: m.hcp ?? null, gender: 'M', tee: 'main' }));
+  if (players.length === 0) { showToast('No buddy data to save.', 'error'); return; }
 
-  const teamName = req.teamName;
-  const teamId   = Date.now().toString();
-
+  const data = {
+    id:            Date.now().toString(),
+    profileTeamId: teamId,
+    teamName:      t.teamName,
+    teamType:      t.teamType || '2P',
+    players,
+    p1Name:  players[0]?.name || null, p1Hcp: players[0]?.hcp ?? null,
+    p2Name:  players[1]?.name || null, p2Hcp: players[1]?.hcp ?? null,
+    savedAt: new Date().toISOString(),
+    source:  'profile',
+  };
+  _savedTeams.push(data);
   try {
-    // Add team to own teams
-    await window._fbDb.collection('users').doc(uid).collection('teams').doc(teamId).set({
-      teamName, buddyUid: req.fromUid, buddyName: req.fromName,
-      buddyAvatar: req.fromAvatar || null, status: 'active', createdAt: new Date().toISOString()
-    });
-    // Add team to buddy's teams
-    await window._fbDb.collection('users').doc(req.fromUid).collection('teams').doc(teamId).set({
-      teamName, buddyUid: uid, buddyName: _profile.displayName,
-      buddyAvatar: _profile.avatarId || null, status: 'active', createdAt: new Date().toISOString()
-    });
-    // Delete request
-    await window._fbDb.collection('users').doc(uid).collection('buddyRequests').doc(reqId).delete();
+    await persistTeams(uid);
+    renderMyData();
+    renderTeamsList(); // update the sync button state
+    showToast(`"${t.teamName}" saved to My Scramble.`, 'success');
+  } catch(e) {
+    _savedTeams.pop();
+    showToast('Could not save: ' + e.message, 'error');
+  }
+}
 
-    _pendingRequests = _pendingRequests.filter(r => r.id !== reqId);
-    _teams.push({ id: teamId, teamName, buddyUid: req.fromUid, buddyName: req.fromName, buddyAvatar: req.fromAvatar, status: 'active' });
-    renderTeamsList();
-    renderPendingRequests();
-    updateRequestBadge();
-    showToast(`Team "${teamName}" created!`, 'success');
-  } catch(e) { showToast('Could not accept: ' + e.message, 'error'); }
+function renderTeamsList() {
+  const list = document.getElementById('profileTeamsList');
+  if (!list) return;
+  if (_teams.length === 0) {
+    list.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">No teams yet — add a team above.</div>`;
+  } else {
+    const currentUid = window._fbAuth?.currentUser?.uid;
+    list.innerHTML = _teams.map(t => {
+      const teamType  = t.teamType || '2P';
+      const typeBadge = `<span style="background:var(--green);color:#fff;font-size:0.58rem;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;">${teamType}</span>`;
+      // Show only buddy members (not the owner/self)
+      const allMembers    = t.members || [];
+      const buddyMembers  = allMembers.filter(m => m.uid !== currentUid);
+      const memberHtml    = buddyMembers.length > 0
+        ? buddyMembers.map(m => {
+            const av = (m.avatarId || m.avatar) && AVATARS[m.avatarId || m.avatar]
+              ? `<img src="${AVATARS[m.avatarId || m.avatar]}" alt="">`
+              : `<span style="font-size:0.75rem;">🏌️</span>`;
+            const hcpText = m.hcp != null ? ` <span style="color:var(--muted);font-size:0.7rem;">HCP ${m.hcp}</span>` : '';
+            return `<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+              <div class="team-buddy-avatar" style="width:24px;height:24px;font-size:0.7rem;">${av}</div>
+              <span style="font-size:0.78rem;color:var(--white);">${esc(m.name || '—')}</span>${hcpText}
+            </div>`;
+          }).join('')
+        : `<div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">No buddies assigned</div>`;
+      const alreadySynced = _savedTeams.find(s => s.profileTeamId === t.id);
+      const saveBtn = !alreadySynced
+        ? `<button class="btn-card-load" onclick="saveTeamToMyScramble('${t.id}')" style="font-size:0.65rem;padding:4px 8px;white-space:nowrap;">💾 My Scramble</button>`
+        : `<span style="font-size:0.65rem;color:var(--green);padding:4px 8px;">✓ Saved</span>`;
+      return `
+        <div class="team-buddy-card" style="align-items:flex-start;margin-bottom:10px;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span class="team-buddy-name">${esc(t.teamName)}${typeBadge}</span>
+            </div>
+            ${memberHtml}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            ${saveBtn}
+            <button class="btn-decline" onclick="removeTeam('${t.id}')" style="padding:5px 10px;font-size:0.65rem;" title="Remove">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  const addSection = document.getElementById('profileAddTeamSection');
+  if (addSection) addSection.style.display = '';
 }
 
 async function declineBuddyRequest(reqId) {
@@ -5302,17 +5845,127 @@ async function declineBuddyRequest(reqId) {
   } catch(e) {}
 }
 
-async function removeTeam(teamId) {
+// ── TEAM DELETE MODAL ────────────────────────────────────────
+
+let _pendingDeleteTeamId   = null; // profile team id
+let _pendingDeleteSavedId  = null; // savedTeams id
+let _pendingDeleteSource   = null; // 'profile' | 'scramble'
+
+function confirmTeamDelete() {
+  const modal = document.getElementById('teamDeleteModal');
+  if (modal) modal.style.display = 'none';
+  if (_pendingDeleteSource === 'profile') {
+    _doRemoveTeam(_pendingDeleteTeamId);
+  } else {
+    _doDeleteSavedTeam(_pendingDeleteSavedId);
+  }
+  _pendingDeleteTeamId  = null;
+  _pendingDeleteSavedId = null;
+  _pendingDeleteSource  = null;
+}
+
+function cancelTeamDelete() {
+  document.getElementById('teamDeleteModal').style.display = 'none';
+  _pendingDeleteTeamId = _pendingDeleteSavedId = _pendingDeleteSource = null;
+}
+
+function removeTeam(teamId) {
+  const t = _teams.find(x => x.id === teamId);
+  _pendingDeleteTeamId  = teamId;
+  _pendingDeleteSource  = 'profile';
+  const nameEl = document.getElementById('teamDeleteName');
+  if (nameEl) nameEl.textContent = t?.teamName || 'this team';
+  const bodyEl = document.getElementById('teamDeleteBody');
+  if (bodyEl) {
+    const buddyCount = (t?.members || []).filter(m => m.uid !== window._fbAuth?.currentUser?.uid).length;
+    bodyEl.textContent = buddyCount > 0
+      ? `This will remove the team for you and ${buddyCount} buddy${buddyCount > 1 ? 's' : ''}. They will be notified.`
+      : 'This will permanently remove the team.';
+  }
+  document.getElementById('teamDeleteModal').style.display = 'flex';
+}
+
+async function _doRemoveTeam(teamId) {
   const uid = window._fbAuth?.currentUser?.uid;
   if (!uid) return;
-  if (!confirm('Remove this team?')) return;
+  const t = _teams.find(x => x.id === teamId);
   try {
+    // Notify each buddy
+    if (t) {
+      const buddies = (t.members || []).filter(m => m.uid !== uid);
+      for (const buddy of buddies) {
+        await window._fbDb.collection('users').doc(buddy.uid)
+          .collection('notifications').add({
+            type:      'team_removed',
+            teamName:  t.teamName,
+            removedBy: _profile?.displayName || 'A teammate',
+            at:        new Date().toISOString(),
+            read:      false,
+          });
+        // Also remove the team doc from each buddy's teams
+        try {
+          await window._fbDb.collection('users').doc(buddy.uid).collection('teams').doc(teamId).delete();
+        } catch(e) {}
+      }
+    }
     await window._fbDb.collection('users').doc(uid).collection('teams').doc(teamId).delete();
-    _teams = _teams.filter(t => t.id !== teamId);
+    _teams = _teams.filter(x => x.id !== teamId);
+    // Remove linked My Scramble entry
+    const before = _savedTeams.length;
+    _savedTeams = _savedTeams.filter(x => x.profileTeamId !== teamId);
+    if (_savedTeams.length !== before) await persistTeams(uid);
     renderTeamsList();
-    showToast('Team removed.', 'info');
+    renderMyData();
+    showToast('Team removed and buddies notified.', 'success');
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
+
+function deleteTeamWithConfirm(savedId) {
+  const t = _savedTeams.find(x => x.id === savedId);
+  _pendingDeleteSavedId = savedId;
+  _pendingDeleteSource  = 'scramble';
+  const nameEl = document.getElementById('teamDeleteName');
+  if (nameEl) nameEl.textContent = t?.teamName || 'this team';
+  const bodyEl = document.getElementById('teamDeleteBody');
+  if (bodyEl) {
+    bodyEl.textContent = t?.profileTeamId
+      ? 'This will remove the team from My Scramble and from your Profile. Your buddies will be notified.'
+      : 'This will permanently remove the team from My Scramble.';
+  }
+  document.getElementById('teamDeleteModal').style.display = 'flex';
+}
+
+async function _doDeleteSavedTeam(savedId) {
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid) return;
+  const t = _savedTeams.find(x => x.id === savedId);
+  _savedTeams = _savedTeams.filter(x => x.id !== savedId);
+  try {
+    await persistTeams(uid);
+    // If linked to a profile team, also remove that
+    if (t?.profileTeamId) {
+      const profileTeam = _teams.find(x => x.id === t.profileTeamId);
+      if (profileTeam) {
+        const buddies = (profileTeam.members || []).filter(m => m.uid !== uid);
+        for (const buddy of buddies) {
+          await window._fbDb.collection('users').doc(buddy.uid)
+            .collection('notifications').add({
+              type: 'team_removed', teamName: profileTeam.teamName,
+              removedBy: _profile?.displayName || 'A teammate',
+              at: new Date().toISOString(), read: false,
+            });
+          try { await window._fbDb.collection('users').doc(buddy.uid).collection('teams').doc(t.profileTeamId).delete(); } catch(e) {}
+        }
+        await window._fbDb.collection('users').doc(uid).collection('teams').doc(t.profileTeamId).delete();
+        _teams = _teams.filter(x => x.id !== t.profileTeamId);
+        renderTeamsList();
+      }
+    }
+    renderMyData();
+    showToast('Team deleted.', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
 
 // Profile course dropdown
 function profileShowCourseDropdown() {
@@ -5355,14 +6008,18 @@ async function loadProfileData(uid) {
     if (snap.exists) { _profile = snap.data(); updateUserPill(); prefillFromProfile(); }
   } catch(e) { console.warn('Could not load profile:', e); }
 
+  // Load buddies
+  await loadBuddiesData(uid);
+
   // Load teams
   try {
     const snap = await window._fbDb.collection('users').doc(uid).collection('teams').get();
     _teams = [];
     snap.forEach(doc => _teams.push({ id: doc.id, ...doc.data() }));
+    renderTeamsList();
   } catch(e) { console.warn('Could not load teams:', e); }
 
-  // Load pending buddy requests
+  // Load pending buddy requests (filter to buddy_request type)
   try {
     const snap = await window._fbDb.collection('users').doc(uid).collection('buddyRequests')
       .where('status', '==', 'pending').get();
@@ -5370,9 +6027,45 @@ async function loadProfileData(uid) {
     snap.forEach(doc => _pendingRequests.push({ id: doc.id, ...doc.data() }));
     updateRequestBadge();
   } catch(e) { console.warn('Could not load requests:', e); }
+
+  // Check for team_removed notifications and show toasts, then mark read
+  try {
+    const snap = await window._fbDb.collection('users').doc(uid)
+      .collection('notifications').where('read','==',false).get();
+    snap.forEach(async doc => {
+      const n = doc.data();
+      if (n.type === 'team_removed')  showToast(`🗑 "${n.teamName}" was removed by ${n.removedBy}.`, 'info');
+      if (n.type === 'added_to_team') showToast(`🏌️ ${n.byName} added you to "${n.teamName}"!`, 'success');
+      if (n.type === 'buddy_accepted') {
+        // The person who accepted our request — add them to our buddies now
+        try {
+          await window._fbDb.collection('users').doc(uid).collection('buddies').doc(n.byUid).set({
+            name:     n.byName,
+            hcp:      n.byHcp ?? null,
+            avatarId: n.byAvatar || null,
+            addedAt:  n.at || new Date().toISOString(),
+          });
+          // Delete matching sentRequests entry so it disappears from the panel
+          if (n.reqId) {
+            try {
+              await window._fbDb.collection('users').doc(uid).collection('sentRequests').doc(n.reqId).delete();
+              _sentBuddyRequests = _sentBuddyRequests.filter(r => r.id !== n.reqId);
+            } catch(e) {}
+          }
+          // Update local state if not already present
+          if (!_buddies.find(b => b.uid === n.byUid)) {
+            _buddies.push({ uid: n.byUid, name: n.byName, hcp: n.byHcp ?? null, avatarId: n.byAvatar || null });
+            renderBuddiesList();
+          }
+          showToast(`${n.byName} accepted your buddy request! 🏌️`, 'success');
+        } catch(e) { console.warn('Could not write reverse buddy:', e); }
+      }
+      await doc.ref.update({ read: true });
+    });
+  } catch(e) {}
 }
 
-function onSignedIn(user) {
+async function onSignedIn(user) {
   const name = user.displayName || user.email.split('@')[0];
   document.getElementById('userPillName').textContent = name;
   document.getElementById('userPill').classList.add('visible');
@@ -5380,8 +6073,8 @@ function onSignedIn(user) {
   document.getElementById('appContent').classList.add('unlocked');
   document.getElementById('bottomTabs').classList.add('visible');
   setGameMode('single');
-  loadSavedData(user.uid);
-  loadProfileData(user.uid);
+  await loadSavedData(user.uid);    // must complete BEFORE loadProfileData
+  loadProfileData(user.uid);        // now _savedTeams is populated for sync checks
   checkForActiveMatch(user.uid);
   initSectionState();
   initTeamPlayers();
@@ -5393,7 +6086,7 @@ function onSignedOut() {
   document.getElementById('appContent').classList.remove('unlocked');
   document.getElementById('bottomTabs').classList.remove('visible');
   _savedCourses = []; _savedTeams = []; _savedRounds = [];
-  _profile = null; _teams = []; _pendingRequests = [];
+  _profile = null; _teams = []; _buddies = []; _sentBuddyRequests = []; _pendingRequests = [];
   // Reset avatar pill
   const imgEl   = document.getElementById('userPillAvatarImg');
   const fallback= document.getElementById('userPillAvatarFallback');
