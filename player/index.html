@@ -716,6 +716,16 @@ input { transition:border-color 0.4s, background 0.2s; }
 /* Course name row */
 .ms-course-name-row { display:flex; align-items:flex-end; gap:8px; margin-bottom:12px; }
 .ms-course-actions { display:flex; gap:6px; padding-bottom:1px; flex-shrink:0; }
+/* Match setup team load picker */
+.ms-team-load-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; background:var(--surface2); border-radius:var(--radius-sm); padding:8px 12px; }
+.ms-team-load-label { font-size:0.72rem; color:var(--muted); flex:1; }
+.ms-team-load-btn { font-size:0.72rem; font-weight:700; color:var(--green); background:none; border:1px solid var(--green); border-radius:var(--radius-sm); padding:4px 10px; cursor:pointer; white-space:nowrap; }
+.ms-team-load-dropdown { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-sm); overflow:hidden; margin-bottom:12px; }
+.ms-team-load-item { display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); }
+.ms-team-load-item:last-child { border-bottom:none; }
+.ms-team-load-item:active { background:var(--surface2); }
+.ms-team-load-name { font-size:0.85rem; font-weight:700; color:var(--white); flex:1; }
+.ms-team-load-meta { font-size:0.7rem; color:var(--muted); }
 
 /* Reset button */
 .ms-reset-btn { background:none; border:1px solid var(--border2); border-radius:var(--radius-sm); color:var(--muted); font-size:0.7rem; padding:6px 10px; cursor:pointer; }
@@ -2511,6 +2521,8 @@ let _buddies = [];   // [{ uid, name, hcp, avatarId, addedAt }]
 let _pendingRequests = []; // incoming buddy requests
 let _sharedCourses = []; // shared course DB — loaded on sign-in
 let _msCourseTees  = []; // tees for currently loaded match setup course
+let _msT1Count = 2; // player count for My Team in match setup (2–4)
+let _msT2Count = 2; // player count for Opponent Team in match setup (2–4)
 let _savedTeams    = []; // array, max 2
 let _savedRounds   = []; // loaded from Firestore, newest first
 
@@ -2790,50 +2802,81 @@ async function joinLookupCode() {
 }
 
 function joinShowConfirm(data) {
-  const teeLabel = { champ:'Championship', main:'Standard', fwd:'Forward' };
+  // Build tee label lookup from match tees if available
+  const courseTees = data.tees || [];
+  function teeLabel(teeVal) {
+    const legacyMap = { champ:'Championship', main:'Standard', fwd:'Forward' };
+    if (typeof teeVal === 'string' && legacyMap[teeVal]) return legacyMap[teeVal];
+    const idx = parseInt(teeVal);
+    if (!isNaN(idx) && courseTees[idx]) return courseTees[idx].label;
+    return teeVal ?? 'Standard';
+  }
 
-  // Build confirmation card showing match details
+  // Opponent card — show ALL players, handle both hcpIndex and hcp field names
+  const oppPlayers = data.teamA.players || [];
+  const oppRows = oppPlayers.map(p => {
+    const hcp = p.hcpIndex ?? p.hcp ?? '—';
+    return `<div class="join-confirm-row"><span>${esc(p.name || '—')}</span><span>${hcp} · ${teeLabel(p.tee)}</span></div>`;
+  }).join('');
+
+  // Format label
+  const fmtMap = {
+    '35_15':'35% / 15%', '25_20':'25% / 20%', '20_15':'20% / 15%', '50_50':'50% / 50%',
+    '20_15_10':'20% / 15% / 10%', '15_12_10':'15% / 12% / 10%',
+    '20_15_10_5':'20% / 15% / 10% / 5%', '15_12_10_7':'15% / 12% / 10% / 7%'
+  };
+  const fmtLabel = data.format ? (fmtMap[data.format] || data.format) : '—';
+
   document.getElementById('joinConfirmContent').innerHTML = `
     <div class="join-confirm-card">
       <div class="join-confirm-card-title">Course</div>
-      <div class="join-confirm-row"><span>Name</span><span>${data.course.name}</span></div>
+      <div class="join-confirm-row"><span>Name</span><span>${esc(data.course.name)}</span></div>
       <div class="join-confirm-row"><span>Holes</span><span>${data.holes}</span></div>
       <div class="join-confirm-row"><span>Rating / Slope / Par</span><span>${data.course.rating} / ${data.course.slope} / ${data.course.par}</span></div>
+      <div class="join-confirm-row"><span>Format</span><span>${fmtLabel}</span></div>
     </div>
     <div class="join-confirm-card">
-      <div class="join-confirm-card-title">Opponent — ${data.teamA.teamName}</div>
-      <div class="join-confirm-row"><span>${data.teamA.players[0]?.name || '—'}</span><span>${data.teamA.players[0]?.hcpIndex ?? '—'} · ${teeLabel[data.teamA.players[0]?.tee] || 'Standard'}</span></div>
-      <div class="join-confirm-row"><span>${data.teamA.players[1]?.name || '—'}</span><span>${data.teamA.players[1]?.hcpIndex ?? '—'} · ${teeLabel[data.teamA.players[1]?.tee] || 'Standard'}</span></div>
-      <div><span class="join-confirm-hcp">Team HCP: ${data.teamA.teamHcp}</span></div>
+      <div class="join-confirm-card-title">Opponent — ${esc(data.teamA.teamName)}</div>
+      ${oppRows || '<div class="join-confirm-row"><span>No player data</span></div>'}
+      <div><span class="join-confirm-hcp">Team HCP: ${data.teamA.teamHcp ?? '—'}</span></div>
     </div>`;
 
-  // Pre-fill Team B fields from match data (host entered these)
-  document.getElementById('join_t2_name').value    = data.teamB.teamName || '';
-  document.getElementById('join_t2p1_name').value  = data.teamB.players[0]?.name || '';
-  document.getElementById('join_t2p1_hcp').value   = data.teamB.players[0]?.hcpIndex ?? '';
-  document.getElementById('join_t2p2_name').value  = data.teamB.players[1]?.name || '';
-  document.getElementById('join_t2p2_hcp').value   = data.teamB.players[1]?.hcpIndex ?? '';
+  // Build dynamic Your Team fields — use teamType to determine player count
+  const teamBPlayers = data.teamB.players || [];
+  const teamType    = data.teamB.teamType || data.teamType || '2P';
+  const expectedCount = teamType === '4P' ? 4 : teamType === '3P' ? 3 : 2;
+  const playerCount   = Math.max(expectedCount, teamBPlayers.length, 2);
 
-  // Set tee selections
-  const p1tee = data.teamB.players[0]?.tee || 'main';
-  const p2tee = data.teamB.players[1]?.tee || 'main';
-  const p1g   = data.teamB.players[0]?.gender || 'M';
-  const p2g   = data.teamB.players[1]?.gender || 'M';
-  const p1teeEl = document.getElementById(`join_t2p1_tee${p1tee === 'champ' ? '1' : p1tee === 'fwd' ? '3' : '2'}`);
-  const p2teeEl = document.getElementById(`join_t2p2_tee${p2tee === 'champ' ? '1' : p2tee === 'fwd' ? '3' : '2'}`);
-  const p1gEl   = document.getElementById(`join_t2p1_g${p1g}`);
-  const p2gEl   = document.getElementById(`join_t2p2_g${p2g}`);
-  if (p1teeEl) p1teeEl.checked = true;
-  if (p2teeEl) p2teeEl.checked = true;
-  if (p1gEl)   p1gEl.checked   = true;
-  if (p2gEl)   p2gEl.checked   = true;
+  let teamFieldsHtml = `<div class="field"><label>Team Name</label><input type="text" id="join_t2_name" placeholder="Your team name" value="${esc(data.teamB.teamName || '')}"></div>`;
 
-  // Switch to step 2
+  for (let pi = 1; pi <= playerCount; pi++) {
+    const p      = teamBPlayers[pi - 1] || {};
+    const req    = pi <= 2 ? `<span style="color:var(--gold)">*</span>` : '';
+    const hcpVal = p.hcpIndex ?? p.hcp ?? '';
+    const teePills = courseTees.length > 0
+      ? courseTees.map((t, i) => `<div class="tee-pill"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee${i}" value="${i}" ${(parseInt(p.tee)===i||(i===0&&!p.tee))?'checked':''}><label for="join_t2p${pi}_tee${i}">${esc(t.label)}</label></div>`).join('')
+      : `<div class="tee-pill t1"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee1" value="champ" ${p.tee==='champ'?'checked':''}><label for="join_t2p${pi}_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
+         <div class="tee-pill t2"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee2" value="main" ${(!p.tee||p.tee==='main')?'checked':''}><label for="join_t2p${pi}_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
+         <div class="tee-pill t3"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee3" value="fwd" ${p.tee==='fwd'?'checked':''}><label for="join_t2p${pi}_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>`;
+    const gM = (!p.gender || p.gender === 'M') ? 'checked' : '';
+    const gF = p.gender === 'F' ? 'checked' : '';
+    teamFieldsHtml += `
+      <div class="match-step-sublabel" style="margin-top:12px;">Player ${pi}</div>
+      <div class="field"><label>Name ${req}</label><input type="text" id="join_t2p${pi}_name" placeholder="${pi <= 2 ? 'Required' : 'Optional'}" value="${esc(p.name || '')}"></div>
+      <div class="grid-2">
+        <div class="field"><label>HCP Index</label><input type="number" id="join_t2p${pi}_hcp" placeholder="0–54" step="0.1" inputmode="decimal" value="${hcpVal}"></div>
+        <div class="field"><label>Gender</label><div class="gender-pills">
+          <div class="gender-pill"><input type="radio" name="join_t2p${pi}_g" id="join_t2p${pi}_gM" value="M" ${gM}><label for="join_t2p${pi}_gM">♂ M</label></div>
+          <div class="gender-pill"><input type="radio" name="join_t2p${pi}_g" id="join_t2p${pi}_gF" value="F" ${gF}><label for="join_t2p${pi}_gF">♀ F</label></div>
+        </div></div>
+      </div>
+      <div class="field"><label>Tee</label><div class="tee-pills">${teePills}</div></div>`;
+  }
+
+  document.getElementById('joinTeamFields').innerHTML = teamFieldsHtml;
   document.getElementById('joinStep1').style.display = 'none';
   document.getElementById('joinStep2').style.display = '';
   document.getElementById('joinMatchOverlay').scrollTop = 0;
-
-  // Reset lookup button for if user goes back
   document.getElementById('joinLookupBtn').disabled = false;
   document.getElementById('joinLookupBtn').textContent = 'Find Match →';
 }
@@ -2841,8 +2884,8 @@ function joinShowConfirm(data) {
 async function joinConfirm() {
   if (!_joinMatchData) return;
 
-  const p1name = document.getElementById('join_t2p1_name').value.trim();
-  const p2name = document.getElementById('join_t2p2_name').value.trim();
+  const p1name = document.getElementById('join_t2p1_name')?.value.trim();
+  const p2name = document.getElementById('join_t2p2_name')?.value.trim();
   if (!p1name) { showToast('Please enter Player 1 name.', 'error'); return; }
   if (!p2name) { showToast('Please enter Player 2 name.', 'error'); return; }
 
@@ -2850,27 +2893,32 @@ async function joinConfirm() {
   btn.disabled = true;
   btn.textContent = 'Joining match…';
 
-  const teamName = document.getElementById('join_t2_name').value.trim() || _joinMatchData.teamB.teamName;
-  const p1hcp    = parseFloat(document.getElementById('join_t2p1_hcp').value);
-  const p1tee    = document.querySelector('input[name="join_t2p1_tee"]:checked')?.value || 'main';
-  const p1g      = document.querySelector('input[name="join_t2p1_g"]:checked')?.value || 'M';
-  const p2hcp    = parseFloat(document.getElementById('join_t2p2_hcp').value);
-  const p2tee    = document.querySelector('input[name="join_t2p2_tee"]:checked')?.value || 'main';
-  const p2g      = document.querySelector('input[name="join_t2p2_g"]:checked')?.value || 'M';
-
+  const teamName   = document.getElementById('join_t2_name')?.value.trim() || _joinMatchData.teamB.teamName;
+  const teamType   = _joinMatchData.teamB.teamType || _joinMatchData.teamType || '2P';
+  const expectedCount = teamType === '4P' ? 4 : teamType === '3P' ? 3 : 2;
+  const playerCount = Math.max(expectedCount, _joinMatchData.teamB.players?.length || 2);
   const uid = window._fbAuth?.currentUser?.uid;
   const code = _joinMatchData.matchId;
 
+  // Collect all players
+  const players = [];
+  for (let pi = 1; pi <= playerCount; pi++) {
+    const name = document.getElementById(`join_t2p${pi}_name`)?.value.trim();
+    const hcp  = parseFloat(document.getElementById(`join_t2p${pi}_hcp`)?.value);
+    const tee  = document.querySelector(`input[name="join_t2p${pi}_tee"]:checked`)?.value || '0';
+    const g    = document.querySelector(`input[name="join_t2p${pi}_g"]:checked`)?.value || 'M';
+    if (name || pi <= 2) {
+      players.push({ name: name || '', hcpIndex: isNaN(hcp) ? 0 : hcp, tee, gender: g });
+    }
+  }
+
   try {
     await window._fbDb.collection('matches').doc(code).update({
-      'teamB.uid':        uid,
-      'teamB.teamName':   teamName,
-      'teamB.players':    [
-        { name: p1name, hcpIndex: isNaN(p1hcp) ? 0 : p1hcp, tee: p1tee, gender: p1g },
-        { name: p2name, hcpIndex: isNaN(p2hcp) ? 0 : p2hcp, tee: p2tee, gender: p2g }
-      ],
-      status:    'active',
-      startedAt: Date.now()
+      'teamB.uid':      uid,
+      'teamB.teamName': teamName,
+      'teamB.players':  players,
+      status:           'active',
+      startedAt:        Date.now()
     });
 
     window._activeMatchId   = code;
@@ -2957,6 +3005,15 @@ function openMatchSetup(forceReset) {
   }
 
   msGoToStep(1);
+  // Hide extra player slots and reset format picker
+  _msT1Count = 2; _msT2Count = 2;
+  ['ms_t1p3_wrap','ms_t1p4_wrap','ms_t2p3_wrap','ms_t2p4_wrap'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  msUpdateTeamControls('t1');
+  msUpdateTeamControls('t2');
+  msUpdateFormatForTeamType('2P');
+  msUpdateTeePills(); // ensure correct tee options from the start
   setTimeout(() => msRenderParGrid(), 50);
 
   const el = document.getElementById('matchSetupOverlay');
@@ -3220,6 +3277,197 @@ function msUpdateParTotal() {
   if (el) el.textContent = total > 0 ? total : '—';
 }
 
+// ── MATCH SETUP: TEAM PICKER FROM MY SCRAMBLE ────────────────
+
+function msToggleTeamPicker(team) {
+  const pickerId = team === 't1' ? 'msTeamPickerT1' : 'msTeamPickerT2';
+  const picker   = document.getElementById(pickerId);
+  if (!picker) return;
+  if (picker.style.display !== 'none') { picker.style.display = 'none'; return; }
+  // Render the list
+  if (_savedTeams.length === 0) {
+    picker.innerHTML = `<div style="padding:12px;font-size:0.8rem;color:var(--muted);">No saved teams yet — save a team in the Calculator tab first.</div>`;
+  } else {
+    picker.innerHTML = _savedTeams.map(t => {
+      const players = t.players && t.players.length
+        ? t.players
+        : [{ name: t.p1Name, hcp: t.p1Hcp }, { name: t.p2Name, hcp: t.p2Hcp }].filter(p => p.name);
+      const meta = players.map(p => {
+        const h = p.hcp != null && !isNaN(p.hcp) ? ` ${p.hcp}` : '';
+        return esc(p.name) + (h ? `<strong>${h}</strong>` : '');
+      }).join(' · ');
+      const badge = t.teamType || (players.length + 'P');
+      return `
+        <div class="ms-team-load-item" onclick="msLoadTeamIntoSetup('${t.id}','${team}')">
+          <div style="flex:1;">
+            <div class="ms-team-load-name">${esc(t.teamName)} <span style="background:var(--green);color:#fff;font-size:0.55rem;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px;">${badge}</span></div>
+            <div class="ms-team-load-meta">${meta}</div>
+          </div>
+          <span style="color:var(--muted);font-size:1rem;">›</span>
+        </div>`;
+    }).join('');
+  }
+  picker.style.display = '';
+}
+
+function msLoadTeamIntoSetup(savedId, team) {
+  const t = _savedTeams.find(x => x.id === savedId);
+  if (!t) return;
+
+  // Build full players list
+  let players = t.players && t.players.length
+    ? t.players.slice()
+    : [{ name: t.p1Name, hcp: t.p1Hcp, gender: 'M', tee: 'main' },
+       { name: t.p2Name, hcp: t.p2Hcp, gender: 'M', tee: 'main' }].filter(p => p.name);
+
+  // For profile-sourced teams, inject owner as Player 1
+  if (t.source === 'profile' && team === 't1' && _profile?.displayName) {
+    const ownerEntry = {
+      name:   _profile.displayName,
+      hcp:    _profile.hcpIndex ?? null,
+      gender: 'M',
+      tee:    'main',
+    };
+    // Don't double-add if already present
+    if (!players.find(p => p.name === _profile.displayName)) {
+      players = [ownerEntry, ...players];
+    }
+  }
+
+  const prefix = team === 't1' ? 'ms_t1' : 'ms_t2';
+
+  // Determine player count from teamType (reliable) not players.length
+  // Profile teams store buddies-only so players.length is 1 less than actual team size
+  const teamType = t.teamType || '2P';
+  const expectedCount = teamType === '4P' ? 4 : teamType === '3P' ? 3 : 2;
+  const playerCount   = Math.max(expectedCount, Math.min(players.length, 4));
+
+  // Show/hide extra player slots
+  ['p3', 'p4'].forEach(p => {
+    const wrap = document.getElementById(`ms_${team}${p}_wrap`);
+    if (wrap) wrap.style.display = 'none';
+  });
+  if (playerCount >= 3) { const w = document.getElementById(`ms_${team}p3_wrap`); if (w) w.style.display = ''; }
+  if (playerCount >= 4) { const w = document.getElementById(`ms_${team}p4_wrap`); if (w) w.style.display = ''; }
+
+  // Set team name
+  setVal(`${prefix}_name`, t.teamName);
+
+  // Fill player slots
+  for (let i = 0; i < playerCount; i++) {
+    const p   = players[i];
+    const pi  = i + 1;
+    setVal(`${prefix}p${pi}_name`, p.name || '');
+    setVal(`${prefix}p${pi}_hcp`,  p.hcp != null && !isNaN(p.hcp) ? p.hcp : '');
+  }
+
+  // Sync count state and update controls
+  msSetCount(team, playerCount);
+  msUpdateTeamControls(team);
+  msUpdateFormatForTeamType(teamType);
+
+  // Close picker
+  const pickerId = team === 't1' ? 'msTeamPickerT1' : 'msTeamPickerT2';
+  const picker   = document.getElementById(pickerId);
+  if (picker) picker.style.display = 'none';
+
+  showToast(`"${t.teamName}" loaded — ${playerCount} players`, 'success');
+}
+
+// ── MATCH SETUP: PLAYER COUNT CONTROLS ───────────────────────
+
+function msGetCount(team) { return team === 't1' ? _msT1Count : _msT2Count; }
+function msSetCount(team, n) { if (team === 't1') _msT1Count = n; else _msT2Count = n; }
+
+function msUpdateTeamControls(team) {
+  const count = msGetCount(team);
+  // Show/hide extra player wraps
+  const p3 = document.getElementById(`ms_${team}p3_wrap`);
+  const p4 = document.getElementById(`ms_${team}p4_wrap`);
+  if (p3) p3.style.display = count >= 3 ? '' : 'none';
+  if (p4) p4.style.display = count >= 4 ? '' : 'none';
+  // Update label + button states
+  const label  = document.getElementById(`ms_${team}_count_label`);
+  const addBtn = document.getElementById(`ms_${team}_add_btn`);
+  const remBtn = document.getElementById(`ms_${team}_remove_btn`);
+  if (label)  label.textContent = `${count} player${count > 1 ? 's' : ''}`;
+  if (addBtn) addBtn.disabled = count >= 4;
+  if (remBtn) remBtn.disabled = count <= 2;
+  // Sync format picker to current max player count
+  const maxCount = Math.max(_msT1Count, _msT2Count);
+  const type = maxCount >= 4 ? '4P' : maxCount >= 3 ? '3P' : '2P';
+  msUpdateFormatForTeamType(type);
+}
+
+function msAddPlayer(team) {
+  const count = msGetCount(team);
+  if (count >= 4) return;
+  msSetCount(team, count + 1);
+  msUpdateTeamControls(team);
+  msUpdateTeePills(); // ensure new slot gets correct tee options
+}
+
+function msRemovePlayer(team) {
+  const count = msGetCount(team);
+  if (count <= 2) return;
+  // Clear the removed player's fields
+  const pi = count;
+  const prefix = team === 't1' ? 'ms_t1' : 'ms_t2';
+  const nameEl = document.getElementById(`${prefix}p${pi}_name`);
+  const hcpEl  = document.getElementById(`${prefix}p${pi}_hcp`);
+  if (nameEl) nameEl.value = '';
+  if (hcpEl)  hcpEl.value  = '';
+  msSetCount(team, count - 1);
+  msUpdateTeamControls(team);
+}
+
+function msResetTeam(team) {
+  const prefix = team === 't1' ? 'ms_t1' : 'ms_t2';
+  // Clear all fields
+  const nameEl = document.getElementById(`${prefix}_name`);
+  if (nameEl) nameEl.value = '';
+  for (let pi = 1; pi <= 4; pi++) {
+    const n = document.getElementById(`${prefix}p${pi}_name`); if (n) n.value = '';
+    const h = document.getElementById(`${prefix}p${pi}_hcp`);  if (h) h.value = '';
+  }
+  // Reset count to 2
+  msSetCount(team, 2);
+  msUpdateTeamControls(team);
+  // Close picker if open
+  const pickerId = team === 't1' ? 'msTeamPickerT1' : 'msTeamPickerT2';
+  const picker   = document.getElementById(pickerId);
+  if (picker) picker.style.display = 'none';
+  showToast(`${team === 't1' ? 'Your' : 'Opponent'} team reset.`, 'info');
+}
+
+function msUpdateFormatForTeamType(teamType) {
+  const f2 = document.getElementById('ms_fmt_2p');
+  const f3 = document.getElementById('ms_fmt_3p');
+  const f4 = document.getElementById('ms_fmt_4p');
+  if (!f2) return;
+  const is4 = teamType === '4P';
+  const is3 = teamType === '3P';
+  f2.style.display = (!is3 && !is4) ? '' : 'none';
+  f3.style.display = is3 ? '' : 'none';
+  f4.style.display = is4 ? '' : 'none';
+  // Auto-select first option of the visible group
+  if (is3) { const r = document.getElementById('ms_fE'); if (r) r.checked = true; }
+  else if (is4) { const r = document.getElementById('ms_fG'); if (r) r.checked = true; }
+  else { const r = document.getElementById('ms_fA'); if (r) r.checked = true; }
+}
+
+// ── MATCH SETUP: SAVE COURSE NUDGE ───────────────────────────
+
+function msCheckSaveNudge() {
+  const nudge = document.getElementById('msSaveCourseNudge');
+  if (!nudge) return;
+  const name = document.getElementById('ms_course_name')?.value.trim();
+  if (!name) { nudge.style.display = 'none'; return; }
+  const alreadySaved = _savedCourses.some(c => c.name.toLowerCase() === name.toLowerCase());
+  const alreadyShared = _sharedCourses.some(c => c.name.toLowerCase() === name.toLowerCase());
+  nudge.style.display = (alreadySaved || alreadyShared) ? 'none' : '';
+}
+
 function msGoToStep(n) {
   [1,2,3,4].forEach(i => {
     const step = document.getElementById('msStep' + i);
@@ -3255,6 +3503,7 @@ function msNext(fromStep) {
       if (isNaN(bp)) { showToast('Please enter Back 9 par.', 'error'); return; }
     }
     msGoToStep(2);
+    msCheckSaveNudge();
   } else if (fromStep === 2) {
     const p1 = document.getElementById('ms_t1p1_name').value.trim();
     const p2 = document.getElementById('ms_t1p2_name').value.trim();
@@ -3311,6 +3560,42 @@ function msCalcHcp(p1hcp, p1teeIdx, p1g, p2hcp, p2teeIdx, p2g) {
   return Math.round(total);
 }
 
+// Multi-player version used by match setup
+function msCalcHcpMulti(players, pcts) {
+  function getTeeData(teeIdx) {
+    if (_msCourseTees && _msCourseTees.length > 0) {
+      const t = _msCourseTees[parseInt(teeIdx) || 0];
+      if (t) return t;
+    }
+    if (_msHoles === 9) {
+      return {
+        rating: parseFloat(document.getElementById('ms_rating').value),
+        slope:  parseInt(document.getElementById('ms_slope').value),
+        par:    parseInt(document.getElementById('ms_par').value)
+      };
+    }
+    return {
+      rating: parseFloat(document.getElementById('ms_combined_rating').value),
+      slope:  parseInt(document.getElementById('ms_combined_slope').value),
+      par:    (parseInt(document.getElementById('ms_front_par').value)||0) + (parseInt(document.getElementById('ms_back_par').value)||0)
+    };
+  }
+
+  const chs = players
+    .filter(p => p.hcp != null && !isNaN(p.hcp))
+    .map(p => {
+      const tee = getTeeData(p.tee);
+      if (isNaN(tee.rating) || isNaN(tee.slope) || isNaN(tee.par)) return null;
+      return p.hcp * (tee.slope / 113) + (tee.rating - tee.par);
+    })
+    .filter(v => v !== null)
+    .sort((a, b) => a - b);
+
+  let total = 0;
+  chs.forEach((ch, i) => { total += ch * (pcts[Math.min(i, pcts.length - 1)] || 0); });
+  return Math.round(total);
+}
+
 function msBuildReview() {
   const courseName = document.getElementById('ms_course_name').value.trim();
   let rating, slope, par, displayName;
@@ -3329,28 +3614,32 @@ function msBuildReview() {
     displayName = courseName; // always use the main course name field
   }
 
-  const t1name  = document.getElementById('ms_t1_name').value.trim() || 'My Team';
-  const t1p1n   = document.getElementById('ms_t1p1_name').value.trim();
-  const t1p1h   = parseFloat(document.getElementById('ms_t1p1_hcp').value);
-  const t1p1tee = document.querySelector('input[name="ms_t1p1_tee"]:checked')?.value || 'main';
-  const t1p1g   = document.querySelector('input[name="ms_t1p1_g"]:checked')?.value || 'M';
-  const t1p2n   = document.getElementById('ms_t1p2_name').value.trim();
-  const t1p2h   = parseFloat(document.getElementById('ms_t1p2_hcp').value);
-  const t1p2tee = document.querySelector('input[name="ms_t1p2_tee"]:checked')?.value || 'main';
-  const t1p2g   = document.querySelector('input[name="ms_t1p2_g"]:checked')?.value || 'M';
+  // Read format from match setup's own selector
+  const msFmtVal = document.querySelector('input[name="ms_fmt"]:checked')?.value || '35_15';
+  const msPcts   = FORMATS[msFmtVal] || FORMATS['35_15'];
 
-  const t2name  = document.getElementById('ms_t2_name').value.trim() || 'Opponent';
-  const t2p1n   = document.getElementById('ms_t2p1_name').value.trim();
-  const t2p1h   = parseFloat(document.getElementById('ms_t2p1_hcp').value);
-  const t2p1tee = document.querySelector('input[name="ms_t2p1_tee"]:checked')?.value || 'main';
-  const t2p1g   = document.querySelector('input[name="ms_t2p1_g"]:checked')?.value || 'M';
-  const t2p2n   = document.getElementById('ms_t2p2_name').value.trim();
-  const t2p2h   = parseFloat(document.getElementById('ms_t2p2_hcp').value);
-  const t2p2tee = document.querySelector('input[name="ms_t2p2_tee"]:checked')?.value || 'main';
-  const t2p2g   = document.querySelector('input[name="ms_t2p2_g"]:checked')?.value || 'M';
+  // Collect all players for each team (up to 4)
+  function collectMsPlayers(ti) {
+    const ps = [];
+    for (let pi = 1; pi <= 4; pi++) {
+      const name = document.getElementById(`ms_t${ti}p${pi}_name`)?.value.trim();
+      const hcp  = parseFloat(document.getElementById(`ms_t${ti}p${pi}_hcp`)?.value);
+      const tee  = document.querySelector(`input[name="ms_t${ti}p${pi}_tee"]:checked`)?.value || '0';
+      const g    = document.querySelector(`input[name="ms_t${ti}p${pi}_g"]:checked`)?.value || 'M';
+      if (name) ps.push({ name, hcp: isNaN(hcp) ? 0 : hcp, tee, gender: g });
+    }
+    return ps;
+  }
 
-  const t1hcp = msCalcHcp(t1p1h, t1p1tee, t1p1g, t1p2h, t1p2tee, t1p2g);
-  const t2hcp = msCalcHcp(t2p1h, t2p1tee, t2p1g, t2p2h, t2p2tee, t2p2g);
+  const t1players = collectMsPlayers(1);
+  const t2players = collectMsPlayers(2);
+
+  const t1name = document.getElementById('ms_t1_name').value.trim() || 'My Team';
+  const t2name = document.getElementById('ms_t2_name').value.trim() || 'Opponent';
+
+  // Calc HCP using msCalcHcpMulti
+  const t1hcp = msCalcHcpMulti(t1players, msPcts);
+  const t2hcp = msCalcHcpMulti(t2players, msPcts);
 
   // Dynamic tee label lookup
   function teeName(idx) {
@@ -3358,7 +3647,12 @@ function msBuildReview() {
       const t = _msCourseTees[parseInt(idx)];
       if (t) return t.label;
     }
-    return { champ:'Championship', main:'Standard', fwd:'Forward' }[idx] || idx;
+    // Fallback: read the label from the rendered pill if available
+    const labelEl = document.querySelector(`label[for="ms_t1p1_tee${idx}"]`);
+    if (labelEl) return labelEl.textContent.trim();
+    // Legacy string keys
+    const legacyMap = { champ:'Championship', main:'Standard', fwd:'Forward', '0':'Medal', '1':'Champion', '2':'Forward' };
+    return legacyMap[String(idx)] || `Tee ${idx}`;
   }
 
   const parArr = (window._msParValues && window._msParValues.length === _msHoles)
@@ -3368,65 +3662,37 @@ function msBuildReview() {
     ? window._msIndexValues.slice()
     : Array.from({length: _msHoles}, (_, i) => i + 1);
 
+  const parSummary = `
+    <table class="ms-par-table">
+      <thead><tr><th>Hole</th>${Array.from({length: Math.min(9,_msHoles)},(_,i)=>`<th>${i+1}</th>`).join('')}</tr></thead>
+      <tbody>
+        <tr><td class="ms-par-table-label">Par</td>${parArr.slice(0,9).map(p=>`<td><strong>${p}</strong></td>`).join('')}</tr>
+        <tr><td class="ms-par-table-label">SI</td>${idxArr.slice(0,9).map(s=>`<td>${s}</td>`).join('')}</tr>
+      </tbody>
+    </table>
+    ${_msHoles===18?`<table class="ms-par-table" style="margin-top:6px;">
+      <thead><tr><th>Hole</th>${Array.from({length:9},(_,i)=>`<th>${i+10}</th>`).join('')}</tr></thead>
+      <tbody>
+        <tr><td class="ms-par-table-label">Par</td>${parArr.slice(9).map(p=>`<td><strong>${p}</strong></td>`).join('')}</tr>
+        <tr><td class="ms-par-table-label">SI</td>${idxArr.slice(9).map(s=>`<td>${s}</td>`).join('')}</tr>
+      </tbody>
+    </table>`:''}`;
+
   _msMatchData = {
     holes:  _msHoles,
     course: { name: displayName, rating, slope, par },
     par:    parArr,
     index:  idxArr,
-    teamA: {
-      teamName: t1name, teamHcp: t1hcp,
-      players: [
-        { name: t1p1n, hcpIndex: isNaN(t1p1h) ? 0 : t1p1h, tee: t1p1tee, gender: t1p1g },
-        { name: t1p2n, hcpIndex: isNaN(t1p2h) ? 0 : t1p2h, tee: t1p2tee, gender: t1p2g }
-      ]
-    },
-    teamB: {
-      teamName: t2name, teamHcp: t2hcp,
-      players: [
-        { name: t2p1n, hcpIndex: isNaN(t2p1h) ? 0 : t2p1h, tee: t2p1tee, gender: t2p1g },
-        { name: t2p2n, hcpIndex: isNaN(t2p2h) ? 0 : t2p2h, tee: t2p2tee, gender: t2p2g }
-      ]
-    }
+    format: msFmtVal,
+    teamA: { teamName: t1name, teamHcp: t1hcp, players: t1players },
+    teamB: { teamName: t2name, teamHcp: t2hcp, players: t2players },
   };
 
-  const parSummary = `
-    <table class="ms-par-table">
-      <thead>
-        <tr>
-          <th>Hole</th>
-          ${Array.from({length: Math.min(9, _msHoles)}, (_, i) => `<th>${i+1}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="ms-par-table-label">Par</td>
-          ${parArr.slice(0,9).map(p => `<td><strong>${p}</strong></td>`).join('')}
-        </tr>
-        <tr>
-          <td class="ms-par-table-label">SI</td>
-          ${idxArr.slice(0,9).map(s => `<td>${s}</td>`).join('')}
-        </tr>
-      </tbody>
-    </table>
-    ${_msHoles === 18 ? `
-    <table class="ms-par-table" style="margin-top:6px;">
-      <thead>
-        <tr>
-          <th>Hole</th>
-          ${Array.from({length: 9}, (_, i) => `<th>${i+10}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="ms-par-table-label">Par</td>
-          ${parArr.slice(9).map(p => `<td><strong>${p}</strong></td>`).join('')}
-        </tr>
-        <tr>
-          <td class="ms-par-table-label">SI</td>
-          ${idxArr.slice(9).map(s => `<td>${s}</td>`).join('')}
-        </tr>
-      </tbody>
-    </table>` : ''}`;
+  const fmtLabel = msPcts.map(p => Math.round(p*100)+'%').join(' / ');
+
+  const playerRows = (players, ti) => players.map(p =>
+    `<div class="ms-review-row"><span>${esc(p.name)}</span><span>${p.hcp} · ${teeName(p.tee)}</span></div>`
+  ).join('');
 
   document.getElementById('msReviewContent').innerHTML = `
     <div class="ms-review-card">
@@ -3434,6 +3700,7 @@ function msBuildReview() {
       <div class="ms-review-row"><span>Name</span><span>${displayName}</span></div>
       <div class="ms-review-row"><span>Holes</span><span>${_msHoles}</span></div>
       <div class="ms-review-row"><span>Rating / Slope / Par</span><span>${rating} / ${slope} / ${par}</span></div>
+      <div class="ms-review-row"><span>Format</span><span>${fmtLabel}</span></div>
       <div style="margin-top:10px;">
         <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Par &amp; Stroke Index</div>
         ${parSummary}
@@ -3441,14 +3708,12 @@ function msBuildReview() {
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Your Team — ${t1name}</div>
-      <div class="ms-review-row"><span>${t1p1n}</span><span>${isNaN(t1p1h)?'—':t1p1h} · ${teeName(t1p1tee)}</span></div>
-      <div class="ms-review-row"><span>${t1p2n}</span><span>${isNaN(t1p2h)?'—':t1p2h} · ${teeName(t1p2tee)}</span></div>
+      ${playerRows(t1players)}
       <div><span class="ms-review-hcp">Team HCP: ${t1hcp}</span></div>
     </div>
     <div class="ms-review-card">
       <div class="ms-review-card-title">Opponent — ${t2name}</div>
-      <div class="ms-review-row"><span>${t2p1n}</span><span>${isNaN(t2p1h)?'—':t2p1h} · ${teeName(t2p1tee)}</span></div>
-      <div class="ms-review-row"><span>${t2p2n}</span><span>${isNaN(t2p2h)?'—':t2p2h} · ${teeName(t2p2tee)}</span></div>
+      ${playerRows(t2players)}
       <div><span class="ms-review-hcp">Team HCP: ${t2hcp}</span></div>
     </div>`;
 }
@@ -3883,6 +4148,8 @@ function msLoadSharedCourse(courseId, slot) {
   }
   window._msCurrentSharedCourseId = courseId;
   showToast(`Loaded "${c.name}" from shared database`, 'success');
+  const nudge = document.getElementById('msSaveCourseNudge');
+  if (nudge) nudge.style.display = 'none';
 }
 
 function msLoadCourseIntoSetupData(c, slot) {
@@ -3984,17 +4251,22 @@ function msLoadCourseIntoSetup(id, slot) {
 // ── TEE SELECTOR ────────────────────────────────────────────
 
 function msUpdateTeePills() {
-  // Render dynamic tee pills for all 4 players based on _msCourseTees
-  const players = ['ms_t1p1','ms_t1p2','ms_t2p1','ms_t2p2'];
+  // Render dynamic tee pills for all players (p1–p4) based on _msCourseTees
+  const players = ['ms_t1p1','ms_t1p2','ms_t1p3','ms_t1p4','ms_t2p1','ms_t2p2','ms_t2p3','ms_t2p4'];
+  const tees = _msCourseTees && _msCourseTees.length
+    ? _msCourseTees
+    : [
+        { label: 'Champion', rating: 0, slope: 113, par: 72 },
+        { label: 'Medal',    rating: 0, slope: 113, par: 72 },
+        { label: 'Forward',  rating: 0, slope: 113, par: 72 },
+      ];
   players.forEach(pfx => {
     const container = document.getElementById(`${pfx}_tee_pills`);
     if (!container) return;
-    const tees = _msCourseTees && _msCourseTees.length
-      ? _msCourseTees
-      : [{ label: 'Medal', rating: 0, slope: 113, par: 72 }];
+    const currentChecked = container.querySelector('input[type="radio"]:checked')?.value;
     container.innerHTML = tees.map((t, i) => `
       <div class="tee-pill">
-        <input type="radio" name="${pfx}_tee" id="${pfx}_tee${i}" value="${i}" ${i===0?'checked':''}>
+        <input type="radio" name="${pfx}_tee" id="${pfx}_tee${i}" value="${i}" ${(currentChecked !== undefined ? String(i) === currentChecked : i === 1) ? 'checked' : ''}>
         <label for="${pfx}_tee${i}">${esc(t.label)}</label>
       </div>`).join('');
   });
@@ -6474,15 +6746,13 @@ function showLiveMatchBanner(label) {
   const textEl = document.getElementById('liveMatchBannerText');
   if (textEl) textEl.textContent = label || '⚡ Live Match in progress — tap to return';
   if (banner) banner.style.display = '';
-  const pageInner = document.querySelector('.page-inner');
-  if (pageInner) pageInner.style.paddingTop = '44px';
+  document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '44px');
 }
 
 function hideLiveMatchBanner() {
   const banner = document.getElementById('liveMatchBanner');
   if (banner) banner.style.display = 'none';
-  const pageInner = document.querySelector('.page-inner');
-  if (pageInner) pageInner.style.paddingTop = '';
+  document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '');
 }
 
 async function resumeLiveScorecard() {
@@ -6540,6 +6810,7 @@ async function endMatch() {
 // ── CHECK FOR ACTIVE MATCH ON LOGIN ───────────────────────
 async function checkForActiveMatch(uid) {
   try {
+    // Try compound queries first (requires Firestore index)
     const snapA = await window._fbDb.collection('matches')
       .where('teamA.uid', '==', uid)
       .where('status', '==', 'active')
@@ -6548,7 +6819,7 @@ async function checkForActiveMatch(uid) {
       const data = snapA.docs[0].data();
       window._activeMatchId   = data.matchId;
       window._activeMatchRole = 'A';
-      showLiveMatchBanner(`⚡ Active match vs ${data.teamB.teamName} — tap to rejoin`);
+      showLiveMatchBanner(`⚡ Active match vs ${data.teamB?.teamName || 'opponent'} — tap to rejoin`);
       return;
     }
     const snapB = await window._fbDb.collection('matches')
@@ -6559,12 +6830,36 @@ async function checkForActiveMatch(uid) {
       const data = snapB.docs[0].data();
       window._activeMatchId   = data.matchId;
       window._activeMatchRole = 'B';
-      showLiveMatchBanner(`⚡ Active match vs ${data.teamA.teamName} — tap to rejoin`);
+      showLiveMatchBanner(`⚡ Active match vs ${data.teamA?.teamName || 'opponent'} — tap to rejoin`);
       return;
     }
   } catch(err) {
-    // Index may not exist yet — user can still rejoin via code
-    console.warn('checkForActiveMatch:', err.message);
+    // Firestore index may not exist — fall back to single-field queries + JS filter
+    console.warn('checkForActiveMatch compound query failed, trying fallback:', err.message);
+    try {
+      // Query by teamA.uid only (no compound index needed)
+      const snapA = await window._fbDb.collection('matches')
+        .where('teamA.uid', '==', uid).limit(5).get();
+      const activeA = snapA.docs.find(d => d.data().status === 'active');
+      if (activeA) {
+        const data = activeA.data();
+        window._activeMatchId   = data.matchId;
+        window._activeMatchRole = 'A';
+        showLiveMatchBanner(`⚡ Active match vs ${data.teamB?.teamName || 'opponent'} — tap to rejoin`);
+        return;
+      }
+      const snapB = await window._fbDb.collection('matches')
+        .where('teamB.uid', '==', uid).limit(5).get();
+      const activeB = snapB.docs.find(d => d.data().status === 'active');
+      if (activeB) {
+        const data = activeB.data();
+        window._activeMatchId   = data.matchId;
+        window._activeMatchRole = 'B';
+        showLiveMatchBanner(`⚡ Active match vs ${data.teamA?.teamName || 'opponent'} — tap to rejoin`);
+      }
+    } catch(err2) {
+      console.warn('checkForActiveMatch fallback also failed:', err2.message);
+    }
   }
 }
 function openLiveScorecard(matchData, role) {
@@ -7519,6 +7814,8 @@ async function createMatch(matchData) {
     startedAt: null,
     completedAt: null,
     holes: matchData.holes,
+    format: matchData.format || '35_15',
+    tees:   _msCourseTees && _msCourseTees.length ? _msCourseTees : [],
     course: matchData.course,
     par:   matchData.par,
     index: matchData.index || Array.from({length: matchData.holes}, (_, i) => i + 1),
@@ -7526,6 +7823,7 @@ async function createMatch(matchData) {
       uid: uid,
       teamName: matchData.teamA.teamName,
       teamHcp: matchData.teamA.teamHcp,
+      teamType: matchData.teamA.teamType || (matchData.teamA.players?.length >= 4 ? '4P' : matchData.teamA.players?.length === 3 ? '3P' : '2P'),
       players: matchData.teamA.players,
       scores: Array(matchData.holes).fill(0),
       holesComplete: 0
@@ -7534,6 +7832,7 @@ async function createMatch(matchData) {
       uid: null,
       teamName: matchData.teamB.teamName,
       teamHcp: matchData.teamB.teamHcp,
+      teamType: matchData.teamB.teamType || (matchData.teamB.players?.length >= 4 ? '4P' : matchData.teamB.players?.length === 3 ? '3P' : '2P'),
       players: matchData.teamB.players,
       scores: Array(matchData.holes).fill(0),
       holesComplete: 0
@@ -7791,11 +8090,26 @@ if ('serviceWorker' in navigator) {
       </div>
 
       <button class="btn-calc" style="margin-top:20px;" onclick="msNext(1)">Next: Your Team →</button>
+      <div id="msSaveCourseNudge" style="display:none;margin-top:10px;text-align:center;">
+        <span style="font-size:0.72rem;color:var(--muted);">Course not saved yet — </span>
+        <button onclick="msSaveCourse()" style="font-size:0.72rem;color:var(--green);background:none;border:none;cursor:pointer;font-weight:700;padding:0;">💾 Save to My Courses</button>
+      </div>
     </div>
 
     <!-- Step 2: My Team -->
     <div class="match-setup-step" id="msStep2" style="display:none;">
-      <div class="match-step-label">Your Team</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="match-step-label" style="margin:0;">Your Team</div>
+        <button class="ms-reset-btn" onclick="msResetTeam('t1')">↺ Reset</button>
+      </div>
+
+      <!-- Load from My Scramble -->
+      <div class="ms-team-load-bar">
+        <span class="ms-team-load-label">📋 Load from My Scramble</span>
+        <button class="ms-team-load-btn" onclick="msToggleTeamPicker('t1')">Choose Team ↓</button>
+      </div>
+      <div id="msTeamPickerT1" class="ms-team-load-dropdown" style="display:none;"></div>
+
       <div class="field"><label>Team Name</label><input type="text" id="ms_t1_name" placeholder="e.g. Team Eagles"></div>
       <div class="match-step-sublabel">Player 1</div>
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t1p1_name" placeholder="Required"></div>
@@ -7805,12 +8119,42 @@ if ('serviceWorker' in navigator) {
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t1p2_name" placeholder="Required"></div>
       <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
       <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t1p2_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t1p2_tee" id="ms_t1p2_tee0" value="0" checked><label for="ms_t1p2_tee0">Medal</label></div></div></div>
-      <button class="btn-calc" style="margin-top:20px;" onclick="msNext(2)">Next: Opponent Team →</button>
+      <!-- Extra players (shown for 3P/4P teams) -->
+      <div id="ms_t1p3_wrap" style="display:none;">
+        <div class="match-step-sublabel" style="margin-top:12px;">Player 3</div>
+        <div class="field"><label>Name</label><input type="text" id="ms_t1p3_name" placeholder="Optional"></div>
+        <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p3_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t1p3_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t1p3_tee" id="ms_t1p3_tee0" value="0" checked><label for="ms_t1p3_tee0">Medal</label></div></div></div>
+      </div>
+      <div id="ms_t1p4_wrap" style="display:none;">
+        <div class="match-step-sublabel" style="margin-top:12px;">Player 4</div>
+        <div class="field"><label>Name</label><input type="text" id="ms_t1p4_name" placeholder="Optional"></div>
+        <div class="field"><label>HCP Index</label><input type="number" id="ms_t1p4_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t1p4_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t1p4_tee" id="ms_t1p4_tee0" value="0" checked><label for="ms_t1p4_tee0">Medal</label></div></div></div>
+      </div>
+      <!-- +/- player controls -->
+      <div class="player-count-controls">
+        <button class="btn-player-remove" id="ms_t1_remove_btn" onclick="msRemovePlayer('t1')">−</button>
+        <span class="player-count-label" id="ms_t1_count_label">2 players</span>
+        <button class="btn-player-add"    id="ms_t1_add_btn"    onclick="msAddPlayer('t1')">+</button>
+      </div>
+      <button class="btn-calc" style="margin-top:4px;" onclick="msNext(2)">Next: Opponent Team →</button>
     </div>
 
     <!-- Step 3: Opponent Team -->
     <div class="match-setup-step" id="msStep3" style="display:none;">
-      <div class="match-step-label">Opponent Team</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="match-step-label" style="margin:0;">Opponent Team</div>
+        <button class="ms-reset-btn" onclick="msResetTeam('t2')">↺ Reset</button>
+      </div>
+
+      <!-- Load from My Scramble -->
+      <div class="ms-team-load-bar">
+        <span class="ms-team-load-label">📋 Load from My Scramble</span>
+        <button class="ms-team-load-btn" onclick="msToggleTeamPicker('t2')">Choose Team ↓</button>
+      </div>
+      <div id="msTeamPickerT2" class="ms-team-load-dropdown" style="display:none;"></div>
+
       <div class="field"><label>Team Name</label><input type="text" id="ms_t2_name" placeholder="e.g. Team Birdies"></div>
       <div class="match-step-sublabel">Player 1</div>
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t2p1_name" placeholder="Required"></div>
@@ -7820,6 +8164,45 @@ if ('serviceWorker' in navigator) {
       <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="ms_t2p2_name" placeholder="Required"></div>
       <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
       <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t2p2_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t2p2_tee" id="ms_t2p2_tee0" value="0" checked><label for="ms_t2p2_tee0">Medal</label></div></div></div>
+      <!-- Extra players (shown for 3P/4P teams) -->
+      <div id="ms_t2p3_wrap" style="display:none;">
+        <div class="match-step-sublabel" style="margin-top:12px;">Player 3</div>
+        <div class="field"><label>Name</label><input type="text" id="ms_t2p3_name" placeholder="Optional"></div>
+        <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p3_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t2p3_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t2p3_tee" id="ms_t2p3_tee0" value="0" checked><label for="ms_t2p3_tee0">Medal</label></div></div></div>
+      </div>
+      <div id="ms_t2p4_wrap" style="display:none;">
+        <div class="match-step-sublabel" style="margin-top:12px;">Player 4</div>
+        <div class="field"><label>Name</label><input type="text" id="ms_t2p4_name" placeholder="Optional"></div>
+        <div class="field"><label>HCP Index</label><input type="number" id="ms_t2p4_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>Tee</label><div class="tee-pills" id="ms_t2p4_tee_pills"><div class="tee-pill"><input type="radio" name="ms_t2p4_tee" id="ms_t2p4_tee0" value="0" checked><label for="ms_t2p4_tee0">Medal</label></div></div></div>
+      </div>
+      <!-- +/- player controls -->
+      <div class="player-count-controls">
+        <button class="btn-player-remove" id="ms_t2_remove_btn" onclick="msRemovePlayer('t2')">−</button>
+        <span class="player-count-label" id="ms_t2_count_label">2 players</span>
+        <button class="btn-player-add"    id="ms_t2_add_btn"    onclick="msAddPlayer('t2')">+</button>
+      </div>
+
+      <!-- Scramble Format -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+        <div class="match-step-sublabel">Scramble Format</div>
+        <div id="ms_fmt_2p" class="fmt-grid" style="margin-top:8px;">
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fA" value="35_15" checked><label for="ms_fA"><strong>35% / 15%</strong>Standard</label></div>
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fB" value="25_20"><label for="ms_fB"><strong>25% / 20%</strong>Higher allowance</label></div>
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fC" value="20_15"><label for="ms_fC"><strong>20% / 15%</strong>Lower allowance</label></div>
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fD" value="50_50"><label for="ms_fD"><strong>50% / 50%</strong>Equal / casual</label></div>
+        </div>
+        <div id="ms_fmt_3p" class="fmt-grid" style="margin-top:8px;display:none;">
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fE" value="20_15_10" checked><label for="ms_fE"><strong>20% / 15% / 10%</strong>Standard 3-player</label></div>
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fF" value="15_12_10"><label for="ms_fF"><strong>15% / 12% / 10%</strong>Lower allowance</label></div>
+        </div>
+        <div id="ms_fmt_4p" class="fmt-grid" style="margin-top:8px;display:none;">
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fG" value="20_15_10_5" checked><label for="ms_fG"><strong>20% / 15% / 10% / 5%</strong>Standard 4-player</label></div>
+          <div class="fmt-pill"><input type="radio" name="ms_fmt" id="ms_fH" value="15_12_10_7"><label for="ms_fH"><strong>15% / 12% / 10% / 7%</strong>Lower allowance</label></div>
+        </div>
+      </div>
+
       <button class="btn-calc" style="margin-top:20px;" onclick="msNext(3)">Next: Review →</button>
     </div>
 
@@ -7905,22 +8288,8 @@ if ('serviceWorker' in navigator) {
       <div class="match-step-label" style="margin-top:20px;">Your Team Details</div>
       <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Check your details below — correct anything that's wrong before joining.</p>
 
-      <div class="field"><label>Team Name</label><input type="text" id="join_t2_name" placeholder="Your team name"></div>
-      <div class="match-step-sublabel">Player 1</div>
-      <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="join_t2p1_name" placeholder="Required"></div>
-      <div class="grid-2">
-        <div class="field"><label>HCP Index</label><input type="number" id="join_t2p1_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="join_t2p1_g" id="join_t2p1_gM" value="M" checked><label for="join_t2p1_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="join_t2p1_g" id="join_t2p1_gF" value="F"><label for="join_t2p1_gF">♀ F</label></div></div></div>
-      </div>
-      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="join_t2p1_tee" id="join_t2p1_tee1" value="champ"><label for="join_t2p1_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="join_t2p1_tee" id="join_t2p1_tee2" value="main" checked><label for="join_t2p1_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="join_t2p1_tee" id="join_t2p1_tee3" value="fwd"><label for="join_t2p1_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
-
-      <div class="match-step-sublabel" style="margin-top:12px;">Player 2</div>
-      <div class="field"><label>Name <span style="color:var(--gold)">*</span></label><input type="text" id="join_t2p2_name" placeholder="Required"></div>
-      <div class="grid-2">
-        <div class="field"><label>HCP Index</label><input type="number" id="join_t2p2_hcp" placeholder="0–54" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label>Gender</label><div class="gender-pills"><div class="gender-pill"><input type="radio" name="join_t2p2_g" id="join_t2p2_gM" value="M" checked><label for="join_t2p2_gM">♂ M</label></div><div class="gender-pill"><input type="radio" name="join_t2p2_g" id="join_t2p2_gF" value="F"><label for="join_t2p2_gF">♀ F</label></div></div></div>
-      </div>
-      <div class="field"><label>Tee</label><div class="tee-pills"><div class="tee-pill t1"><input type="radio" name="join_t2p2_tee" id="join_t2p2_tee1" value="champ"><label for="join_t2p2_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div><div class="tee-pill t2"><input type="radio" name="join_t2p2_tee" id="join_t2p2_tee2" value="main" checked><label for="join_t2p2_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div><div class="tee-pill t3"><input type="radio" name="join_t2p2_tee" id="join_t2p2_tee3" value="fwd"><label for="join_t2p2_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div></div></div>
+      <!-- Dynamic team fields injected by joinShowConfirm() -->
+      <div id="joinTeamFields"></div>
 
       <button class="btn-calc" id="joinConfirmBtn" onclick="joinConfirm()" style="margin-top:20px;">
         Join & Start Scoring →
