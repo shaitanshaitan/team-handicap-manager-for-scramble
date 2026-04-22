@@ -233,7 +233,18 @@ body::before {
 .team-buddy-status { font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:10px; }
 .team-buddy-status.pending { background:rgba(200,120,0,0.15); color:#c87800; }
 .team-buddy-status.active  { background:rgba(42,122,72,0.15);  color:var(--green); }
-/* ── BUDDY SEARCH OVERLAY ─────────────────────────────────── */
+/* ── LEGAL OVERLAY ──────────────────────────────────────────── */
+.legal-overlay { position:fixed; inset:0; background:var(--bg); z-index:220; overflow-y:auto; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.32,0,0,1); }
+.legal-overlay.open { transform:translateY(0); }
+.legal-inner { max-width:480px; margin:0 auto; padding:0 20px 80px; }
+.legal-section { margin-bottom:24px; }
+.legal-section h2 { font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.legal-section p, .legal-section li { font-size:0.82rem; color:var(--white); line-height:1.65; margin-bottom:6px; }
+.legal-section ul { padding-left:18px; margin-bottom:8px; }
+.legal-section a { color:var(--green); text-decoration:underline; }
+.legal-tab-bar { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:20px; margin-top:8px; }
+.legal-tab { flex:1; padding:10px 0; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+.legal-tab.active { color:var(--green); border-bottom-color:var(--green); }
 .buddy-overlay { position:fixed; inset:0; background:var(--bg); z-index:210; overflow-y:auto; transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.32,0,0,1); }
 .buddy-overlay.open { transform:translateY(0); }
 .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0 16px 100px; }
@@ -1615,6 +1626,9 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
         <div class="locked-terms">Free to use · InApp purchases available</div>
+        <div style="margin-top:8px;">
+          <button onclick="openLegal()" style="background:none;border:none;font-size:0.58rem;color:rgba(255,255,255,0.5);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;letter-spacing:0.06em;">Privacy Policy · Legal Notice</button>
+        </div>
       </div>
 
       <!-- App content (revealed on login) -->
@@ -2235,7 +2249,174 @@ input { transition:border-color 0.4s, background 0.2s; }
   </div>
 </div>
 
-<!-- SI EDITOR POPUP -->
+<!-- LEGAL & PRIVACY OVERLAY -->
+<div class="legal-overlay" id="legalOverlay">
+  <div class="legal-inner">
+    <div class="profile-header">
+      <button class="btn-back" onclick="closeLegal()">← Back</button>
+      <div class="profile-title">Legal & Privacy</div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="legal-tab-bar">
+      <button class="legal-tab active" id="legalTabPrivacy" onclick="showLegalTab('privacy')">Privacy Policy</button>
+      <button class="legal-tab"        id="legalTabLegal"   onclick="showLegalTab('legal')">Legal Notice</button>
+      <button class="legal-tab"        id="legalTabCookies" onclick="showLegalTab('cookies')">Cookies</button>
+    </div>
+
+    <!-- Privacy Policy -->
+    <div id="legalContentPrivacy">
+      <div class="legal-section">
+        <h2>Who we are</h2>
+        <p>Parmate is a WHS-correct scramble handicap platform operated by <strong>The Ninth Tee</strong>, registered in the Netherlands (KvK: 98566903).</p>
+        <p>Our app is currently available at <strong>teamhcp.therookiegolfer.com</strong>. We will be migrating to <strong>parmate.golf</strong> in the near future.</p>
+        <p>Contact: <a href="mailto:privacy@theninthtee.com">privacy@theninthtee.com</a></p>
+      </div>
+
+      <div class="legal-section">
+        <h2>What data we collect</h2>
+        <ul>
+          <li><strong>Account data</strong> — email address, display name (provided at registration via Google Sign-In or email/password)</li>
+          <li><strong>Profile data</strong> — handicap index, home course, avatar selection (voluntarily provided by you)</li>
+          <li><strong>Usage data</strong> — saved courses, teams, scorecards, match history (stored to provide the service)</li>
+          <li><strong>Technical data</strong> — device type, browser, Firebase session tokens (automatically collected by Firebase)</li>
+        </ul>
+        <p>We do <strong>not</strong> collect location data, payment card data, or sell your data to third parties.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>How we use your data</h2>
+        <ul>
+          <li>To provide and improve the Parmate service</li>
+          <li>To enable multiplayer match play between users</li>
+          <li>To allow users to find and connect with other golfers ("buddies")</li>
+          <li>To calculate WHS-correct scramble handicaps</li>
+        </ul>
+        <p>Legal basis (GDPR Art. 6): <strong>Performance of a contract</strong> (providing the service you signed up for) and <strong>Legitimate interest</strong> (improving the app).</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Third-party services</h2>
+        <ul>
+          <li><strong>Google Firebase</strong> (Authentication + Firestore) — your data is stored on Google's EU servers. See <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy Policy</a>.</li>
+          <li><strong>Netlify</strong> — app hosting. See <a href="https://www.netlify.com/privacy/" target="_blank">Netlify Privacy Policy</a>.</li>
+        </ul>
+        <p>No advertising, analytics, or tracking services are used.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Your rights (GDPR)</h2>
+        <p>Under EU/EEA law you have the right to:</p>
+        <ul>
+          <li><strong>Access</strong> — request a copy of your personal data</li>
+          <li><strong>Rectification</strong> — correct inaccurate data (via Profile settings)</li>
+          <li><strong>Erasure</strong> — request deletion of your account and all associated data</li>
+          <li><strong>Portability</strong> — receive your data in a structured format</li>
+          <li><strong>Objection</strong> — object to processing based on legitimate interest</li>
+        </ul>
+        <p>To exercise any right, email <a href="mailto:privacy@theninthtee.com">privacy@theninthtee.com</a> or use the button below.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Data retention</h2>
+        <p>Your data is retained as long as your account is active. Rounds and matches are stored indefinitely to preserve your history. You may delete your account at any time.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Data deletion request</h2>
+        <p>Tap below to send a deletion request. We will permanently delete your account and all associated data within 30 days.</p>
+        <button class="btn-calc" style="background:var(--red);margin-top:8px;" onclick="requestDataDeletion()">🗑 Request Account Deletion</button>
+      </div>
+
+      <div class="legal-section">
+        <h2>Last updated</h2>
+        <p>April 2026 · Version 1.0</p>
+        <p style="font-size:0.75rem;color:var(--muted);">This policy will be updated when Parmate migrates to <strong>parmate.golf</strong> and when the Google Play Store app launches. Users will be notified of material changes.</p>
+      </div>
+    </div><!-- /legalContentPrivacy -->
+
+    <div id="legalContentLegal" style="display:none;">
+      <div class="legal-section">
+        <h2>Operator</h2>
+        <p><strong>The Ninth Tee</strong><br>
+        Rijswijkstraat 199<br>
+        1062 XL Amsterdam<br>
+        Netherlands<br>
+        KvK (Chamber of Commerce): <strong>98566903</strong><br>
+        Email: <a href="mailto:legal@theninthtee.com">legal@theninthtee.com</a></p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Product</h2>
+        <p><strong>Parmate</strong> — WHS-correct scramble handicap calculator<br>
+        Current URL: <strong>teamhcp.therookiegolfer.com</strong><br>
+        Future URL: <strong>parmate.golf</strong> (migration in progress)<br>
+        Platform: Progressive Web App (PWA) · Google Play Store (upcoming)</p>
+        <p style="font-size:0.75rem;color:var(--muted);">Note: This app will be available as a downloadable app via the Google Play Store. When this transition occurs, these terms remain in effect. Any material changes will be communicated in advance.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Applicable law</h2>
+        <p>This service is governed by the laws of the <strong>Netherlands</strong>. Any disputes shall be subject to the jurisdiction of Dutch courts.</p>
+        <p>Parmate complies with applicable EU regulations including the General Data Protection Regulation (GDPR) and the Dutch Telecommunications Act (Telecommunicatiewet).</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Disclaimer</h2>
+        <p>Parmate provides handicap calculations based on the <strong>World Handicap System (WHS)</strong>. Results are indicative and for recreational use only. They are not official WHS handicap records. The Ninth Tee accepts no liability for decisions made based on calculated handicaps.</p>
+        <p>The app is provided "as is" without warranty of any kind. The Ninth Tee reserves the right to modify, suspend, or discontinue the service at any time.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Intellectual property</h2>
+        <p>All content, design, branding, and software within Parmate are the property of The Ninth Tee. Unauthorised reproduction or distribution is prohibited.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Contact</h2>
+        <p>For questions or complaints: <a href="mailto:legal@theninthtee.com">legal@theninthtee.com</a></p>
+      </div>
+    </div>
+
+    <!-- Cookies -->
+    <div id="legalContentCookies" style="display:none;">
+      <div class="legal-section">
+        <h2>Our cookie policy</h2>
+        <p>Parmate uses <strong>no advertising cookies, no tracking pixels, and no third-party analytics</strong>.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>What we do use</h2>
+        <ul>
+          <li><strong>Firebase session tokens</strong> — stored in your browser's local storage to keep you signed in. These are strictly necessary for the app to function.</li>
+          <li><strong>PWA cache</strong> — the app is cached by your browser's service worker for offline access. This stores app code only, not personal data.</li>
+        </ul>
+      </div>
+
+      <div class="legal-section">
+        <h2>No consent banner required</h2>
+        <p>Because we use only strictly necessary session tokens (no analytics, no advertising, no profiling), we are not required to show a cookie consent banner under the ePrivacy Directive or Dutch Telecommunications Act.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>How to clear</h2>
+        <p>You can clear all stored session data by signing out of the app and clearing your browser's site data in your device settings. This will sign you out of Parmate.</p>
+      </div>
+
+      <div class="legal-section">
+        <h2>Last updated</h2>
+        <p>April 2026</p>
+      </div>
+    </div>
+
+    <!-- Legal footer -->
+    <div style="text-align:center;padding-top:8px;padding-bottom:16px;">
+      <button onclick="closeProfile();openLegal();" style="background:none;border:none;font-size:0.65rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;">Privacy Policy · Legal Notice · Cookies</button>
+      <div style="font-size:0.58rem;color:var(--muted);margin-top:6px;opacity:0.6;">Parmate by The Ninth Tee · KvK 98566903 · v1.0</div>
+    </div>
+
+  </div>
+</div>
 <div id="siEditorPopup" class="si-editor-popup" style="display:none;">
   <div class="si-editor-backdrop" onclick="closeSiEditor()"></div>
   <div class="si-editor-sheet">
@@ -5330,6 +5511,50 @@ async function doSignOut() {
 // ═══════════════════════════════════════════════════════════
 // PROFILE
 // ═══════════════════════════════════════════════════════════
+
+// ── LEGAL OVERLAY ────────────────────────────────────────────
+
+function openLegal(tab) {
+  showLegalTab(tab || 'privacy');
+  const ov = document.getElementById('legalOverlay');
+  ov.style.display = '';
+  requestAnimationFrame(() => ov.classList.add('open'));
+}
+
+function closeLegal() {
+  const ov = document.getElementById('legalOverlay');
+  ov.classList.remove('open');
+  setTimeout(() => { ov.style.display = 'none'; }, 350);
+}
+
+function showLegalTab(tab) {
+  ['privacy','legal','cookies'].forEach(t => {
+    const content = document.getElementById(`legalContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const btn     = document.getElementById(`legalTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (content) content.style.display = t === tab ? '' : 'none';
+    if (btn)     btn.classList.toggle('active', t === tab);
+  });
+}
+
+async function requestDataDeletion() {
+  const uid = window._fbAuth?.currentUser?.uid;
+  const email = window._fbAuth?.currentUser?.email;
+  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!confirm(`Send a data deletion request for ${email}?\n\nWe will permanently delete your account and all data within 30 days. This cannot be undone.`)) return;
+  try {
+    // Write deletion request to Firestore — admin processes manually
+    await window._fbDb.collection('deletion_requests').add({
+      uid,
+      email:     email || null,
+      requestedAt: new Date().toISOString(),
+      status:    'pending',
+    });
+    showToast('Deletion request submitted. You will receive confirmation within 30 days.', 'success');
+  } catch(e) {
+    // Fallback — email link
+    window.location.href = `mailto:privacy@theninthtee.com?subject=Data Deletion Request&body=Please delete my account. UID: ${uid}, Email: ${email}`;
+  }
+}
 
 function openProfile() {
   renderAvatarGrid();
