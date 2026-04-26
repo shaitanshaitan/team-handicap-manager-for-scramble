@@ -1,28 +1,28 @@
-# ─── TRG · Netlify Configuration ───
+# ─── Parmate · Netlify Configuration ───
 # One repo, two apps:
-#   therookiegolfer.com        → admin app (index.html)
-#   teamhcp.therookiegolfer.com → player app (player/index.html)
+#   parmate.golf       → admin app (index.html)
+#   play.parmate.golf  → player app (player/index.html)
 
 [build]
   publish = "."
 
-# ── Serve player app on teamhcp subdomain ──
+# ── Serve player app on play subdomain ──
 [[redirects]]
-  from   = "https://teamhcp.therookiegolfer.com/*"
+  from   = "https://play.parmate.golf/*"
   to     = "/player/:splat"
   status = 200
   force  = true
 
 # ── Service worker must be served from subdomain root ──
 [[redirects]]
-  from   = "https://teamhcp.therookiegolfer.com/sw.js"
+  from   = "https://play.parmate.golf/sw.js"
   to     = "/player/sw.js"
   status = 200
   force  = true
 
 # ── Manifest ──
 [[redirects]]
-  from   = "https://teamhcp.therookiegolfer.com/manifest.json"
+  from   = "https://play.parmate.golf/manifest.json"
   to     = "/player/manifest.json"
   status = 200
   force  = true
