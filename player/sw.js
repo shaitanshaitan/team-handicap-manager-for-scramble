@@ -1,5 +1,5 @@
 // ─── Parmate Team HCP · Service Worker ───
-const APP_VERSION = 'parmate-team-hcp-v1';
+const APP_VERSION = 'parmate-team-hcp-v2';
 
 // App shell files to cache on install
 const APP_SHELL = [
