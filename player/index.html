@@ -1594,22 +1594,22 @@ input { transition:border-color 0.4s, background 0.2s; }
     <div id="formSignIn">
       <div class="auth-error" id="signInError"></div>
       <div class="auth-fields">
-        <div class="field"><label>Email</label><input type="email" id="signInEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
-        <div class="field"><label>Password</label><input type="password" id="signInPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
+        <div class="field"><label data-i18n="auth_email">Email</label><input type="email" id="signInEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
+        <div class="field"><label data-i18n="auth_password">Password</label><input type="password" id="signInPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doEmailSignIn()"></div>
       </div>
-      <button class="btn-auth" id="btnSignIn" onclick="doEmailSignIn()">Sign In →</button>
-      <div class="auth-switch">No account? <button onclick="switchToRegister()">Create one</button></div>
+      <button class="btn-auth" id="btnSignIn" onclick="doEmailSignIn()" data-i18n="auth_signin">Sign In →</button>
+      <div class="auth-switch"><span data-i18n="auth_noaccount">No account?</span> <button onclick="switchToRegister()" data-i18n="auth_createone">Create one</button></div>
     </div>
     <div id="formRegister" style="display:none;">
       <div class="auth-error" id="registerError"></div>
       <div class="auth-fields">
-        <div class="field"><label>Name</label><input type="text" id="regName" placeholder="Your name" autocomplete="name"></div>
-        <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" inputmode="email"></div>
-        <div class="field"><label>Password</label><input type="password" id="regPass" placeholder="Min. 6 characters" autocomplete="new-password"></div>
-        <div class="field"><label>Confirm Password</label><input type="password" id="regPassConfirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <div class="field"><label data-i18n="auth_name">Name</label><input type="text" id="regName" placeholder="Your name" autocomplete="name"></div>
+        <div class="field"><label data-i18n="auth_email">Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" inputmode="email"></div>
+        <div class="field"><label data-i18n="auth_password">Password</label><input type="password" id="regPass" placeholder="Min. 6 characters" autocomplete="new-password"></div>
+        <div class="field"><label data-i18n="auth_confirmpass">Confirm Password</label><input type="password" id="regPassConfirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
       </div>
-      <button class="btn-auth" id="btnRegister" onclick="doRegister()">Create Account →</button>
-      <div class="auth-switch">Already have an account? <button onclick="switchToSignIn()">Sign in</button></div>
+      <button class="btn-auth" id="btnRegister" onclick="doRegister()" data-i18n="auth_register">Create Account →</button>
+      <div class="auth-switch"><span data-i18n="auth_haveaccount">Already have an account?</span> <button onclick="switchToSignIn()" data-i18n="auth_signinlink">Sign in</button></div>
     </div>
   </div>
 </div>
@@ -1627,27 +1627,31 @@ input { transition:border-color 0.4s, background 0.2s; }
       <div id="lockedHero" class="locked-hero">
         <span class="locked-hero-flag">⛳</span>
         <h1><em>Parmate</em></h1>
-        <div class="locked-hero-sub">Scramble Handicap Calculator</div>
-        <div class="locked-hero-desc">Sign in to calculate team handicaps.</div>
+        <div class="locked-hero-sub" data-i18n="login_sub">Scramble Handicap Calculator</div>
+        <div class="locked-hero-desc" data-i18n="login_desc">Sign in to calculate team handicaps.</div>
         <div class="locked-features">
-          <div class="locked-feature"><div class="locked-feature-icon">🏌️</div>WHS scramble handicap calculator</div>
-          <div class="locked-feature"><div class="locked-feature-icon">💾</div>Save courses & teams & scorecards</div>
-          <div class="locked-feature"><div class="locked-feature-icon">📍</div>9 and 18 hole support</div>
+          <div class="locked-feature"><div class="locked-feature-icon">🏌️</div><span data-i18n="login_feat1">WHS scramble handicap calculator</span></div>
+          <div class="locked-feature"><div class="locked-feature-icon">💾</div><span data-i18n="login_feat2">Save courses & teams & scorecards</span></div>
+          <div class="locked-feature"><div class="locked-feature-icon">📍</div><span data-i18n="login_feat3">9 and 18 hole support</span></div>
         </div>
-        <button class="btn-locked-signin" onclick="openAuthModal()">Sign In / Create Account →</button>
-        <div class="locked-terms">Free to use · InApp purchases available</div>
+        <button class="btn-locked-signin" onclick="openAuthModal()" data-i18n="login_signin_btn">Sign In / Create Account →</button>
+        <div class="locked-terms" data-i18n="login_terms">Free to use · InApp purchases available</div>
         <div style="margin-top:8px;">
-          <button onclick="openLegal()" style="background:none;border:none;font-size:0.58rem;color:rgba(255,255,255,0.5);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;letter-spacing:0.06em;">Privacy Policy · Legal Notice</button>
+          <button onclick="openLegal()" style="background:none;border:none;font-size:0.58rem;color:rgba(255,255,255,0.5);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;letter-spacing:0.06em;" data-i18n="login_privacy">Privacy Policy · Legal Notice</button>
         </div>
       </div>
 
       <!-- App content (revealed on login) -->
       <div class="app-content" id="appContent">
 
-        <header class="header">
+        <header class="header" style="position:relative;">
           <span class="header-flag">⛳</span>
           <h1><em>Parmate</em></h1>
-          <div class="header-sub">Scramble Handicap Calculator</div>
+          <div class="header-sub" data-i18n="header_sub">Scramble Handicap Calculator</div>
+          <button id="langToggleBtn" onclick="setLang(_lang==='nl'?'en':'nl')"
+            style="position:absolute;top:12px;right:80px;background:none;border:1px solid var(--border2);border-radius:20px;padding:3px 10px;font-size:0.68rem;font-weight:700;color:var(--muted);cursor:pointer;letter-spacing:0.06em;z-index:2;">
+            EN / NL
+          </button>
           <div class="header-auth">
             <div class="user-pill" id="userPill" onclick="openProfile()">
               <div class="user-pill-avatar" id="userPillAvatar">
@@ -1664,13 +1668,13 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="mode-toggle">
           <button class="mode-btn active" id="modeSingle" onclick="setGameMode('single')">
             <span class="mode-btn-icon">🏌️</span>
-            <span class="mode-btn-label">Single</span>
-            <span class="mode-btn-desc">vs the course</span>
+            <span class="mode-btn-label" data-i18n="mode_single">Single</span>
+            <span class="mode-btn-desc" data-i18n="mode_single_desc">vs the course</span>
           </button>
           <button class="mode-btn" id="modeMatch" onclick="setGameMode('match')">
             <span class="mode-btn-icon">⚔️</span>
-            <span class="mode-btn-label">Match</span>
-            <span class="mode-btn-desc">2 vs 2 teams</span>
+            <span class="mode-btn-label" data-i18n="mode_match">Match</span>
+            <span class="mode-btn-desc" data-i18n="mode_match_desc">2 vs 2 teams</span>
           </button>
         </div>
 
@@ -1678,7 +1682,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="section">
           <div class="section-header" id="sec_course_header" onclick="toggleSection('sec_course')">
             <span class="section-icon">📍</span>
-            <span class="section-title">Course Details</span>
+            <span class="section-title" data-i18n="sec_course">Course Details</span>
             <div class="holes-toggle" onclick="event.stopPropagation()">
               <button class="holes-toggle-btn" id="btn9holes" onclick="setHoles(9)">9</button>
               <button class="holes-toggle-btn active" id="btn18holes" onclick="setHoles(18)">18</button>
@@ -1701,7 +1705,7 @@ input { transition:border-color 0.4s, background 0.2s; }
               </div>
             </div>
 
-            <div class="holes-note" id="holesNote">
+            <div class="holes-note" id="holesNote" data-i18n="note_9hole">
               ⛳ 9-hole mode — enter the <strong>9-hole</strong> rating, slope and par from your scorecard.
             </div>
 
@@ -1763,7 +1767,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="section">
           <div class="section-header" id="sec_format_header" onclick="toggleSection('sec_format')">
             <span class="section-icon">⚙️</span>
-            <span class="section-title">Scramble Format</span>
+            <span class="section-title" data-i18n="sec_format">Scramble Format</span>
             <span class="section-toggle" id="sec_format_toggle">−</span>
           </div>
           <div class="section-body" id="sec_format_body">
@@ -1797,7 +1801,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div class="section">
           <div class="section-header" id="sec_myteam_header" onclick="toggleSection('sec_myteam')">
             <span class="section-icon">🏌️</span>
-            <span class="section-title">My Team</span>
+            <span class="section-title" data-i18n="sec_team1">My Team</span>
             <button class="btn-save-inline" id="saveTeamBtn" onclick="event.stopPropagation();saveTeam()">💾 Save</button>
             <span class="section-toggle" id="sec_myteam_toggle">−</span>
           </div>
@@ -1818,7 +1822,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
         <!-- OPPONENT TEAM -->
         <div class="section" id="opponentSection">
-          <div class="section-header"><span class="section-icon">🏌️</span><span class="section-title">Opponent Team</span></div>
+          <div class="section-header"><span class="section-icon">🏌️</span><span class="section-title" data-i18n="sec_team2">Opponent Team</span></div>
           <div class="section-body">
             <div class="team-label">
               <div class="team-label-num">2</div>
@@ -1839,7 +1843,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
         <!-- sticky calc button — sits above bottom tab bar -->
         <div class="calc-wrap">
-          <button class="btn-calc" onclick="calculate()">Calculate Team Handicaps →</button>
+          <button class="btn-calc" onclick="calculate()" data-i18n="btn_calculate">Calculate Team Handicaps →</button>
         </div>
 
       </div><!-- /appContent -->
@@ -1857,7 +1861,7 @@ input { transition:border-color 0.4s, background 0.2s; }
       <!-- COURSES -->
       <div class="mydata-section-label" onclick="toggleMydataSection('ms_courses')" style="cursor:pointer;">
         <span id="ms_courses_toggle" style="margin-right:6px;font-size:1rem;color:var(--muted);font-weight:700;">−</span>
-        <span class="mydata-section-label-text">📍 Courses</span>
+        <span class="mydata-section-label-text">📍 <span data-i18n="ms_courses">Courses</span></span>
         <span class="mydata-section-label-count" id="courseCount">0 / 20</span>
       </div>
       <div id="ms_courses_body">
@@ -1883,7 +1887,7 @@ input { transition:border-color 0.4s, background 0.2s; }
       <!-- TEAMS -->
       <div class="mydata-section-label" onclick="toggleMydataSection('ms_teams')" style="cursor:pointer;">
         <span id="ms_teams_toggle" style="margin-right:6px;font-size:1rem;color:var(--muted);font-weight:700;">−</span>
-        <span class="mydata-section-label-text">🏌️ My Teams</span>
+        <span class="mydata-section-label-text">🏌️ <span data-i18n="ms_teams">My Teams</span></span>
         <span class="mydata-section-label-count" id="teamCount">0 / 2</span>
       </div>
       <div id="ms_teams_body">
@@ -1942,18 +1946,18 @@ input { transition:border-color 0.4s, background 0.2s; }
 <nav class="bottom-tabs" id="bottomTabs">
   <button class="tab-btn-bar active" id="tabBtnCalc" onclick="switchTab('calc')">
     <span class="tab-btn-icon">⛳</span>
-    <span class="tab-btn-label">Calculator</span>
+    <span class="tab-btn-label" data-i18n="tab_calc">Calculator</span>
   </button>
   <button class="tab-btn-bar" id="tabBtnMyData" onclick="switchTab('mydata')">
     <span class="tab-btn-icon">📁</span>
-    <span class="tab-btn-label">My Scramble</span>
+    <span class="tab-btn-label" data-i18n="tab_my">My Scramble</span>
   </button>
 </nav>
 
 <!-- LIVE MATCH RETURN BANNER -->
 <div id="liveMatchBanner" style="display:none;" onclick="resumeLiveScorecard()" class="live-match-banner">
   <span class="live-match-banner-dot"></span>
-  <span class="live-match-banner-text" id="liveMatchBannerText">⚡ Live Match in progress — tap to return</span>
+  <span class="live-match-banner-text" id="liveMatchBannerText" data-i18n="banner_live">⚡ Live Match in progress — tap to return</span>
   <span class="live-match-banner-arrow">›</span>
 </div>
 
@@ -1997,22 +2001,22 @@ input { transition:border-color 0.4s, background 0.2s; }
       <!-- Single mode banner -->
       <div class="sc-score-banner" id="sc_singleBanner">
         <div class="sc-score-item">
-          <div class="sc-score-label">Gross</div>
+          <div class="sc-score-label" data-i18n="sc_gross">Gross</div>
           <div class="sc-score-val" id="sc_gross">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Par Played</div>
+          <div class="sc-score-label" data-i18n="sc_par_played">Par Played</div>
           <div class="sc-score-val" id="sc_parTotal">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">vs Par</div>
+          <div class="sc-score-label" data-i18n="sc_vs_par">vs Par</div>
           <div class="sc-score-val" id="sc_vsPar">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Holes</div>
+          <div class="sc-score-label" data-i18n="sc_holes">Holes</div>
           <div class="sc-holes-progress" id="sc_holesProgress">0 / 18</div>
         </div>
       </div>
@@ -2027,7 +2031,7 @@ input { transition:border-color 0.4s, background 0.2s; }
         </div>
         <div class="sc-match-divider"></div>
         <div class="sc-match-status">
-          <div class="sc-match-status-label" id="sc_statusLabel">Holes</div>
+          <div class="sc-match-status-label" id="sc_statusLabel" data-i18n="sc_holes">Holes</div>
           <div class="sc-match-status-val" id="sc_matchStatus">0/18</div>
         </div>
         <div class="sc-match-divider"></div>
@@ -2041,10 +2045,10 @@ input { transition:border-color 0.4s, background 0.2s; }
 
       <!-- Column headers (injected dynamically) -->
       <div class="sc-col-header" id="sc_colHeader">
-        <div class="sc-col-label">Hole</div>
-        <div class="sc-col-label">Par</div>
-        <div class="sc-col-label score-col">Score</div>
-        <div class="sc-col-label badge-col">Badge</div>
+        <div class="sc-col-label" data-i18n="sc_hole">Hole</div>
+        <div class="sc-col-label" data-i18n="sc_par">Par</div>
+        <div class="sc-col-label score-col" data-i18n="sc_score_col">Score</div>
+        <div class="sc-col-label badge-col" data-i18n="sc_badge_col">Badge</div>
       </div>
     </div>
 
@@ -2071,7 +2075,7 @@ input { transition:border-color 0.4s, background 0.2s; }
           <div class="sc-carousel-team-name" id="sc_carouselMyName">My Team</div>
           <div class="sc-carousel-score-tap" id="sc_carouselMyScore" onclick="carouselOpenNumpad('my')">
             <div class="sc-carousel-score-val" id="sc_carouselMyVal">–</div>
-            <div class="sc-carousel-score-hint" id="sc_carouselMyHint">tap to score</div>
+            <div class="sc-carousel-score-hint" id="sc_carouselMyHint" data-i18n="sc_tap_to_score">tap to score</div>
           </div>
         </div>
         <div class="sc-carousel-result-badge" id="sc_carouselResult"></div>
@@ -2089,14 +2093,14 @@ input { transition:border-color 0.4s, background 0.2s; }
 
       <!-- All holes button -->
       <div style="text-align:center;margin-top:12px;">
-        <button class="sc-all-holes-btn" onclick="showAllHoles()">≡ All Holes</button>
+        <button class="sc-all-holes-btn" onclick="showAllHoles()" data-i18n="sc_all_holes">≡ All Holes</button>
       </div>
 
     </div>
 
     <!-- Bottom save button -->
     <div class="sc-save-bottom">
-      <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()">💾 Save Round</button>
+      <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()" data-i18n="sc_save_round">💾 Save Round</button>
     </div>
 
   </div>
@@ -2153,8 +2157,8 @@ input { transition:border-color 0.4s, background 0.2s; }
   <div class="profile-inner">
     <div class="profile-header">
       <button class="btn-back" onclick="closeProfile()">← Back</button>
-      <div class="profile-title">My Profile</div>
-      <button class="btn-signout" onclick="doSignOut()" style="font-size:0.65rem;">Sign Out</button>
+      <div class="profile-title" data-i18n="profile_title">My Profile</div>
+      <button class="btn-signout" onclick="doSignOut()" style="font-size:0.65rem;" data-i18n="btn_signout">Sign Out</button>
     </div>
 
     <!-- Pending requests banner -->
@@ -2198,21 +2202,21 @@ input { transition:border-color 0.4s, background 0.2s; }
           <input type="number" id="profileHcp" placeholder="0–54" step="0.1" min="0" max="54" inputmode="decimal">
         </div>
         <div class="field" style="margin-top:12px;">
-          <label>Home Course</label>
+          <label data-i18n="profile_homecourse">Home Course</label>
           <div style="position:relative;">
             <input type="text" id="profileHomeCourse" placeholder="Search shared courses…"
               oninput="profileFilterCourses()" onfocus="profileShowCourseDropdown()" autocomplete="off">
             <div id="profileCourseDropdown" class="ms-course-dropdown" style="display:none;"></div>
           </div>
         </div>
-        <button class="btn-calc" style="margin-top:16px;" onclick="saveProfile()">💾 Save Profile</button>
+        <button class="btn-calc" style="margin-top:16px;" onclick="saveProfile()" data-i18n="profile_save">💾 Save Profile</button>
       </div>
     </div>
 
     <!-- My Buddies -->
     <div class="profile-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div class="profile-card-title" style="margin-bottom:0;">My Buddies</div>
+        <div class="profile-card-title" style="margin-bottom:0;" data-i18n="profile_buddies">My Buddies</div>
         <button class="btn-save-inline" style="padding:7px 14px;" onclick="openBuddySearch()">🔍 Find Buddy</button>
       </div>
       <div id="profileBuddiesList"></div>
@@ -2420,7 +2424,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
     <!-- Legal footer -->
     <div style="text-align:center;padding-top:8px;padding-bottom:16px;">
-      <button onclick="closeProfile();openLegal();" style="background:none;border:none;font-size:0.65rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;">Privacy Policy · Legal Notice · Cookies</button>
+      <button onclick="closeProfile();openLegal();" style="background:none;border:none;font-size:0.65rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;" data-i18n="profile_legal">Privacy Policy · Legal Notice · Cookies</button>
       <div style="font-size:0.58rem;color:var(--muted);margin-top:6px;opacity:0.6;">Parmate by The Ninth Tee · KvK 98566903 · v1.0</div>
     </div>
 
@@ -2433,8 +2437,8 @@ input { transition:border-color 0.4s, background 0.2s; }
     <div class="whats-new-header">
       <div class="whats-new-crown">👑</div>
       <div>
-        <div class="whats-new-title">What's New in Parmate</div>
-        <div class="whats-new-version">Beta v0.9 — April 2026</div>
+        <div class="whats-new-title" data-i18n="wn_title">What's New in Parmate</div>
+        <div class="whats-new-version" data-i18n="wn_version">Beta v0.9 — April 2026</div>
       </div>
     </div>
 
@@ -2493,7 +2497,7 @@ input { transition:border-color 0.4s, background 0.2s; }
       <div style="font-size:0.75rem;color:var(--muted);line-height:1.5;">This is a beta release. Some features are still being refined. Found a bug? Email <a href="mailto:feedback@theninthtee.com" style="color:var(--green);">feedback@theninthtee.com</a></div>
     </div>
 
-    <button class="btn-calc" style="margin-top:16px;width:100%;" onclick="dismissWhatsNew()">Let's Play 🏌️</button>
+    <button class="btn-calc" style="margin-top:16px;width:100%;" onclick="dismissWhatsNew()" data-i18n="wn_cta">Let's Play 🏌️</button>
   </div>
 </div>
 <div id="siEditorPopup" class="si-editor-popup" style="display:none;">
@@ -2515,7 +2519,7 @@ input { transition:border-color 0.4s, background 0.2s; }
   <div class="buddy-overlay-inner">
     <div class="profile-header">
       <button class="btn-back" onclick="closeBuddySearch()">← Back</button>
-      <div class="profile-title">Find a Buddy</div>
+      <div class="profile-title" data-i18n="profile_findbud">Find a Buddy</div>
     </div>
     <div class="buddy-search-bar">
       <span class="buddy-search-bar-icon">🔍</span>
@@ -2698,22 +2702,22 @@ input { transition:border-color 0.4s, background 0.2s; }
       <!-- Single mode banner -->
       <div class="sc-score-banner" id="rv_singleBanner">
         <div class="sc-score-item">
-          <div class="sc-score-label">Gross</div>
+          <div class="sc-score-label" data-i18n="sc_gross">Gross</div>
           <div class="sc-score-val" id="rv_gross">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Par Played</div>
+          <div class="sc-score-label" data-i18n="sc_par_played">Par Played</div>
           <div class="sc-score-val" id="rv_par">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">vs Par</div>
+          <div class="sc-score-label" data-i18n="sc_vs_par">vs Par</div>
           <div class="sc-score-val" id="rv_vsPar">–</div>
         </div>
         <div class="sc-score-divider"></div>
         <div class="sc-score-item">
-          <div class="sc-score-label">Holes</div>
+          <div class="sc-score-label" data-i18n="sc_holes">Holes</div>
           <div class="sc-holes-progress" id="rv_holes">–</div>
         </div>
       </div>
@@ -2740,7 +2744,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
       <!-- Column headers (set dynamically) -->
       <div id="rv_colHeader" class="rv-col-header">
-        <div class="sc-col-label">Hole</div>
+        <div class="sc-col-label" data-i18n="sc_hole">Hole</div>
         <div class="sc-col-label" style="text-align:center;">Par</div>
         <div class="sc-col-label" style="text-align:center;">Score</div>
         <div class="sc-col-label" style="text-align:right;">Badge</div>
@@ -2756,6 +2760,483 @@ input { transition:border-color 0.4s, background 0.2s; }
 <div class="toast" id="toast"></div>
 
 <script>
+// ═══════════════════════════════════
+// i18n — TRANSLATIONS
+// ═══════════════════════════════════
+const LANG = {
+  en: {
+    // Tabs
+    tab_calc:        'Calculator',
+    tab_my:          'My Scramble',
+    // Login screen
+    login_sub:       'Scramble Handicap Calculator',
+    login_desc:      'Sign in to calculate team handicaps.',
+    login_feat1:     'WHS scramble handicap calculator',
+    login_feat2:     'Save courses & teams & scorecards',
+    login_feat3:     '9 and 18 hole support',
+    login_signin_btn:'Sign In / Create Account →',
+    login_terms:     'Free to use · InApp purchases available',
+    login_privacy:   'Privacy Policy · Legal Notice',
+    // Auth form
+    auth_email:      'Email',
+    auth_password:   'Password',
+    auth_name:       'Name',
+    auth_confirm_pw: 'Confirm Password',
+    auth_signin_btn: 'Sign In →',
+    auth_register_btn:'Create Account →',
+    auth_no_account: 'No account?',
+    auth_create_one: 'Create one',
+    auth_have_account:'Already have an account?',
+    auth_sign_in:    'Sign in',
+    auth_or:         'or',
+    auth_google:     'Continue with Google',
+    auth_email_ph:   'you@example.com',
+    auth_pw_ph:      'Your password',
+    auth_name_ph:    'Your name',
+    auth_newpw_ph:   'Min. 6 characters',
+    auth_confirmpw_ph:'Repeat password',
+    // Header
+    header_sub:      'Scramble Handicap Calculator',
+    // Game mode
+    mode_single:     'Single',
+    mode_match:      'Match',
+    mode_single_desc:'vs the course',
+    mode_match_desc: '2 vs 2 teams',
+    // Calculator section
+    calc_course:     'Course',
+    calc_holes_9:    '9 holes',
+    calc_holes_18:   '18 holes',
+    calc_course_name:'Course name',
+    calc_rating:     'Rating',
+    calc_slope:      'Slope',
+    calc_par:        'Par',
+    calc_front_par:  'Front 9 Par',
+    calc_back_par:   'Back 9 Par',
+    calc_combined_rating: 'Combined Rating',
+    calc_combined_slope:  'Combined Slope',
+    calc_format:     'Scramble Format',
+    calc_team:       'Team',
+    calc_player:     'Player',
+    calc_name:       'Name',
+    calc_hcp:        'HCP Index',
+    calc_tee:        'Tee',
+    calc_gender:     'Gender',
+    calc_result:     'Team Handicap',
+    calc_btn:        'Calculate →',
+    calc_save_round: '💾 Save Round',
+    // Tee labels
+    tee_champion:    'Champion',
+    tee_medal:       'Medal',
+    tee_forward:     'Forward',
+    // My Scramble
+    my_courses:      'My Courses',
+    my_teams:        'My Teams',
+    my_rounds:       'My Rounds',
+    my_empty_courses:'No courses saved yet.',
+    my_empty_teams:  'No teams saved yet.',
+    my_empty_rounds: 'No rounds saved yet.',
+    my_add_course:   '+ Add Course',
+    my_shared_db:    'Shared Course Database',
+    // Match setup steps
+    ms_step1:        'Course',
+    ms_step2:        'Your Team',
+    ms_step3:        'Opponent Team',
+    ms_step4:        'Review',
+    ms_load_team:    '<span data-i18n="ms_match_load">📋 Load from My Scramble</span>',
+    ms_choose_team:  'Choose Team ↓',
+    ms_team_name:    'Team Name',
+    ms_reset:        '↺ Reset',
+    ms_next_team:    'Next: Your Team →',
+    ms_next_opp:     'Next: Opponent Team →',
+    ms_next_review:  'Next: Review →',
+    ms_generate:     'Generate Match Code →',
+    ms_format:       'Scramble Format',
+    ms_course_nudge: 'Course not saved yet —',
+    ms_save_course:  '💾 Save to My Courses',
+    // Join match
+    join_title:      'Join Match',
+    join_enter_code: 'Enter 5-character match code',
+    join_find:       'Find Match →',
+    join_confirm:    'Join & Start Scoring →',
+    // Profile
+    profile_title:   'My Profile',
+    profile_hcp:     'Handicap Index',
+    profile_home:    'Home Course',
+    profile_avatar:  'Avatar',
+    profile_save:    'Save Profile',
+    profile_signout: 'Sign Out',
+    profile_legal:   'Privacy Policy · Legal Notice · Cookies',
+    // Buddy system
+    buddy_title:     'My Buddies',
+    buddy_find:      '🔍 Find Buddy',
+    buddy_requests:  'Pending Requests',
+    buddy_sent:      'Sent Requests',
+    buddy_add:       'Add Buddy',
+    buddy_remove:    'Remove',
+    // Teams
+    team_create:     'Create Team',
+    team_save:       '💾 Save to My Scramble',
+    team_delete:     'Delete Team',
+    // Scorecard
+    sc_hole:         'Hole',
+    sc_par:          'Par',
+    sc_si:           'SI',
+    sc_score:        'Score',
+    sc_total:        'Total',
+    sc_finish:       'Finish Round',
+    // Common
+    btn_back:        '← Back',
+    btn_save:        'Save',
+    btn_cancel:      'Cancel',
+    btn_delete:      'Delete',
+    btn_edit:        'Edit',
+    btn_close:       'Close',
+    btn_yes:         'Yes',
+    btn_no:          'No',
+    required:        'Required',
+    optional:        'Optional',
+    // Toasts
+    toast_hcp_entry:     "Enter at least one player's handicap.",
+    toast_course_saved:  'Course saved!',
+    toast_course_exists: 'Already saved. Edit it instead.',
+    toast_team_saved:    'Team saved to My Scramble.',
+    toast_team_created:  'Team created! Buddies notified.',
+    toast_round_saved:   'Round saved!',
+    toast_buddy_added:   'Buddy request sent!',
+    toast_buddy_removed: 'Buddy removed.',
+    toast_request_cancelled: 'Request cancelled.',
+    toast_match_created: 'Match created!',
+    toast_match_joined:  'Joined match successfully!',
+    toast_enter_p1:      'Please enter Player 1 name.',
+    toast_enter_p2:      'Please enter Player 2 name.',
+    toast_enter_course:  'Please enter a course name.',
+    toast_enter_rating:  'Please enter a course rating.',
+    toast_enter_slope:   'Please enter a slope rating.',
+    toast_enter_par:     'Please enter course par.',
+    toast_signin_first:  'Please sign in first.',
+    toast_deletion_sent: 'Deletion request submitted. You will receive confirmation within 30 days.',
+    banner_live: '⚡ Live Match in progress — tap to return',
+    // Match gate
+    gate_title:       '⚔️ Match Play',
+    gate_sub:         'How do you want to play?',
+    gate_start_title: 'Start Match',
+    gate_start_desc:  'Set up both teams and generate a match code',
+    gate_join_title:  'Join Match',
+    gate_join_desc:   'Enter a code from the other team',
+    // Match setup title
+    ms_setup_title:   'Start Match',
+    // Join match
+    join_overlay_title: 'Join Match',
+    join_enter_code:  'Enter the 5-character code from your opponent',
+    // ── Keys used by data-i18n HTML attributes ──────────────────
+    btn_calculate:       'Calculate Team Handicap',
+    btn_signout:         'Sign Out',
+    auth_confirmpass:    'Confirm Password',
+    auth_createone:      'Create one',
+    auth_haveaccount:    'Already have an account?',
+    auth_noaccount:      'No account?',
+    auth_register:       'Create Account →',
+    auth_signin:         'Sign In →',
+    auth_signinlink:     'Sign in',
+    ms_courses:          'Courses',
+    ms_teams:            'My Teams',
+    ms_match_choose:     'Choose Team ↓',
+    ms_match_course:     'Course',
+    ms_match_generate:   'Generate Match Code →',
+    ms_match_load:       '📋 Load from My Scramble',
+    ms_match_next2:      'Next: Your Team →',
+    ms_match_next3:      'Next: Opponent Team →',
+    ms_match_next4:      'Next: Review →',
+    ms_match_opponent:   'Opponent Team',
+    ms_match_review:     'Review & Generate',
+    ms_match_yourteam:   'Your Team',
+    note_9hole:          '⛳ 9-hole mode — enter the 9-hole rating, slope and par from your scorecard.',
+    profile_buddies:     'My Buddies',
+    profile_findbud:     '🔍 Find a Buddy',
+    profile_homecourse:  'Home Course',
+    profile_save:        '💾 Save Profile',
+    profile_title:       'My Profile',
+    sec_course:          'Course Details',
+    sec_format:          'Scramble Format',
+    sec_team1:           'My Team',
+    sec_team2:           'Opponent Team',
+    wn_cta:              "Let's Play 🏌️",
+    wn_title:            "What's New in Parmate",
+    wn_version:          'Beta v0.9 — April 2026',
+    // Scorecard
+    sc_gross:         'Gross',
+    sc_par_played:    'Par Played',
+    sc_vs_par:        'vs Par',
+    sc_holes:         'Holes',
+    sc_hole:          'Hole',
+    sc_par:           'Par',
+    sc_score_col:     'Score',
+    sc_badge_col:     'Badge',
+    sc_all_holes:     '≡ All Holes',
+    sc_save_round:    '💾 Save Round',
+    sc_tap_to_score:  'tap to score',
+    sc_easiest:       'Easiest',
+    sc_average:       'Average',
+    sc_hardest:       'Hardest',
+  },
+  nl: {
+    // Tabs
+    tab_calc:        'Calculator',
+    tab_my:          'Mijn Scramble',
+    // Login screen
+    login_sub:       'Scramble Handicap Calculator',
+    login_desc:      'Meld je aan om teamhandicaps te berekenen.',
+    login_feat1:     'WHS scramble handicap calculator',
+    login_feat2:     'Sla banen, teams & scorecards op',
+    login_feat3:     '9 en 18 holes ondersteuning',
+    login_signin_btn:'Aanmelden / Account aanmaken →',
+    login_terms:     'Gratis te gebruiken · In-app aankopen beschikbaar',
+    login_privacy:   'Privacybeleid · Juridische kennisgeving',
+    // Auth form
+    auth_email:      'E-mail',
+    auth_password:   'Wachtwoord',
+    auth_name:       'Naam',
+    auth_confirm_pw: 'Bevestig wachtwoord',
+    auth_signin_btn: 'Aanmelden →',
+    auth_register_btn:'Account aanmaken →',
+    auth_no_account: 'Geen account?',
+    auth_create_one: 'Maak een account',
+    auth_have_account:'Al een account?',
+    auth_sign_in:    'Aanmelden',
+    auth_or:         'of',
+    auth_google:     'Doorgaan met Google',
+    auth_email_ph:   'jij@voorbeeld.nl',
+    auth_pw_ph:      'Jouw wachtwoord',
+    auth_name_ph:    'Jouw naam',
+    auth_newpw_ph:   'Min. 6 tekens',
+    auth_confirmpw_ph:'Herhaal wachtwoord',
+    // Header
+    header_sub:      'Scramble Handicap Calculator',
+    // Game mode
+    mode_single:     'Single',
+    mode_match:      'Matchplay',
+    mode_single_desc:'tegen de baan',
+    mode_match_desc: '2 tegen 2 teams',
+    // Calculator section
+    calc_course:     'Baan',
+    calc_holes_9:    '9 holes',
+    calc_holes_18:   '18 holes',
+    calc_course_name:'Baannaam',
+    calc_rating:     'Rating',
+    calc_slope:      'Slope',
+    calc_par:        'Par',
+    calc_front_par:  'Voor 9 Par',
+    calc_back_par:   'Achter 9 Par',
+    calc_combined_rating: 'Gecombineerde Rating',
+    calc_combined_slope:  'Gecombineerde Slope',
+    calc_format:     'Scramble Formaat',
+    calc_team:       'Team',
+    calc_player:     'Speler',
+    calc_name:       'Naam',
+    calc_hcp:        'Handicap Index',
+    calc_tee:        'Tee',
+    calc_gender:     'Geslacht',
+    calc_result:     'Team Handicap',
+    calc_btn:        'Berekenen →',
+    calc_save_round: '💾 Ronde opslaan',
+    // Tee labels
+    tee_champion:    'Wit',
+    tee_medal:       'Geel',
+    tee_forward:     'Rood',
+    // My Scramble
+    my_courses:      'Mijn Banen',
+    my_teams:        'Mijn Teams',
+    my_rounds:       'Mijn Rondes',
+    my_empty_courses:'Nog geen banen opgeslagen.',
+    my_empty_teams:  'Nog geen teams opgeslagen.',
+    my_empty_rounds: 'Nog geen rondes opgeslagen.',
+    my_add_course:   '+ Baan toevoegen',
+    my_shared_db:    'Gedeelde Baandatabase',
+    // Match setup steps
+    ms_step1:        'Baan',
+    ms_step2:        'Jouw Team',
+    ms_step3:        'Tegenstander',
+    ms_step4:        'Overzicht',
+    ms_load_team:    '📋 Laden uit Mijn Scramble',
+    ms_choose_team:  'Kies team ↓',
+    ms_team_name:    'Teamnaam',
+    ms_reset:        '↺ Reset',
+    ms_next_team:    'Volgende: Jouw Team →',
+    ms_next_opp:     'Volgende: Tegenstander →',
+    ms_next_review:  'Volgende: Overzicht →',
+    ms_generate:     'Match Code genereren →',
+    ms_format:       'Scramble Formaat',
+    ms_course_nudge: 'Baan nog niet opgeslagen —',
+    ms_save_course:  '💾 Opslaan bij Mijn Banen',
+    // Join match
+    join_title:      'Match joinen',
+    join_enter_code: 'Voer de 5-tekens matchcode in',
+    join_find:       'Match zoeken →',
+    join_confirm:    'Joinen & Scoren →',
+    // Profile
+    profile_title:   'Mijn Profiel',
+    profile_hcp:     'Handicap Index',
+    profile_home:    'Thuisbaan',
+    profile_avatar:  'Avatar',
+    profile_save:    'Profiel opslaan',
+    profile_signout: 'Uitloggen',
+    profile_legal:   'Privacybeleid · Juridische kennisgeving · Cookies',
+    // Buddy system
+    buddy_title:     'Mijn Buddies',
+    buddy_find:      '🔍 Buddy zoeken',
+    buddy_requests:  'Openstaande verzoeken',
+    buddy_sent:      'Verzonden verzoeken',
+    buddy_add:       'Buddy toevoegen',
+    buddy_remove:    'Verwijderen',
+    // Teams
+    team_create:     'Team aanmaken',
+    team_save:       '💾 Opslaan in Mijn Scramble',
+    team_delete:     'Team verwijderen',
+    // Scorecard
+    sc_hole:         'Hole',
+    sc_par:          'Par',
+    sc_si:           'SI',
+    sc_score:        'Score',
+    sc_total:        'Totaal',
+    sc_finish:       'Ronde afsluiten',
+    // Common
+    btn_back:        '← Terug',
+    btn_save:        'Opslaan',
+    btn_cancel:      'Annuleren',
+    btn_delete:      'Verwijderen',
+    btn_edit:        'Bewerken',
+    btn_close:       'Sluiten',
+    btn_yes:         'Ja',
+    btn_no:          'Nee',
+    required:        'Verplicht',
+    optional:        'Optioneel',
+    // Toasts
+    toast_hcp_entry:     'Voer minimaal één handicap in.',
+    toast_course_saved:  'Baan opgeslagen!',
+    toast_course_exists: 'Al opgeslagen. Bewerk in plaats daarvan.',
+    toast_team_saved:    'Team opgeslagen in Mijn Scramble.',
+    toast_team_created:  'Team aangemaakt! Buddies ontvangen bericht.',
+    toast_round_saved:   'Ronde opgeslagen!',
+    toast_buddy_added:   'Buddyverzoek verzonden!',
+    toast_buddy_removed: 'Buddy verwijderd.',
+    toast_request_cancelled: 'Verzoek geannuleerd.',
+    toast_match_created: 'Match aangemaakt!',
+    toast_match_joined:  'Succesvol gejoined!',
+    toast_enter_p1:      'Voer naam van Speler 1 in.',
+    toast_enter_p2:      'Voer naam van Speler 2 in.',
+    toast_enter_course:  'Voer een baannaam in.',
+    toast_enter_rating:  'Voer een baanrating in.',
+    toast_enter_slope:   'Voer een slopewaarde in.',
+    toast_enter_par:     'Voer de par van de baan in.',
+    toast_signin_first:  'Meld je eerst aan.',
+    toast_deletion_sent: 'Verwijderingsverzoek ingediend. Je ontvangt bevestiging binnen 30 dagen.',
+    banner_live: '⚡ Live Match bezig — tik om terug te keren',
+    // Match gate
+    gate_title:       '⚔️ Match Play',
+    gate_sub:         'Hoe wil je spelen?',
+    gate_start_title: 'Match starten',
+    gate_start_desc:  'Stel beide teams in en genereer een matchcode',
+    gate_join_title:  'Match joinen',
+    gate_join_desc:   'Voer een code in van het andere team',
+    // Match setup title
+    ms_setup_title:   'Match starten',
+    // Join match
+    join_overlay_title: 'Match joinen',
+    join_enter_code:  'Voer de 5-cijferige code in van je tegenstander',
+    // ── Keys used by data-i18n HTML attributes ──────────────────
+    btn_calculate:       'Teamhandicap berekenen',
+    btn_signout:         'Uitloggen',
+    auth_confirmpass:    'Wachtwoord bevestigen',
+    auth_createone:      'Maak er een aan',
+    auth_haveaccount:    'Al een account?',
+    auth_noaccount:      'Nog geen account?',
+    auth_register:       'Account aanmaken →',
+    auth_signin:         'Aanmelden →',
+    auth_signinlink:     'Aanmelden',
+    ms_courses:          'Mijn Banen',
+    ms_teams:            'Mijn Teams',
+    ms_match_choose:     'Kies Team ↓',
+    ms_match_course:     'Baan',
+    ms_match_generate:   'Matchcode genereren →',
+    ms_match_load:       '📋 Laden uit Mijn Scramble',
+    ms_match_next2:      'Volgende: Jouw Team →',
+    ms_match_next3:      'Volgende: Tegenstander →',
+    ms_match_next4:      'Volgende: Overzicht →',
+    ms_match_opponent:   'Tegenstander',
+    ms_match_review:     'Overzicht & Genereren',
+    ms_match_yourteam:   'Jouw Team',
+    note_9hole:          '⛳ 9-holes modus — vul de 9-holes rating, slope en par in van jouw scorecard.',
+    profile_buddies:     'Mijn Buddies',
+    profile_findbud:     '🔍 Buddy zoeken',
+    profile_homecourse:  'Thuisbaan',
+    profile_save:        '💾 Profiel opslaan',
+    profile_title:       'Mijn Profiel',
+    sec_course:          'Baangegevens',
+    sec_format:          'Scramble Formaat',
+    sec_team1:           'Mijn Team',
+    sec_team2:           'Tegenstander',
+    wn_cta:              'Spelen maar 🏌️',
+    wn_title:            'Wat is er nieuw in Parmate',
+    wn_version:          'Beta v0.9 — april 2026',
+    // Scorecard
+    sc_gross:         'Bruto',
+    sc_par_played:    'Gespeelde Par',
+    sc_vs_par:        'vs Par',
+    sc_holes:         'Holes',
+    sc_hole:          'Hole',
+    sc_par:           'Par',
+    sc_score_col:     'Score',
+    sc_badge_col:     'Badge',
+    sc_all_holes:     '≡ Alle Holes',
+    sc_save_round:    '💾 Ronde opslaan',
+    sc_tap_to_score:  'score invullen',
+    sc_easiest:       'Makkelijkst',
+    sc_average:       'Gemiddeld',
+    sc_hardest:       'Moeilijkst',
+  }
+};
+
+let _lang = localStorage.getItem('parmate_lang') ||
+  (navigator.language.startsWith('nl') ? 'nl' : 'en');
+
+function t(key) {
+  return (LANG[_lang] && LANG[_lang][key]) || LANG.en[key] || key;
+}
+
+function setLang(lang) {
+  _lang = lang;
+  localStorage.setItem('parmate_lang', lang);
+  applyLang();
+  updateLangBtn();
+}
+
+function updateLangBtn() {
+  const btn = document.getElementById('langToggleBtn');
+  if (!btn) return;
+  // Show EN / NL with active one bold
+  if (_lang === 'nl') {
+    btn.innerHTML = 'EN / <strong style="color:var(--green)">NL</strong>';
+  } else {
+    btn.innerHTML = '<strong style="color:var(--green)">EN</strong> / NL';
+  }
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      el.placeholder = val;
+    } else {
+      el.textContent = val;
+    }
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+  updateLangBtn();
+}
+
 // ═══════════════════════════════════
 // STATE
 // ═══════════════════════════════════
@@ -3744,7 +4225,7 @@ function msGoToStep(n) {
 function msNext(fromStep) {
   if (fromStep === 1) {
     const name = document.getElementById('ms_course_name').value.trim();
-    if (!name) { showToast('Please enter a course name.', 'error'); return; }
+    if (!name) { showToast(t('toast_enter_course'), 'error'); return; }
     if (_msHoles === 9) {
       const rating = parseFloat(document.getElementById('ms_rating').value);
       const slope  = parseInt(document.getElementById('ms_slope').value);
@@ -3767,14 +4248,14 @@ function msNext(fromStep) {
   } else if (fromStep === 2) {
     const p1 = document.getElementById('ms_t1p1_name').value.trim();
     const p2 = document.getElementById('ms_t1p2_name').value.trim();
-    if (!p1) { showToast('Please enter Player 1 name.', 'error'); return; }
-    if (!p2) { showToast('Please enter Player 2 name.', 'error'); return; }
+    if (!p1) { showToast(t('toast_enter_p1'), 'error'); return; }
+    if (!p2) { showToast(t('toast_enter_p2'), 'error'); return; }
     msGoToStep(3);
   } else if (fromStep === 3) {
     const p1 = document.getElementById('ms_t2p1_name').value.trim();
     const p2 = document.getElementById('ms_t2p2_name').value.trim();
-    if (!p1) { showToast('Please enter Opponent Player 1 name.', 'error'); return; }
-    if (!p2) { showToast('Please enter Opponent Player 2 name.', 'error'); return; }
+    if (!p1) { showToast(t('toast_enter_p1'), 'error'); return; }
+    if (!p2) { showToast(t('toast_enter_p2'), 'error'); return; }
     msBuildReview();
     msGoToStep(4);
   }
@@ -4150,7 +4631,7 @@ function calculate() {
     if (res) { any = true; results.push({ name: team.name, ...res }); }
     else      results.push({ name: team.name, hcp: null, players: [] });
   }
-  if (!any) { showToast("Enter at least one player's handicap.", 'error'); return; }
+  if (!any) { showToast(t('toast_hcp_entry'), 'error'); return; }
   renderResults(results, rating, slope, numVal('course_par') || 72, pcts);
   document.getElementById('resultsOverlay').classList.add('open');
   document.getElementById('resultsOverlay').scrollTop = 0;
@@ -4250,7 +4731,7 @@ function msCollectCourseData() {
 
 async function msShareCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toast_signin_first'), 'error'); return; }
   const data = msCollectCourseData();
   if (!data) { showToast('Please fill in course name, rating and slope first.', 'error'); return; }
 
@@ -4290,14 +4771,14 @@ async function msShareCourse() {
 
 async function msSaveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toast_signin_first'), 'error'); return; }
 
   const name = document.getElementById('ms_course_name').value.trim();
   if (!name) { showToast('Please enter a course name first.', 'error'); return; }
 
   // Duplicate name check
   if (_savedCourses.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-    showToast(`"${name}" is already saved. Edit it instead.`, 'error'); return;
+    showToast(t('toast_course_exists'), 'error'); return;
   }
   if (_savedCourses.length >= MAX_COURSES) {
     showToast(`Maximum ${MAX_COURSES} courses — delete one first.`, 'error'); return;
@@ -4863,7 +5344,7 @@ function openCalcSiEditor(holeIdx) {
 
 async function calcShareCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toast_signin_first'), 'error'); return; }
   const name = val('course_name');
   if (!name) { showToast('Please enter a course name first.', 'error'); return; }
 
@@ -4901,7 +5382,7 @@ async function calcShareCourse() {
 
 async function saveCourse() {
   const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toast_signin_first'), 'error'); return; }
   if (_savedCourses.length >= MAX_COURSES) {
     showToast(`Maximum ${MAX_COURSES} courses — delete one in My Scramble first.`, 'error');
     return;
@@ -5184,7 +5665,7 @@ function selectPlayerSuggestion(ti, pi, name, hcp) {
 // ── SAVE TEAM (updated for multi-player) ────────────────────
 async function saveTeam() {
   const uid = window._fbAuth?.currentUser?.uid;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toast_signin_first'), 'error'); return; }
   // Collect players dynamically
   const players = [];
   for (let pi = 1; pi <= _t1PlayerCount; pi++) {
@@ -5618,7 +6099,7 @@ function showLegalTab(tab) {
 async function requestDataDeletion() {
   const uid = window._fbAuth?.currentUser?.uid;
   const email = window._fbAuth?.currentUser?.email;
-  if (!uid) { showToast('Please sign in first.', 'error'); return; }
+  if (!uid) { showToast(t('toast_signin_first'), 'error'); return; }
   if (!confirm(`Send a data deletion request for ${email}?\n\nWe will permanently delete your account and all data within 30 days. This cannot be undone.`)) return;
   try {
     // Write deletion request to Firestore — admin processes manually
@@ -5628,7 +6109,7 @@ async function requestDataDeletion() {
       requestedAt: new Date().toISOString(),
       status:    'pending',
     });
-    showToast('Deletion request submitted. You will receive confirmation within 30 days.', 'success');
+    showToast(t('toast_deletion_sent'), 'success');
   } catch(e) {
     // Fallback — email link
     window.location.href = `mailto:privacy@theninthtee.com?subject=Data Deletion Request&body=Please delete my account. UID: ${uid}, Email: ${email}`;
@@ -6672,6 +7153,7 @@ async function onSignedIn(user) {
   loadProfileData(user.uid);        // now _savedTeams is populated for sync checks
   checkForActiveMatch(user.uid);
   checkWhatsNew();
+  applyLang();
   initSectionState();
   initTeamPlayers();
 }
@@ -6733,7 +7215,7 @@ function openRoundView(id) {
 
     // Single col header
     document.getElementById('rv_colHeader').innerHTML = `
-      <div class="sc-col-label">Hole</div>
+      <div class="sc-col-label" data-i18n="sc_hole">Hole</div>
       <div class="sc-col-label" style="text-align:center;">Par</div>
       <div class="sc-col-label" style="text-align:center;">Score</div>
       <div class="sc-col-label" style="text-align:right;">Badge</div>`;
@@ -6984,10 +7466,10 @@ function openScorecard() {
     document.getElementById('sc_colHeader').className = 'sc-col-header match';
   } else {
     document.getElementById('sc_colHeader').innerHTML = `
-      <div class="sc-col-label">Hole</div>
-      <div class="sc-col-label">Par</div>
-      <div class="sc-col-label score-col">Score</div>
-      <div class="sc-col-label badge-col">Badge</div>`;
+      <div class="sc-col-label" data-i18n="sc_hole">Hole</div>
+      <div class="sc-col-label" data-i18n="sc_par">Par</div>
+      <div class="sc-col-label score-col" data-i18n="sc_score_col">Score</div>
+      <div class="sc-col-label badge-col" data-i18n="sc_badge_col">Badge</div>`;
     document.getElementById('sc_colHeader').className = 'sc-col-header';
   }
 
@@ -7068,7 +7550,7 @@ function forceCloseScorecard() {
 function showLiveMatchBanner(label) {
   const banner = document.getElementById('liveMatchBanner');
   const textEl = document.getElementById('liveMatchBannerText');
-  if (textEl) textEl.textContent = label || '⚡ Live Match in progress — tap to return';
+  if (textEl) textEl.textContent = label || t('banner_live');
   if (banner) banner.style.display = '';
   document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '44px');
 }
@@ -7288,7 +7770,7 @@ function openLiveScorecard(matchData, role) {
 function setSaveBtnsState(disabled) {
   ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
     const btn = document.getElementById(id);
-    if (btn) { btn.disabled = disabled; btn.textContent = disabled ? '⏳ Saving…' : (id === 'sc_saveBtnTop' ? '💾 Save' : '💾 Save Round'); }
+    if (btn) { btn.disabled = disabled; btn.textContent = disabled ? '⏳ Saving…' : (id === 'sc_saveBtnTop' ? t('btn_save') : t('sc_save_round')); }
   });
 }
 
@@ -7417,7 +7899,7 @@ function renderCarouselHole(i) {
   const n       = _sc.holes;
 
   // Navigation
-  document.getElementById('sc_carouselHoleNum').textContent = `Hole ${i + 1} / ${n}`;
+  document.getElementById('sc_carouselHoleNum').textContent = `${t('sc_hole')} ${i + 1} / ${n}`;
   document.getElementById('sc_prevBtn').disabled = i === 0;
   document.getElementById('sc_nextBtn').disabled = i === n - 1;
 
@@ -7426,7 +7908,7 @@ function renderCarouselHole(i) {
   const s = strokeOnHole(i, hcpDiff);
   const si = _sc.index && _sc.index[i] ? _sc.index[i] : null;
 
-  let parInfo = `Par ${p}`;
+  let parInfo = `${t('sc_par')} ${p}`;
   if (_sc.isMatch) {
     if (s > 0)      parInfo += `  ·  +${s} ${esc(_sc.oppName)}`;
     else if (s < 0) parInfo += `  ·  +${Math.abs(s)} ${esc(_sc.teamName)}`;
@@ -7437,7 +7919,7 @@ function renderCarouselHole(i) {
   const siContainer = document.getElementById('sc_carouselSiBadge');
   if (siContainer) {
     if (si && !_sc.isMatch) {
-      const difficulty = si <= 6 ? 'Hardest' : si <= 12 ? 'Average' : 'Easiest';
+      const difficulty = si <= 6 ? t('sc_hardest') : si <= 12 ? t('sc_average') : t('sc_easiest');
       const bg = si <= 6 ? 'var(--red)' : si <= 12 ? '#c87a3a' : 'var(--green)';
       siContainer.innerHTML = `<span style="display:inline-block;background:${bg};color:#fff;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">SI ${si} · ${difficulty}</span>`;
       siContainer.style.display = '';
@@ -7476,7 +7958,7 @@ function renderCarouselHole(i) {
   const myTap   = document.getElementById('sc_carouselMyScore');
   myEl.textContent = myDone ? myScore : '–';
   myEl.className   = 'sc-carousel-score-val' + (myClass ? ' ' + myClass : '');
-  myHint.textContent = myDone ? '' : 'tap to score';
+  myHint.textContent = myDone ? '' : t('sc_tap_to_score');
   myHint.style.display = myDone ? 'none' : '';
   myTap.classList.toggle('scored', myDone);
 
@@ -8262,12 +8744,17 @@ async function abandonMatch(matchId) {
   }
 }
 
+
+
+
 // ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW failed:', err));
   });
 }
+
+document.addEventListener('DOMContentLoaded', applyLang);
 </script>
 
 <!-- ── MATCH GATE OVERLAY ── -->
@@ -8275,20 +8762,20 @@ if ('serviceWorker' in navigator) {
   <div class="match-overlay-inner">
     <div class="match-overlay-header">
       <button class="btn-back" onclick="closeMatchGate()">← Back</button>
-      <div class="match-overlay-title">⚔️ Match Play</div>
+      <div class="match-overlay-title" data-i18n="gate_title">⚔️ Match Play</div>
     </div>
     <div class="match-gate-body">
-      <p class="match-gate-sub">How do you want to play?</p>
+      <p class="match-gate-sub" data-i18n="gate_sub">How do you want to play?</p>
       <div class="match-gate-cards">
         <button class="match-gate-card" onclick="openMatchSetup()">
           <span class="match-gate-card-icon">🏌️</span>
-          <span class="match-gate-card-title">Start Match</span>
-          <span class="match-gate-card-desc">Set up both teams and generate a match code</span>
+          <span class="match-gate-card-title" data-i18n="gate_start_title">Start Match</span>
+          <span class="match-gate-card-desc" data-i18n="gate_start_desc">Set up both teams and generate a match code</span>
         </button>
         <button class="match-gate-card" onclick="openJoinMatch()">
           <span class="match-gate-card-icon">📲</span>
-          <span class="match-gate-card-title">Join Match</span>
-          <span class="match-gate-card-desc">Enter a code from the other team</span>
+          <span class="match-gate-card-title" data-i18n="gate_join_title">Join Match</span>
+          <span class="match-gate-card-desc" data-i18n="gate_join_desc">Enter a code from the other team</span>
         </button>
       </div>
     </div>
@@ -8302,7 +8789,7 @@ if ('serviceWorker' in navigator) {
     <!-- Header -->
     <div class="match-overlay-header">
       <button class="btn-back" id="matchSetupBack" onclick="matchSetupBack()">← Back</button>
-      <div class="match-overlay-title" id="matchSetupTitle">Start Match</div>
+      <div class="match-overlay-title" id="matchSetupTitle" data-i18n="gate_start_title">Start Match</div>
       <div class="match-setup-steps" id="matchSetupSteps">
         <span class="mss active" id="mss1">1</span>
         <span class="mss-line"></span>
@@ -8317,7 +8804,7 @@ if ('serviceWorker' in navigator) {
     <!-- Step 1: Course -->
     <div class="match-setup-step" id="msStep1">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div class="match-step-label" style="margin:0;">Course Details</div>
+        <div class="match-step-label" style="margin:0;" data-i18n="ms_match_course">Course Details</div>
         <button class="ms-reset-btn" onclick="msResetStep1()" title="Reset all fields">↺ Reset</button>
       </div>
 
@@ -8413,7 +8900,7 @@ if ('serviceWorker' in navigator) {
         </div>
       </div>
 
-      <button class="btn-calc" style="margin-top:20px;" onclick="msNext(1)">Next: Your Team →</button>
+      <button class="btn-calc" style="margin-top:20px;" onclick="msNext(1)"data-i18n="ms_match_next2">Next: Your Team →</button>
       <div id="msSaveCourseNudge" style="display:none;margin-top:10px;text-align:center;">
         <span style="font-size:0.72rem;color:var(--muted);">Course not saved yet — </span>
         <button onclick="msSaveCourse()" style="font-size:0.72rem;color:var(--green);background:none;border:none;cursor:pointer;font-weight:700;padding:0;">💾 Save to My Courses</button>
@@ -8423,14 +8910,14 @@ if ('serviceWorker' in navigator) {
     <!-- Step 2: My Team -->
     <div class="match-setup-step" id="msStep2" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div class="match-step-label" style="margin:0;">Your Team</div>
+        <div class="match-step-label" style="margin:0;" data-i18n="ms_match_yourteam">Your Team</div>
         <button class="ms-reset-btn" onclick="msResetTeam('t1')">↺ Reset</button>
       </div>
 
       <!-- Load from My Scramble -->
       <div class="ms-team-load-bar">
-        <span class="ms-team-load-label">📋 Load from My Scramble</span>
-        <button class="ms-team-load-btn" onclick="msToggleTeamPicker('t1')">Choose Team ↓</button>
+        <span class="ms-team-load-label"><span data-i18n="ms_match_load">📋 Load from My Scramble</span></span>
+        <button class="ms-team-load-btn" onclick="msToggleTeamPicker('t1')"data-i18n="ms_match_choose">Choose Team ↓</button>
       </div>
       <div id="msTeamPickerT1" class="ms-team-load-dropdown" style="display:none;"></div>
 
@@ -8462,20 +8949,20 @@ if ('serviceWorker' in navigator) {
         <span class="player-count-label" id="ms_t1_count_label">2 players</span>
         <button class="btn-player-add"    id="ms_t1_add_btn"    onclick="msAddPlayer('t1')">+</button>
       </div>
-      <button class="btn-calc" style="margin-top:4px;" onclick="msNext(2)">Next: Opponent Team →</button>
+      <button class="btn-calc" style="margin-top:4px;" onclick="msNext(2)"data-i18n="ms_match_next3">Next: Opponent Team →</button>
     </div>
 
     <!-- Step 3: Opponent Team -->
     <div class="match-setup-step" id="msStep3" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div class="match-step-label" style="margin:0;">Opponent Team</div>
+        <div class="match-step-label" style="margin:0;" data-i18n="ms_match_opponent">Opponent Team</div>
         <button class="ms-reset-btn" onclick="msResetTeam('t2')">↺ Reset</button>
       </div>
 
       <!-- Load from My Scramble -->
       <div class="ms-team-load-bar">
-        <span class="ms-team-load-label">📋 Load from My Scramble</span>
-        <button class="ms-team-load-btn" onclick="msToggleTeamPicker('t2')">Choose Team ↓</button>
+        <span class="ms-team-load-label"><span data-i18n="ms_match_load">📋 Load from My Scramble</span></span>
+        <button class="ms-team-load-btn" onclick="msToggleTeamPicker('t2')"data-i18n="ms_match_choose">Choose Team ↓</button>
       </div>
       <div id="msTeamPickerT2" class="ms-team-load-dropdown" style="display:none;"></div>
 
@@ -8527,14 +9014,14 @@ if ('serviceWorker' in navigator) {
         </div>
       </div>
 
-      <button class="btn-calc" style="margin-top:20px;" onclick="msNext(3)">Next: Review →</button>
+      <button class="btn-calc" style="margin-top:20px;" onclick="msNext(3)"data-i18n="ms_match_next4">Next: Review →</button>
     </div>
 
     <!-- Step 4: Review -->
     <div class="match-setup-step" id="msStep4" style="display:none;">
-      <div class="match-step-label">Review & Generate</div>
+      <div class="match-step-label" data-i18n="ms_match_review">Review & Generate</div>
       <div id="msReviewContent"></div>
-      <button class="btn-calc" style="margin-top:20px;" id="msGenerateBtn" onclick="msGenerateCode()">
+      <button class="btn-calc" style="margin-top:20px;" id="msGenerateBtn" onclick="msGenerateCode()" data-i18n="ms_match_generate">
         Generate Match Code →
       </button>
     </div>
@@ -8571,12 +9058,12 @@ if ('serviceWorker' in navigator) {
     <!-- Header -->
     <div class="match-overlay-header">
       <button class="btn-back" onclick="closeJoinMatch()">← Back</button>
-      <div class="match-overlay-title">Join Match</div>
+      <div class="match-overlay-title" data-i18n="gate_join_title">Join Match</div>
     </div>
 
     <!-- Step 1: Enter code -->
     <div id="joinStep1">
-      <p class="match-gate-sub" style="margin-top:4px;">Enter the 5-character code from your opponent</p>
+      <p class="match-gate-sub" style="margin-top:4px;" data-i18n="join_enter_code">Enter the 5-character code from your opponent</p>
 
       <div class="join-code-input-wrap">
         <input
@@ -8593,7 +9080,7 @@ if ('serviceWorker' in navigator) {
         >
       </div>
 
-      <button class="btn-calc" id="joinLookupBtn" onclick="joinLookupCode()" style="margin-top:20px;" disabled>
+      <button class="btn-calc" id="joinLookupBtn" onclick="joinLookupCode()" style="margin-top:20px;" data-i18n="join_find_btn" disabled>
         Find Match →
       </button>
 
@@ -8609,14 +9096,14 @@ if ('serviceWorker' in navigator) {
       <p class="match-gate-sub" style="margin-top:4px;">Confirm you are joining the right match</p>
       <div id="joinConfirmContent"></div>
 
-      <div class="match-step-label" style="margin-top:20px;">Your Team Details</div>
+      <div class="match-step-label" style="margin-top:20px;" data-i18n="join_your_team">Your Team Details</div>
       <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Check your details below — correct anything that's wrong before joining.</p>
 
       <!-- Dynamic team fields injected by joinShowConfirm() -->
       <div id="joinTeamFields"></div>
 
-      <button class="btn-calc" id="joinConfirmBtn" onclick="joinConfirm()" style="margin-top:20px;">
-        Join & Start Scoring →
+      <button class="btn-calc" id="joinConfirmBtn" onclick="joinConfirm()" style="margin-top:20px;" data-i18n="join_confirm_btn">
+        Join &amp; Start Scoring →
       </button>
     </div>
 
