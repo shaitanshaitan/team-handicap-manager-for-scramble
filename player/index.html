@@ -12875,7 +12875,9 @@ async function loadProfileData(uid) {
   // Load profile
   try {
     const snap = await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').get();
-    if (snap.exists) { _profile = snap.data(); updateUserPill(); prefillFromProfile(); }
+    if (snap.exists) { _profile = snap.data(); }
+    try { const _u = await window._fbDb.collection('users').doc(uid).get(); if (_u.exists) { const _ud = _u.data() || {}; _profile = _profile || {}; if (_ud.avatarUrl && !_profile.avatarUrl) _profile.avatarUrl = _ud.avatarUrl; if (_ud.coverUrl && !_profile.coverUrl) _profile.coverUrl = _ud.coverUrl; } } catch(e){}
+    if (_profile) { updateUserPill(); prefillFromProfile(); }
   } catch(e) { console.warn('Could not load profile:', e); }
 
   // Load buddies
@@ -13031,21 +13033,51 @@ function _homePickImage(kind){
   inp.onchange=function(){ var f=inp.files&&inp.files[0]; if(f) _homeUpload(kind,f); };
   inp.click();
 }
+function _downscaleToDataUrl(file, maxDim, quality){
+  return new Promise(function(resolve, reject){
+    var rd = new FileReader();
+    rd.onerror = reject;
+    rd.onload = function(ev){
+      var img = new Image();
+      img.onerror = reject;
+      img.onload = function(){
+        var w=img.width||1, h=img.height||1;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w*scale)), ch = Math.max(1, Math.round(h*scale));
+        var c = document.createElement('canvas'); c.width=cw; c.height=ch;
+        var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, cw, ch);
+        try { resolve(c.toDataURL('image/jpeg', quality)); } catch(err){ reject(err); }
+      };
+      img.src = ev.target.result;
+    };
+    rd.readAsDataURL(file);
+  });
+}
 async function _homeUpload(kind, file){
   var uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
   if(!uid){ if(typeof showToast==='function') showToast('Sign in to change photos'); return; }
-  if(!window._fbStorage){ if(typeof showToast==='function') showToast('Photo upload unavailable'); return; }
   try {
     if(typeof showToast==='function') showToast('Uploading\u2026');
-    var ref = window._fbStorage.ref('users/'+uid+'/'+kind+'.jpg');
-    await ref.put(file);
-    var url = await ref.getDownloadURL();
+    var url = null;
+    // 1) Preferred: Firebase Storage (keeps the Firestore doc small)
+    if(window._fbStorage){
+      try {
+        var ref = window._fbStorage.ref('users/'+uid+'/'+kind+'.jpg');
+        await ref.put(file);
+        url = await ref.getDownloadURL();
+      } catch(se){ console.warn('storage upload failed, using inline fallback', se); url = null; }
+    }
+    // 2) Fallback: downscale and store inline in Firestore (works without Storage rules)
+    if(!url){ url = await _downscaleToDataUrl(file, kind==='avatar'?256:900, 0.72); }
     _profile = _profile || {}; _profile[kind+'Url'] = url;
     var patch={}; patch[kind+'Url']=url;
-    if(window._fbDb) await window._fbDb.collection('users').doc(uid).set(patch, {merge:true});
-    renderHomeScreen();
+    if(window._fbDb) await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch, {merge:true});
+    if(typeof renderHomeScreen==='function') renderHomeScreen();
+    // refresh Edit Profile previews from the saved url (not just the local preview)
+    var bn=document.getElementById('bannerImg'); if(kind==='cover' && bn){ bn.src=url; bn.style.display='block'; }
+    var mainAv=document.getElementById('main-avatar'); if(kind==='avatar' && mainAv){ mainAv.src=url; }
     if(typeof showToast==='function') showToast(kind==='avatar'?'Photo updated':'Cover updated');
-  } catch(e){ console.warn('upload', e); if(typeof showToast==='function') showToast('Upload failed'); }
+  } catch(e){ console.warn('upload', e); if(typeof showToast==='function') showToast('Couldn\u2019t save photo'); }
 }
 
 async function onSignedIn(user) {
@@ -15735,7 +15767,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
             </div>
             <div class="form-row">
               <div class="form-label">Country</div>
-              <input class="form-input" id="f-country" type="text" value="Netherlands" placeholder="Your country">
+              <select class="form-input" id="f-country" style="appearance:none;cursor:pointer;"><option value="Netherlands">🇳🇱 Netherlands</option><option value="Belgium">🇧🇪 Belgium</option><option value="Luxembourg">🇱🇺 Luxembourg</option><option value="United Kingdom">🇬🇧 United Kingdom</option><option value="Germany">🇩🇪 Germany</option><option value="France">🇫🇷 France</option><option value="" disabled>──────────</option><option value="Afghanistan">🇦🇫 Afghanistan</option><option value="Albania">🇦🇱 Albania</option><option value="Algeria">🇩🇿 Algeria</option><option value="Andorra">🇦🇩 Andorra</option><option value="Angola">🇦🇴 Angola</option><option value="Argentina">🇦🇷 Argentina</option><option value="Armenia">🇦🇲 Armenia</option><option value="Australia">🇦🇺 Australia</option><option value="Austria">🇦🇹 Austria</option><option value="Azerbaijan">🇦🇿 Azerbaijan</option><option value="Bahrain">🇧🇭 Bahrain</option><option value="Bangladesh">🇧🇩 Bangladesh</option><option value="Belarus">🇧🇾 Belarus</option><option value="Bolivia">🇧🇴 Bolivia</option><option value="Bosnia and Herzegovina">🇧🇦 Bosnia and Herzegovina</option><option value="Brazil">🇧🇷 Brazil</option><option value="Bulgaria">🇧🇬 Bulgaria</option><option value="Cambodia">🇰🇭 Cambodia</option><option value="Canada">🇨🇦 Canada</option><option value="Chile">🇨🇱 Chile</option><option value="China">🇨🇳 China</option><option value="Colombia">🇨🇴 Colombia</option><option value="Costa Rica">🇨🇷 Costa Rica</option><option value="Croatia">🇭🇷 Croatia</option><option value="Cyprus">🇨🇾 Cyprus</option><option value="Czechia">🇨🇿 Czechia</option><option value="Denmark">🇩🇰 Denmark</option><option value="Ecuador">🇪🇨 Ecuador</option><option value="Egypt">🇪🇬 Egypt</option><option value="Estonia">🇪🇪 Estonia</option><option value="Finland">🇫🇮 Finland</option><option value="Georgia">🇬🇪 Georgia</option><option value="Ghana">🇬🇭 Ghana</option><option value="Greece">🇬🇷 Greece</option><option value="Hong Kong">🇭🇰 Hong Kong</option><option value="Hungary">🇭🇺 Hungary</option><option value="Iceland">🇮🇸 Iceland</option><option value="India">🇮🇳 India</option><option value="Indonesia">🇮🇩 Indonesia</option><option value="Iran">🇮🇷 Iran</option><option value="Iraq">🇮🇶 Iraq</option><option value="Ireland">🇮🇪 Ireland</option><option value="Israel">🇮🇱 Israel</option><option value="Italy">🇮🇹 Italy</option><option value="Japan">🇯🇵 Japan</option><option value="Jordan">🇯🇴 Jordan</option><option value="Kazakhstan">🇰🇿 Kazakhstan</option><option value="Kenya">🇰🇪 Kenya</option><option value="Kuwait">🇰🇼 Kuwait</option><option value="Latvia">🇱🇻 Latvia</option><option value="Lebanon">🇱🇧 Lebanon</option><option value="Liechtenstein">🇱🇮 Liechtenstein</option><option value="Lithuania">🇱🇹 Lithuania</option><option value="Malaysia">🇲🇾 Malaysia</option><option value="Malta">🇲🇹 Malta</option><option value="Mexico">🇲🇽 Mexico</option><option value="Moldova">🇲🇩 Moldova</option><option value="Monaco">🇲🇨 Monaco</option><option value="Montenegro">🇲🇪 Montenegro</option><option value="Morocco">🇲🇦 Morocco</option><option value="New Zealand">🇳🇿 New Zealand</option><option value="Nigeria">🇳🇬 Nigeria</option><option value="North Macedonia">🇲🇰 North Macedonia</option><option value="Norway">🇳🇴 Norway</option><option value="Oman">🇴🇲 Oman</option><option value="Pakistan">🇵🇰 Pakistan</option><option value="Panama">🇵🇦 Panama</option><option value="Peru">🇵🇪 Peru</option><option value="Philippines">🇵🇭 Philippines</option><option value="Poland">🇵🇱 Poland</option><option value="Portugal">🇵🇹 Portugal</option><option value="Qatar">🇶🇦 Qatar</option><option value="Romania">🇷🇴 Romania</option><option value="Russia">🇷🇺 Russia</option><option value="San Marino">🇸🇲 San Marino</option><option value="Saudi Arabia">🇸🇦 Saudi Arabia</option><option value="Serbia">🇷🇸 Serbia</option><option value="Singapore">🇸🇬 Singapore</option><option value="Slovakia">🇸🇰 Slovakia</option><option value="Slovenia">🇸🇮 Slovenia</option><option value="South Africa">🇿🇦 South Africa</option><option value="South Korea">🇰🇷 South Korea</option><option value="Spain">🇪🇸 Spain</option><option value="Sweden">🇸🇪 Sweden</option><option value="Switzerland">🇨🇭 Switzerland</option><option value="Taiwan">🇹🇼 Taiwan</option><option value="Thailand">🇹🇭 Thailand</option><option value="Tunisia">🇹🇳 Tunisia</option><option value="Turkey">🇹🇷 Turkey</option><option value="Ukraine">🇺🇦 Ukraine</option><option value="United Arab Emirates">🇦🇪 United Arab Emirates</option><option value="United States">🇺🇸 United States</option><option value="Uruguay">🇺🇾 Uruguay</option><option value="Vietnam">🇻🇳 Vietnam</option></select>
             </div>
           </div>
         </div>
@@ -22257,7 +22289,9 @@ function _tmOpenTeam(team){
         var patch={displayName:_profile.displayName, username:_profile.username, hcpIndex:_profile.hcpIndex, homeCourse:_profile.homeCourse};
         if(_profile.lang) patch.lang=_profile.lang; if(_profile.country) patch.country=_profile.country;
         if(_profile.gender) patch.gender=_profile.gender; if(_profile.avatarId!=null) patch.avatarId=_profile.avatarId;
-        await window._fbDb.collection('users').doc(uid).set(patch,{merge:true});
+        if(window._editAvatarId!=null) patch.avatarUrl=null; else if(_profile.avatarUrl) patch.avatarUrl=_profile.avatarUrl;
+        if(_profile.coverUrl) patch.coverUrl=_profile.coverUrl;
+        await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch,{merge:true});
       }
     }catch(err){ console.warn('save profile', err); }
     if(typeof renderHomeScreen==='function') renderHomeScreen();
@@ -22280,7 +22314,7 @@ function renderEditProfile(ROOT){
   var bn=document.getElementById('bannerImg'); if(bn && prof.coverUrl){ bn.src=prof.coverUrl; bn.style.display='block'; }
   var ids=Object.keys(AV); var opts=ROOT.querySelectorAll('.av-opt');
   opts.forEach(function(el,i){ var img=el.querySelector('img'); if(img&&ids[i]) img.src=AV[ids[i]]; el.classList.toggle('selected', ids[i]===prof.avatarId); });
-  window._editAvatarId = (prof.avatarId!=null)?prof.avatarId:null;
+  window._editAvatarId = prof.avatarUrl ? null : ((prof.avatarId!=null)?prof.avatarId:null);
   window._editGender = prof.gender||null;
 }
 
@@ -22397,7 +22431,7 @@ function renderBuddyProfile(ROOT){
   };
 })();
 
-(function(){ var _o=window.saveName; window.saveName=function(){ if(_o)_o(); var nd=document.getElementById('name-display'); if(nd){ _profile=_profile||{}; _profile.displayName=nd.textContent; try{ var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid; if(uid&&window._fbDb) window._fbDb.collection('users').doc(uid).set({displayName:_profile.displayName},{merge:true}); }catch(e){} if(typeof renderHomeScreen==='function') renderHomeScreen(); } }; })();
+(function(){ var _o=window.saveName; window.saveName=function(){ if(_o)_o(); var nd=document.getElementById('name-display'); if(nd){ _profile=_profile||{}; _profile.displayName=nd.textContent; try{ var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid; if(uid&&window._fbDb) window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set({displayName:_profile.displayName},{merge:true}); }catch(e){} if(typeof renderHomeScreen==='function') renderHomeScreen(); } }; })();
 function renderAccountSettings(ROOT){
   ROOT=ROOT||document.getElementById('screen-settings'); if(!ROOT) return;
   var prof=_profile||{}; var AV=(typeof AVATARS!=='undefined')?AVATARS:{}; var cu=window._fbAuth&&window._fbAuth.currentUser;
@@ -23006,6 +23040,8 @@ function renderProfile(ROOT){
   var wins=matches.filter(function(m){return m.result&&m.result.teamAWon>m.result.teamBWon;}).length;
   var set=function(sel,val){ var e=ROOT.querySelector(sel); if(e) e.textContent=val; };
   var av=ROOT.querySelector('.avatar-wrap img'); if(av) av.src = prof.avatarUrl || (prof.avatarId&&AV[prof.avatarId]) || 'icons/home-crown.png';
+  var hero=ROOT.querySelector('.profile-hero');
+  if(hero){ if(prof.coverUrl){ hero.style.backgroundImage="linear-gradient(180deg,rgba(14,61,34,0.30),rgba(14,61,34,0.72)), url('"+prof.coverUrl+"')"; hero.style.backgroundSize='cover'; hero.style.backgroundPosition='center'; } else { hero.style.backgroundImage=''; } }
   set('.profile-name', prof.displayName||'Player');
   set('.profile-username', '@'+(prof.username || (prof.displayName||'player').toLowerCase().replace(/\s+/g,'')));
   var metas=ROOT.querySelectorAll('.profile-meta-item');
@@ -23019,15 +23055,19 @@ function renderProfile(ROOT){
   var winRate = matches.length? Math.round(wins/matches.length*100)+'%' : '\u2014';
   var vals=[rounds.length, matches.length, wins, (_savedTeams?_savedTeams.length:0), (_buddies?_buddies.length:0), winRate];
   sv.forEach(function(e,i){ if(vals[i]!=null) e.textContent=vals[i]; });
-  // best result card (best round by vs par)
-  if(rounds.length){
-    var best=rounds.map(function(r){var g=(r.scores||[]).reduce(function(a,b){return a+(b||0);},0);var p=(r.par||[]).reduce(function(a,b){return a+(b||0);},0);return Object.assign({_g:g,_vs:g-p},r);}).sort(function(a,b){return a._vs-b._vs;})[0];
-    var bc=ROOT.querySelector('.best-card');
-    if(bc){
+  // best result card (best round by vs par) — tap to open Round Detail
+  var bc=ROOT.querySelector('.best-card');
+  if(bc){
+    if(rounds.length){
+      var best=rounds.map(function(r){var g=(r.scores||[]).reduce(function(a,b){return a+(b||0);},0);var pp=(r.par||[]).reduce(function(a,b){return a+(b||0);},0);return Object.assign({_g:g,_vs:g-pp},r);}).sort(function(a,b){return a._vs-b._vs;})[0];
       var course=bc.querySelector('.best-course, .best-name'); if(course) course.textContent=best.courseName||'Course';
-      var score=bc.querySelector('.best-score, .best-value, .best-gross'); if(score) score.textContent=best._g;
-      var vs=bc.querySelector('.best-vspar, .best-sub'); if(vs) vs.textContent=(best._vs>0?'+'+best._vs:best._vs)+' vs par';
-    }
+      var meta=bc.querySelector('.best-meta');
+      if(meta){ var hh=best.holes||((best.par||[]).length||9); var parts=[hh+'H']; if(best.format) parts.push(best.format); if(best.teamName) parts.push(best.teamName); if(best.playedAt) parts.push(new Date(best.playedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})); meta.textContent=parts.join(' \u00b7 '); }
+      var score=bc.querySelector('.best-score, .best-value, .best-gross'); if(score) score.textContent=(best._vs>0?'+'+best._vs:best._vs);
+      bc.style.cursor='pointer';
+      bc.onclick=function(){ window._activeRound=best; if(document.getElementById('screen-rounddetail')) showScreen('rounddetail'); };
+      bc.style.display='';
+    } else { bc.style.display='none'; }
   }
   var editBtn=ROOT.querySelector('.action-btn.primary'); if(editBtn) editBtn.onclick=function(){ if(document.getElementById('screen-editprofile')) showScreen('editprofile'); else if(typeof showToast==='function') showToast('Coming soon'); };
   var shareBtn=ROOT.querySelector('.action-btn.secondary'); if(shareBtn) shareBtn.onclick=function(){ if(typeof showToast==='function') showToast('Coming soon'); };
