@@ -15517,7 +15517,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
           <button class="icon-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
         </div>
       </div>
-      <div class="sub-header"><span class="title">Public Profile</span><div class="actions"><button class="back-pill" onclick="showScreen(&quot;settings&quot;)">SETTINGS</button><button class="back-pill" onclick="screenBack()">BACK</button></div></div>
+      <div class="sub-header"><span class="title">Public Profile</span><div class="actions"><button class="back-pill" onclick="screenBack()">BACK</button></div></div>
       <div class="body-area">
 
         <!-- Profile hero -->
@@ -22454,6 +22454,76 @@ function renderAccountSettings(ROOT){
   var parts=(prof.displayName||'').split(' ');
   var fn=document.getElementById('input-firstname'); if(fn) fn.value=parts[0]||'';
   var ln=document.getElementById('input-lastname'); if(ln) ln.value=parts.slice(1).join(' ')||'';
+
+  // ── Reflect real state + wire action rows (idempotent) ──
+  var providers=(cu&&cu.providerData||[]).map(function(p){return p&&p.providerId;});
+  var hasGoogle=providers.indexOf('google.com')>=0;
+  var pushOn=(prof.notif&&typeof prof.notif.push==='boolean')?prof.notif.push:true;
+  var emailOn=(prof.notif&&typeof prof.notif.email==='boolean')?prof.notif.email:false;
+  ROOT.querySelectorAll('.settings-row').forEach(function(row){
+    var lblEl=row.querySelector('.row-label')||row.querySelector('.danger-label');
+    var lbl=(lblEl?lblEl.textContent:'').trim();
+    row.style.cursor='pointer';
+    if(lbl==='Change Password'){ row.onclick=pmChangePassword; }
+    else if(lbl==='Google Sign-In'){
+      row.onclick=pmToggleGoogle;
+      var sub=row.querySelector('.row-sublabel'); var badge=row.querySelector('.row-badge');
+      var gp=(cu&&cu.providerData||[]).filter(function(p){return p&&p.providerId==='google.com';})[0];
+      if(sub) sub.textContent=hasGoogle?((gp&&gp.email)||(cu&&cu.email)||''):'Tap to connect';
+      if(badge){ badge.textContent=hasGoogle?'Connected':'Connect'; badge.classList.toggle('connected',hasGoogle); }
+    }
+    else if(lbl==='Push Notifications'){ row.onclick=function(){ pmToggleNotif('push',row); }; var t1=row.querySelector('.toggle'); if(t1) t1.classList.toggle('on',pushOn); }
+    else if(lbl==='Email Notifications'){ row.onclick=function(){ pmToggleNotif('email',row); }; var t2=row.querySelector('.toggle'); if(t2) t2.classList.toggle('on',emailOn); }
+    else if(lbl==='Current Plan'){ row.onclick=pmOpenPlan; var pb=row.querySelector('.row-badge'); if(pb) pb.textContent=prof.tier||'Free'; }
+    else if(lbl==='Remove Account'){ row.onclick=function(){ if(typeof requestDataDeletion==='function') requestDataDeletion(); }; }
+  });
+  var so=ROOT.querySelector('.signout-btn'); if(so) so.onclick=function(){ if(typeof doSignOut==='function') doSignOut(); };
+}
+
+// ── Account Settings action handlers ──
+function pmChangePassword(){
+  var cu=window._fbAuth&&window._fbAuth.currentUser;
+  if(!cu){ if(typeof showToast==='function') showToast('Please sign in first'); return; }
+  var hasPwd=(cu.providerData||[]).some(function(p){return p&&p.providerId==='password';});
+  if(!hasPwd){ if(typeof showToast==='function') showToast('You sign in with Google \u2014 no password to change'); return; }
+  if(!cu.email){ if(typeof showToast==='function') showToast('No email on file'); return; }
+  window._fbAuth.sendPasswordResetEmail(cu.email)
+    .then(function(){ if(typeof showToast==='function') showToast('Password reset link sent to '+cu.email); })
+    .catch(function(e){ console.warn('pwd reset',e); if(typeof showToast==='function') showToast('Could not send reset email'); });
+}
+function pmToggleGoogle(){
+  var cu=window._fbAuth&&window._fbAuth.currentUser;
+  if(!cu){ if(typeof showToast==='function') showToast('Please sign in first'); return; }
+  var providers=(cu.providerData||[]).map(function(p){return p&&p.providerId;});
+  var hasGoogle=providers.indexOf('google.com')>=0;
+  if(hasGoogle){
+    if(providers.length<=1){ if(typeof showToast==='function') showToast('Google is your only sign-in \u2014 set a password first'); return; }
+    if(!confirm('Disconnect Google sign-in from this account?')) return;
+    cu.unlink('google.com')
+      .then(function(){ if(typeof showToast==='function') showToast('Google disconnected'); renderAccountSettings(); })
+      .catch(function(e){ console.warn(e); if(typeof showToast==='function') showToast('Could not disconnect Google'); });
+  } else {
+    var prov=window._fbGoogleProvider||new firebase.auth.GoogleAuthProvider();
+    cu.linkWithPopup(prov)
+      .then(function(){ if(typeof showToast==='function') showToast('Google connected'); renderAccountSettings(); })
+      .catch(function(e){ console.warn(e); if(typeof showToast==='function') showToast('Could not connect Google'); });
+  }
+}
+function pmToggleNotif(kind,row){
+  var tgl=row.querySelector('.toggle'); if(!tgl) return;
+  var turningOn=!tgl.classList.contains('on');
+  if(kind==='push' && turningOn && ('Notification' in window)){
+    try{ Notification.requestPermission().then(function(perm){ if(perm!=='granted' && typeof showToast==='function') showToast('Enable notifications in your browser settings'); }); }catch(e){}
+  }
+  tgl.classList.toggle('on',turningOn);
+  _profile=_profile||{}; _profile.notif=_profile.notif||{}; _profile.notif[kind]=turningOn;
+  try{
+    var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid;
+    if(uid&&window._fbDb){ var patch={notif:{}}; patch.notif[kind]=turningOn; window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch,{merge:true}); }
+  }catch(e){}
+}
+function pmOpenPlan(){
+  if(typeof showToast==='function') showToast('Pro plans are coming soon');
 }
 
 // ── Admin FAQ Manager (screen-faqadmin) ──
@@ -23420,7 +23490,7 @@ function renderMenu(ov){
     if(document.getElementById('screen-'+target)){ showScreen(target); closeMenu(); }
     else if(typeof showToast==='function'){ showToast('Coming soon'); }
   };
-  var targets=['profile','editprofile','legal','buddies','join','faq'];
+  var targets=['profile','editprofile','settings','legal','buddies','join','faq'];
   ov.querySelectorAll('.menu-item').forEach(function(it,idx){ it.onclick=function(){ go(targets[idx]); }; });
 }
 
@@ -23443,6 +23513,7 @@ function renderMenu(ov){
         <div class="menu-items">
           <div class="menu-item"><span>Public Profile</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Personal Information</span><span class="menu-chevron">›</span></div>
+          <div class="menu-item"><span>Account Settings</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Privacy &amp; Legal statements</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Find Buddies</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Join game</span><span class="menu-chevron">›</span></div>
