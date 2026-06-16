@@ -13080,6 +13080,12 @@ async function _homeUpload(kind, file){
 }
 
 async function onSignedIn(user) {
+  // Re-raise the full-screen auth cover BEFORE any DOM reveal or async load.
+  // onSignedOut() may have run first (brief null-user after a Google redirect) and
+  // both hidden this overlay and switched the underlying screen to the calculator —
+  // without re-showing it here, the calculator flashes during the awaits below.
+  const _aloIn = document.getElementById('authLoadingOverlay');
+  if (_aloIn) { _aloIn.style.display = 'flex'; _aloIn.style.pointerEvents = 'auto'; }
   // NEW-UI: leave the login screen (keep the auth spinner up until Home is painted)
   const _login = document.getElementById('screen-login');
   if (_login) _login.classList.remove('active');
