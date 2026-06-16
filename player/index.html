@@ -4330,6 +4330,11 @@ input { transition:border-color 0.4s, background 0.2s; }
 #screen-home .hh-viewall { background: none; border: none; color: #1a6b3c; font-family: Inter, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; padding:4px 2px; }
 #screen-home .hh-row { display: flex; gap: 12px; overflow-x: auto; padding: 0 18px 6px; }
 #screen-home .hh-empty { color:#9aa3a0; font-family:Inter,sans-serif; font-size:13px; padding: 2px 18px 8px; }
+#screen-home .hh-course-card { flex:0 0 auto; min-width:132px; background:#fff; border:1px solid #e7ece9; border-radius:14px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.05); cursor:pointer; }
+#screen-home .hh-course-name { font-family:Inter,sans-serif; font-size:14px; font-weight:700; color:#14321f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
+#screen-home .hh-course-meta { font-family:Inter,sans-serif; font-size:12px; color:#777; margin-top:2px; }
+#screen-home .hh-course-best { font-family:Inter,sans-serif; font-size:15px; font-weight:800; margin-top:8px; line-height:1; }
+#screen-home .hh-course-best span { font-size:9px; font-weight:600; letter-spacing:0.08em; color:#9aa3a0; }
 
 /* round/match card */
 #screen-home .hh-card { flex: 0 0 80%; max-width: 290px; background:#fff; border:1px solid #e7ece9; border-radius:14px;
@@ -12967,8 +12972,9 @@ function renderHomeScreen() {
   const parOf   = r => (r.par||[]).reduce((a,b)=>a+(b||0),0) || r.parTotal || 0;
   const holesOf = r => r.holes || (Array.isArray(r.par)?r.par.length:9);
   const teamOf  = r => r.isMatch ? ((r.teamA&&r.teamA.name)||'') : (r.teamName || (r.team&&r.team.name) || '');
+  const tOf     = r => Date.parse(r.playedAt||r.date||0)||0;
 
-  const rounds = all.filter(r=>!r.isMatch).map(r=>{ const g=grossOf(r),p=parOf(r); return Object.assign({_g:g,_vs:g-p}, r); }).sort((a,b)=>a._vs-b._vs).slice(0,5);
+  const rounds = all.filter(r=>!r.isMatch).map(r=>{ const g=grossOf(r),p=parOf(r); return Object.assign({_g:g,_vs:g-p,_t:tOf(r)}, r); }).sort((a,b)=>b._t-a._t).slice(0,5);
   const roundsRow = document.getElementById('homeRoundsRow');
   if (roundsRow) roundsRow.innerHTML = rounds.length ? rounds.map(r=>{
       const vsCol = r._vs>0?'#c85a4a':(r._vs<0?'#1a6b3c':'#777');
@@ -12981,7 +12987,7 @@ function renderHomeScreen() {
         + '<div class="hh-card-vspar" style="color:'+vsCol+'">'+(r._g?(r._vs>0?'+'+r._vs:r._vs):'\u2013')+'</div><div class="hh-card-lbl">VS PAR</div></div></div>';
     }).join('') : '<div class="hh-empty">No team rounds yet \u2014 play a round to see your best here.</div>';
 
-  const matches = all.filter(r=>r.isMatch).map(m=>{ const a=(m.result&&m.result.teamAWon)||0,b=(m.result&&m.result.teamBWon)||0; return Object.assign({_m:a-b}, m); }).sort((a,b)=>b._m-a._m).slice(0,5);
+  const matches = all.filter(r=>r.isMatch).map(m=>{ const a=(m.result&&m.result.teamAWon)||0,b=(m.result&&m.result.teamBWon)||0; return Object.assign({_m:a-b,_t:tOf(m)}, m); }).sort((a,b)=>b._t-a._t).slice(0,5);
   const matchesRow = document.getElementById('homeMatchesRow');
   if (matchesRow) matchesRow.innerHTML = matches.length ? matches.map(m=>{
       const badge = m._m>0?(m._m+'UP'):(m._m<0?(Math.abs(m._m)+'DN'):'AS');
@@ -12993,6 +12999,22 @@ function renderHomeScreen() {
         + '<div class="hh-card-fmt">'+esc(m.format||'')+'</div></div>'
         + '<div class="hh-match-badge '+cls+'">'+badge+'</div></div>';
     }).join('') : '<div class="hh-empty">No team matches yet \u2014 play a match to see your best here.</div>';
+
+  // Courses Played (distinct courses, most recent first)
+  const coursesRow = document.getElementById('homeCoursesRow');
+  if (coursesRow) {
+    const cmap = {};
+    all.forEach(r=>{ const n=r.courseName||''; if(!n) return; if(!cmap[n]) cmap[n]={name:n,games:0,best:null,_t:0}; cmap[n].games++; const tt=tOf(r); if(tt>cmap[n]._t) cmap[n]._t=tt; if(!r.isMatch){ const vs=grossOf(r)-parOf(r); if(cmap[n].best==null||vs<cmap[n].best) cmap[n].best=vs; } });
+    const courses = Object.keys(cmap).map(k=>cmap[k]).sort((a,b)=>b._t-a._t).slice(0,5);
+    coursesRow.innerHTML = courses.length ? courses.map(c=>{
+        const bestStr=(c.best==null)?'\u2013':(c.best>0?'+'+c.best:String(c.best));
+        const bestCol=(c.best==null)?'#9aa3a0':(c.best>0?'#c85a4a':'#1a6b3c');
+        return '<div class="hh-course-card" onclick="showScreen(&quot;matches&quot;)">'
+          + '<div class="hh-course-name">'+esc(c.name)+'</div>'
+          + '<div class="hh-course-meta">'+c.games+' '+(c.games===1?'round':'rounds')+'</div>'
+          + '<div class="hh-course-best" style="color:'+bestCol+'">'+bestStr+' <span>BEST</span></div></div>';
+      }).join('') : '<div class="hh-empty">No courses played yet.</div>';
+  }
 
   const teamsRow = document.getElementById('homeTeamsRow');
   if (teamsRow) {
@@ -13016,11 +13038,11 @@ function renderHomeScreen() {
         + '<div class="hh-team-mid"><img src="'+av+'" alt=""><span>'+((t.players||[]).length||1)+' players</span></div>'
         + '<div class="hh-team-stats"><div><b>'+s.rounds+'</b><span>ROUNDS</span></div><div><b>'+s.wins+'</b><span>WINS</span></div><div><b>'+s.best+'</b><span>BEST</span></div></div></div>';
     };
-    const cards=[];
-    if (topRoundTeam) cards.push(teamCard(topRoundTeam, '\u2605 ROUNDS'));
-    if (topMatchTeam && topMatchTeam!==topRoundTeam) cards.push(teamCard(topMatchTeam, '\u2605 MATCHES'));
-    if (!cards.length && (_savedTeams||[]).length) cards.push(teamCard(_savedTeams[0].teamName, '\u2605 MAIN'));
-    teamsRow.innerHTML = cards.length ? cards.join('') : '<div class="hh-empty">No teams yet \u2014 create a team to get started.</div>';
+    var _mainT=(_savedTeams||[]).filter(function(t){return t.isMain;})[0];
+    var mainName=null, mainTag='\u2605 MAIN';
+    if(_mainT){ mainName=_mainT.teamName; }
+    else { mainName = topRoundTeam || topMatchTeam || ((_savedTeams||[])[0]&&_savedTeams[0].teamName) || null; mainTag='\u2605 MOST PLAYED'; }
+    teamsRow.innerHTML = mainName ? teamCard(mainName, mainTag) : '<div class="hh-empty">No teams yet \u2014 create a team to get started.</div>';
   }
 }
 
@@ -15137,12 +15159,10 @@ document.addEventListener('DOMContentLoaded', applyLang);
       <div class="home-body">
 
         <!-- Hero: cover + avatar + name -->
-        <div class="hh-cover" id="homeCover">
-          <button class="hh-cover-cam" type="button" onclick="pickCover()" aria-label="Change cover photo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+        <div class="hh-cover" id="homeCover" onclick="showScreen('profile')" style="cursor:pointer;">
           <div class="hh-id">
           <div class="hh-avatar-wrap">
             <img class="hh-avatar" id="homeAvatarImg" src="icons/home-crown.png" alt="">
-            <button class="hh-avatar-cam" type="button" onclick="pickAvatar()" aria-label="Change profile photo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
           </div>
           <div class="hh-name" id="homeUsername">username</div>
           </div>
@@ -15160,7 +15180,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
         <!-- Team Rounds | Best 5 -->
         <div class="hh-section">
           <div class="hh-sec-head">
-            <div class="hh-sec-title">Team Rounds <span>| Best 5</span></div>
+            <div class="hh-sec-title">Team Rounds <span>| Last 5</span></div>
             <button class="hh-viewall" type="button" onclick="showScreen('matches')">view all</button>
           </div>
           <div class="hh-row" id="homeRoundsRow"></div>
@@ -15169,16 +15189,25 @@ document.addEventListener('DOMContentLoaded', applyLang);
         <!-- Team Matches | Best 5 -->
         <div class="hh-section">
           <div class="hh-sec-head">
-            <div class="hh-sec-title">Team Matches <span>| Best 5</span></div>
+            <div class="hh-sec-title">Team Matches <span>| Last 5</span></div>
             <button class="hh-viewall" type="button" onclick="showScreen('matches')">view all</button>
           </div>
           <div class="hh-row" id="homeMatchesRow"></div>
         </div>
 
-        <!-- My Teams | Most played -->
+        <!-- Courses Played -->
         <div class="hh-section">
           <div class="hh-sec-head">
-            <div class="hh-sec-title">My Teams <span>| Most played</span></div>
+            <div class="hh-sec-title">Courses Played</div>
+            <button class="hh-viewall" type="button" onclick="showScreen('matches')">view all</button>
+          </div>
+          <div class="hh-row" id="homeCoursesRow"></div>
+        </div>
+
+        <!-- Main Team -->
+        <div class="hh-section">
+          <div class="hh-sec-head">
+            <div class="hh-sec-title">Main Team</div>
             <button class="hh-viewall" type="button" onclick="showScreen('myteams')">view all</button>
           </div>
           <div class="hh-row" id="homeTeamsRow"></div>
