@@ -43,16 +43,15 @@
   try { window._fbStorage = firebase.storage(); } catch(e) { console.warn("storage init", e); }
   window._fbGoogleProvider = new firebase.auth.GoogleAuthProvider();
   window._fbAuth.onAuthStateChanged(function(user) {
-    const overlay = document.getElementById('authLoadingOverlay');
-    if (overlay) { overlay.style.display = 'none'; overlay.style.pointerEvents = 'none'; }
     try {
       if (user) { onSignedIn(user); } else { onSignedOut(); }
     } catch (e) {
       console.error('auth handler error:', e);
       // even if profile/data load fails, get the user into the app
-      if (user && typeof showScreen === 'function') { try { showScreen('home'); } catch (_) {} }
+      if (user && typeof showScreen === 'function') { try { if (typeof renderHomeScreen === 'function') renderHomeScreen(); showScreen('home'); } catch (_) {} }
+      const overlay = document.getElementById('authLoadingOverlay');
+      if (overlay) { overlay.style.display = 'none'; overlay.style.pointerEvents = 'none'; }
     }
-    if (overlay) { overlay.style.display = 'none'; overlay.style.pointerEvents = 'none'; }
   });
 </script>
 <style>
@@ -13081,30 +13080,32 @@ async function _homeUpload(kind, file){
 }
 
 async function onSignedIn(user) {
-  // NEW-UI: leave the login screen
+  // NEW-UI: leave the login screen (keep the auth spinner up until Home is painted)
   const _login = document.getElementById('screen-login');
   if (_login) _login.classList.remove('active');
-  // ensure the full-screen auth spinner (z-index 300) is dismissed so it can't eat taps
-  const _alo = document.getElementById('authLoadingOverlay');
-  if (_alo) _alo.style.display = 'none';
   const name = user.displayName || ((user.email || '').split('@')[0]) || 'Player';
   document.getElementById('userPillName').textContent = name;
   document.getElementById('userPill').classList.add('visible');
   document.getElementById('lockedHero').style.display  = 'none';
   document.getElementById('appContent').classList.add('unlocked');
-  document.getElementById('bottomTabs').classList.add('visible');
   setGameMode('single');
-  await loadSavedData(user.uid);    // must complete BEFORE loadProfileData
-  loadProfileData(user.uid);        // now _savedTeams is populated for sync checks
+  // Load the data Home needs BEFORE revealing it — prevents the login screen flashing
+  try {
+    await loadSavedData(user.uid);    // must complete BEFORE loadProfileData
+    await loadProfileData(user.uid);  // _profile (avatar/cover/name) ready for Home
+  } catch (e) { console.warn('sign-in load', e); }
   checkForActiveMatch(user.uid);
   checkWhatsNew();
   applyLang();
   initSectionState();
   initTeamPlayers();
-  // NEW-UI: land on the redesigned Home (legacy app stays in DOM, covered)
+  // NEW-UI: land on the redesigned Home with data ready
   document.getElementById('bottomTabs').classList.remove('visible');
   renderHomeScreen();
-  showScreen('home');
+  showScreen('home', { replace: true });
+  // Only now dismiss the full-screen auth spinner — Home is already painted underneath
+  const _alo = document.getElementById('authLoadingOverlay');
+  if (_alo) { _alo.style.display = 'none'; _alo.style.pointerEvents = 'none'; }
 }
 
 function onSignedOut() {
@@ -13125,6 +13126,8 @@ function onSignedOut() {
   if (fallback)   fallback.style.display = '';
   updateRequestBadge();
   switchTab('calc');
+  const _alo = document.getElementById('authLoadingOverlay');
+  if (_alo) { _alo.style.display = 'none'; _alo.style.pointerEvents = 'none'; }
 }
 
 // ═══════════════════════════════════
