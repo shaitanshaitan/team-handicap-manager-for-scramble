@@ -22453,7 +22453,11 @@ async function tmSummaryFinish(){
 
 // ── Menu cluster: My Teams ──
 function _mtAvatars(players, cls){
-  return (players||[]).slice(0,4).map(function(){ return '<div class="'+cls+'"><img src="icons/avatar-default.png" alt=""></div>'; }).join('');
+  return (players||[]).slice(0,4).map(function(p){
+    var id = p && (p.avatarId || p.avatar);
+    var src = (id && typeof AVATARS !== 'undefined' && AVATARS[id]) ? AVATARS[id] : 'icons/home-crown.png';
+    return '<div class="'+cls+'"><img src="'+src+'" alt="" onerror="this.onerror=null;this.src=\'icons/home-crown.png\'"></div>';
+  }).join('');
 }
 function renderMyTeams(ROOT){
   var teams = (typeof _savedTeams!=='undefined' && Array.isArray(_savedTeams)) ? _savedTeams : [];
