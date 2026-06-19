@@ -8635,8 +8635,12 @@ function trbNext(fromId) {
   }
   const i = order.indexOf(fromId);
   let next = order[i+1];
-  // Team Match reuses TR setup screens, then branches after tee selection
-  if (fromId === 'trtee' && _gameMode === 'match') next = 'tmopp';
+  // Entering the own-team tee step
+  if (fromId === 'trteam' && typeof _trFlow!=='undefined' && _trFlow) _trFlow._teeTarget = 'team';
+  // Team Match reuses TR setup screens. After tees: own → opponent select; opponent → format.
+  if (fromId === 'trtee' && _gameMode === 'match') {
+    next = (typeof _trFlow!=='undefined' && _trFlow && _trFlow._teeTarget === 'opp') ? 'trformat' : 'tmopp';
+  }
   // After choosing the scramble format, match flow goes to the 2v2 handicap screen
   if (fromId === 'trformat' && _gameMode === 'match') next = 'tmhcp';
   if (next && document.getElementById('screen-'+next)) showScreen(next);
@@ -8836,7 +8840,12 @@ function trbCommitTeam() {
 
 // ── Screen 08: Choose Tee (per player) ──
 function trRenderTees(scr) {
-  const players = _trFlow.team.players || [];
+  const _teeTarget = (typeof _trFlow!=='undefined' && _trFlow && _trFlow._teeTarget === 'opp') ? 'opp' : 'team';
+  const players = (_teeTarget === 'opp')
+    ? ((typeof _tmFlow!=='undefined' && _tmFlow.opponent && _tmFlow.opponent.players) || [])
+    : (_trFlow.team.players || []);
+  var _ttl = scr.querySelector('.sub-header .title');
+  if (_ttl) _ttl.textContent = (_teeTarget === 'opp') ? 'Opponent Tees' : 'Choose Tee';
   const courseTees = (_trFlow.course && _trFlow.course.tees) || [];
   const hasTee = (key) => courseTees.some(t => (t.label||'').toLowerCase().includes(key));
   for (let i=1;i<=4;i++){
@@ -8854,19 +8863,22 @@ function trRenderTees(scr) {
       const lbl=(btn.dataset.tee||'').toLowerCase();
       btn.style.display = hasTee(lbl) ? '' : 'none';
     });
-    // ensure the active tee is one that exists; default to first available
+    // ensure the active tee is one that exists; default to first available.
+    // Always persist the resolved tee to p.teeKey so it carries into the match doc even
+    // when the user doesn't tap (previously left undefined → defaulted to CHAMPION on join).
     const key=(p.teeKey||'medal').toLowerCase();
-    let activeSet=false;
+    let activeBtn=null;
     block.querySelectorAll('.tee-btn').forEach(btn=>{
       const lbl=(btn.dataset.tee||'').toLowerCase();
       const on = hasTee(lbl) && (lbl===key || lbl.slice(0,4)===key.slice(0,4));
       btn.classList.toggle('active', on);
-      if (on) activeSet=true;
+      if (on && !activeBtn) activeBtn=btn;
     });
-    if (!activeSet) {
-      const firstVisible=[...block.querySelectorAll('.tee-btn')].find(b=>b.style.display!=='none');
-      if (firstVisible){ firstVisible.classList.add('active'); p.teeKey=firstVisible.dataset.tee; }
+    if (!activeBtn) {
+      activeBtn=[...block.querySelectorAll('.tee-btn')].find(b=>b.style.display!=='none') || null;
+      if (activeBtn) activeBtn.classList.add('active');
     }
+    if (activeBtn) p.teeKey = activeBtn.dataset.tee;
   }
   if (!scr._teeWired) {
     scr.addEventListener('click', (e)=>{
@@ -8875,7 +8887,10 @@ function trRenderTees(scr) {
       const pi=parseInt(block.id.replace('trb_playerBlock',''))-1;
       block.querySelectorAll('.tee-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      if (_trFlow.team.players[pi]) _trFlow.team.players[pi].teeKey = (btn.dataset.tee||'medal');
+      var _arr = ((typeof _trFlow!=='undefined' && _trFlow && _trFlow._teeTarget==='opp')
+                  ? ((typeof _tmFlow!=='undefined' && _tmFlow.opponent && _tmFlow.opponent.players) || [])
+                  : (_trFlow.team.players||[]));
+      if (_arr[pi]) _arr[pi].teeKey = (btn.dataset.tee||'medal');
     });
     scr._teeWired=true;
   }
@@ -9440,11 +9455,34 @@ function joinShowConfirm(data) {
     return teeVal ?? 'Standard';
   }
 
+  // Resolve a player's tee: host stores teeKey (label-based, e.g. 'medal'); older data
+  // uses a numeric tee index or a legacy key. Return the matching courseTees index / label.
+  function teeIndexFor(p){
+    if (p && p.teeKey != null && courseTees.length){
+      const k = String(p.teeKey).toLowerCase();
+      const idx = courseTees.findIndex(t => {
+        const lbl = (t.label||'').toLowerCase();
+        return lbl.includes(k) || lbl.slice(0,4) === k.slice(0,4);
+      });
+      if (idx >= 0) return idx;
+    }
+    const ti = parseInt(p && p.tee);
+    return isNaN(ti) ? 0 : ti;
+  }
+  function teeLabelFor(p){
+    if (p && p.teeKey != null && courseTees.length){
+      const k = String(p.teeKey).toLowerCase();
+      const t = courseTees.find(t => (t.label||'').toLowerCase().includes(k));
+      if (t) return t.label;
+    }
+    return teeLabel(p && p.tee);
+  }
+
   // Opponent card — show ALL players, handle both hcpIndex and hcp field names
   const oppPlayers = data.teamA.players || [];
   const oppRows = oppPlayers.map(p => {
     const hcp = p.hcpIndex ?? p.hcp ?? '—';
-    return `<div class="join-confirm-row"><span>${esc(p.name || '—')}</span><span>${hcp} · ${teeLabel(p.tee)}</span></div>`;
+    return `<div class="join-confirm-row"><span>${esc(p.name || '—')}</span><span>${hcp} · ${teeLabelFor(p)}</span></div>`;
   }).join('');
 
   // Format label
@@ -9482,7 +9520,7 @@ function joinShowConfirm(data) {
     const req    = pi <= 2 ? `<span style="color:var(--gold)">*</span>` : '';
     const hcpVal = p.hcpIndex ?? p.hcp ?? '';
     const teePills = courseTees.length > 0
-      ? courseTees.map((t, i) => `<div class="tee-pill"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee${i}" value="${i}" ${(parseInt(p.tee)===i||(i===0&&!p.tee))?'checked':''}><label for="join_t2p${pi}_tee${i}">${esc(t.label)}</label></div>`).join('')
+      ? courseTees.map((t, i) => `<div class="tee-pill"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee${i}" value="${i}" ${(teeIndexFor(p)===i)?'checked':''}><label for="join_t2p${pi}_tee${i}">${esc(t.label)}</label></div>`).join('')
       : `<div class="tee-pill t1"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee1" value="champ" ${p.tee==='champ'?'checked':''}><label for="join_t2p${pi}_tee1"><span class="dot" style="background:var(--tee1)"></span>Championship</label></div>
          <div class="tee-pill t2"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee2" value="main" ${(!p.tee||p.tee==='main')?'checked':''}><label for="join_t2p${pi}_tee2"><span class="dot" style="background:var(--tee2)"></span>Standard</label></div>
          <div class="tee-pill t3"><input type="radio" name="join_t2p${pi}_tee" id="join_t2p${pi}_tee3" value="fwd" ${p.tee==='fwd'?'checked':''}><label for="join_t2p${pi}_tee3"><span class="dot" style="background:var(--tee3)"></span>Forward</label></div>`;
@@ -11782,7 +11820,7 @@ function renderMyData() {
       const scores    = r.scores    || Array(r.holes).fill(0);
       const oppScores = r.oppScores || Array(r.holes).fill(0);
       const hcpDiff   = (r.oppHcp || 0) - (r.teamHcp || 0);
-      const indexArr  = r.index || null;
+      const indexArr  = _denseSIRanks(r.index, r.holes);
       let myWins = 0, oppWins = 0;
       for (let i = 0; i < r.holes; i++) {
         if (scores[i] > 0 && oppScores[i] > 0) {
@@ -12939,6 +12977,13 @@ async function _doDeleteSavedTeam(savedId) {
     }
     renderMyData();
     showToast('Team deleted.', 'success');
+    // If we deleted from the Team Overview screen, return to My Teams
+    try {
+      var act=document.querySelector('.screen.active');
+      if(act && act.id==='screen-teamoverview' && typeof showScreen==='function'){
+        showScreen('myteams', { replace: true });
+      }
+    } catch(e){}
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
@@ -13372,7 +13417,7 @@ function openRoundView(id) {
   } else {
     // ── Match mode banner ──
     const hcpDiff = (r.oppHcp || 0) - (r.teamHcp || 0);
-    const indexArr = r.index || null;
+    const indexArr = _denseSIRanks(r.index, r.holes);
     let myGross = 0, oppGross = 0, myParPlayed = 0, oppParPlayed = 0;
     let myWins = 0, oppWins = 0, holesPlayed = 0;
 
@@ -13831,6 +13876,7 @@ function openLiveScorecard(matchData, role) {
   _sc.courseName = matchData.course.name;
   _sc.par        = matchData.par.length === n ? matchData.par.slice() : Array(n).fill(Math.floor((matchData.course.par || (n === 9 ? 36 : 72)) / n));
   _sc.index      = (matchData.index && matchData.index.length === n) ? matchData.index.slice() : Array.from({length: n}, (_, i) => i + 1);
+  _sc.siRank     = _denseSIRanks(_sc.index, n);   // ranks for stroke allocation; _sc.index kept raw for display
   _sc.scores     = isA ? matchData.teamA.scores.slice() : matchData.teamB.scores.slice();
   _sc.oppScores  = isA ? matchData.teamB.scores.slice() : matchData.teamA.scores.slice();
 
@@ -14010,8 +14056,19 @@ function scoreColorClass(score, par, complete) {
 
 // Stroke allocation based on hole SI and handicap difference
 // Uses _sc.index for live scorecard
+// Rank the holes actually played by stroke index (1 = hardest among them). For 18-hole
+// play the SI is already 1..18 so this is identity; for 9-hole play it compresses the
+// course's 1..18 indexes into 1..9 so strokes allocate correctly (WHS).
+function _denseSIRanks(siArr, n){
+  var arr=[];
+  for(var i=0;i<n;i++){ arr.push({ i:i, si:(siArr && siArr[i]!=null) ? Number(siArr[i]) : (i+1) }); }
+  var sorted=arr.slice().sort(function(a,b){ return a.si-b.si; });
+  var out=new Array(n);
+  for(var r=0;r<sorted.length;r++){ out[sorted[r].i]=r+1; }
+  return out;
+}
 function strokeOnHole(holeIdx, hcpDiff) {
-  return strokeOnHoleWithIndex(holeIdx, hcpDiff, _sc.index, _sc.holes);
+  return strokeOnHoleWithIndex(holeIdx, hcpDiff, _sc.siRank || _sc.index, _sc.holes);
 }
 
 // Standalone version — accepts explicit index array and hole count
@@ -14189,9 +14246,10 @@ function showAllHoles() {
 
   // Header row
   let html = isMatch ? `
-    <div style="display:grid;grid-template-columns:28px 32px 1fr 1fr 28px;gap:8px;padding:8px 12px;border-bottom:2px solid var(--border);">
+    <div style="display:grid;grid-template-columns:26px 28px 24px 1fr 1fr 26px;gap:6px;padding:8px 12px;border-bottom:2px solid var(--border);">
       <div class="sc-col-label" style="text-align:center;">H</div>
       <div class="sc-col-label" style="text-align:center;">Par</div>
+      <div class="sc-col-label" style="text-align:center;">SI</div>
       <div class="sc-col-label" style="text-align:center;">${esc(_sc.teamName)}</div>
       <div class="sc-col-label" style="text-align:center;">${esc(_sc.oppName)}</div>
       <div class="sc-col-label" style="text-align:right;">Res</div>
@@ -14241,9 +14299,10 @@ function showAllHoles() {
       else                     { resultLabel = 'H'; resultClass = 'half'; }
     }
     return `
-      <div class="ah-hole-row${isCurrent}" onclick="closeAllHoles();carouselGoTo(${i})">
+      <div class="ah-hole-row${isCurrent}" style="grid-template-columns:26px 28px 24px 1fr 1fr 26px;gap:6px;" onclick="closeAllHoles();carouselGoTo(${i})">
         <div class="ah-hole-num${myDone || oppDone ? ' done' : ''}">${i+1}${strokeDot}</div>
         <div class="ah-par">${p}</div>
+        <div style="text-align:center;font-size:0.72rem;font-weight:700;color:${si ? (si <= 6 ? 'var(--red)' : si <= 12 ? '#c87a3a' : 'var(--green)') : 'var(--muted)'};">${si || '–'}</div>
         <div class="ah-score ${mySC}">${myDone  ? myS  : '–'}</div>
         <div class="ah-score ${oppSC}">${oppDone ? oppS : '–'}</div>
         <div class="ah-result ${resultClass}">${resultLabel}</div>
@@ -14257,9 +14316,10 @@ function showAllHoles() {
   if (myTotal > 0) {
     if (isMatch) {
       html += `
-        <div style="display:grid;grid-template-columns:28px 32px 1fr 1fr 28px;gap:8px;padding:12px 12px;border-top:2px solid var(--border);background:var(--surface2);">
+        <div style="display:grid;grid-template-columns:26px 28px 24px 1fr 1fr 26px;gap:6px;padding:12px 12px;border-top:2px solid var(--border);background:var(--surface2);">
           <div class="sc-col-label" style="text-align:center;">—</div>
           <div class="sc-col-label" style="text-align:center;">${myPar}</div>
+          <div></div>
           <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${myTotal > 0 ? myTotal : '–'}</div>
           <div style="text-align:center;font-size:1rem;font-weight:800;color:#1a2820;">${oppTotal > 0 ? oppTotal : '–'}</div>
           <div></div>
@@ -14792,7 +14852,7 @@ async function createMatch(matchData) {
     completedAt: null,
     holes: matchData.holes,
     format: matchData.format || '35_15',
-    tees:   _msCourseTees && _msCourseTees.length ? _msCourseTees : [],
+    tees:   (matchData.tees && matchData.tees.length) ? matchData.tees : (_msCourseTees && _msCourseTees.length ? _msCourseTees : []),
     course: matchData.course,
     par:   matchData.par,
     index: matchData.index || Array.from({length: matchData.holes}, (_, i) => i + 1),
@@ -16658,11 +16718,11 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <svg id="mainBtnIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             <span id="mainBtnText">Set as Main Team</span>
           </button>
-          <button class="btn-secondary">
+          <button class="btn-secondary" onclick="editActiveTeam()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit Team
           </button>
-          <button class="btn-danger">
+          <button class="btn-danger" onclick="deleteActiveTeam()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
             Delete Team
           </button>
@@ -18289,7 +18349,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
       <div class="sub-header">
         <span class="title">Choose Tee</span>
         <div class="actions">
-          <button class="back-pill" type="button" onclick="showScreen('trteam')">BACK</button>
+          <button class="back-pill" type="button" onclick="trTeeBack()">BACK</button>
         </div>
       </div>
 
@@ -18978,7 +19038,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
         <span class="title">Opponent Team</span>
         <div class="actions">
           <button class="action-pill" type="button" id="tmopp_resetBtn">RESET</button><button class="action-pill" type="button" id="tmopp_saveBtn">SAVE</button>
-          <button class="back-pill" type="button" onclick="showScreen('trtee')">BACK</button>
+          <button class="back-pill" type="button" onclick="tmoppBack()">BACK</button>
         </div>
       </div>
 
@@ -19726,7 +19786,8 @@ function tmoppNext() {
   const t = ROOT && ROOT._tmoppCollect ? ROOT._tmoppCollect() : null;
   if (!t) { if (typeof showToast==='function') showToast('Enter opponent team name and size','error'); return; }
   _tmFlow.opponent = t;
-  showScreen('trformat');
+  if (typeof _trFlow !== 'undefined' && _trFlow) _trFlow._teeTarget = 'opp';
+  showScreen('trtee');
 }
 
 </script>
@@ -19812,8 +19873,18 @@ function tmHcpNext() { showScreen('tmcode'); }
 
 // Format screen BACK is shared: opponent screen in match mode, tee screen in round mode
 function trFormatBack() {
-  if (typeof _gameMode !== 'undefined' && _gameMode === 'match') showScreen('tmopp');
-  else showScreen('trtee');
+  if (typeof _gameMode !== 'undefined' && _gameMode === 'match') {
+    if (typeof _trFlow!=='undefined' && _trFlow) _trFlow._teeTarget = 'opp';
+    showScreen('trtee');
+  } else showScreen('trtee');
+}
+function trTeeBack() {
+  if (typeof _trFlow!=='undefined' && _trFlow && _trFlow._teeTarget === 'opp') showScreen('tmopp');
+  else showScreen('trteam');
+}
+function tmoppBack() {
+  if (typeof _trFlow!=='undefined' && _trFlow) _trFlow._teeTarget = 'team';
+  showScreen('trtee');
 }
 
 </script>
@@ -19821,12 +19892,7 @@ function trFormatBack() {
 
 // ── Screen 15: Match Code (share / QR / skip) ──
 function tmGenCode(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
-function tmRenderCode(ROOT){
-  const el=ROOT.querySelector('#tmcode_matchCode');
-  let code=(_tmFlow.matchData && _tmFlow.matchData.code) ? _tmFlow.matchData.code : tmGenCode();
-  _tmFlow.matchData=Object.assign({}, _tmFlow.matchData, { code });
-  if(el) el.textContent=code;
-  // Render a real, scannable QR encoding the join URL
+function tmRenderQR(ROOT, code){
   try {
     const wrap=ROOT.querySelector('.qr-wrap');
     if(wrap && typeof qrcode==='function'){
@@ -19839,6 +19905,71 @@ function tmRenderCode(ROOT){
       if(node){ node.setAttribute('width','150'); node.setAttribute('height','150'); node.style.display='block'; wrap.appendChild(node); }
     }
   } catch(e){ console.warn('QR render failed', e); }
+}
+// Build a live-match document from the new team-match flow's state (_trFlow + _tmFlow).
+// teamHcp is computed with the flow's own WHS-correct tmCalcSide so scramble math is preserved.
+function tmBuildMatchData(){
+  if(typeof _trFlow==='undefined' || !_trFlow || !_trFlow.course) return null;
+  if(typeof _tmFlow==='undefined' || !_tmFlow || !_tmFlow.opponent) return null;
+  var meSide  = (typeof tmCalcSide==='function') ? tmCalcSide(((_trFlow.team&&_trFlow.team.players)||[]).slice()) : null;
+  var oppSide = (typeof tmCalcSide==='function') ? tmCalcSide((_tmFlow.opponent.players||[]).slice()) : null;
+  var par = (_trFlow.parByHole||[]).slice();
+  var idx = (_trFlow.siByHole||[]).slice();
+  var holes = _trFlow.holes || par.length || 9;
+  var totalPar = par.reduce(function(a,b){ return a+(b||0); }, 0);
+  return {
+    holes: holes,
+    course: { name:(_trFlow.course.name||'Course'), par: totalPar },
+    par: par,
+    index: idx,
+    format: _trFlow.format || '35_15',
+    tees: (_trFlow.course.tees)||[],
+    teamA: { teamName:(_trFlow.team&&_trFlow.team.name)||'My Team', teamHcp: meSide?meSide.teamHcp:0, players:(_trFlow.team&&_trFlow.team.players)||[] },
+    teamB: { teamName:_tmFlow.opponent.teamName||'Opponent', teamHcp: oppSide?oppSide.teamHcp:0, players:_tmFlow.opponent.players||[] }
+  };
+}
+// Register the match in Firestore so the code is joinable, then wait for the opponent.
+async function tmHostMatch(ROOT){
+  const el=ROOT.querySelector('#tmcode_matchCode');
+  let code;
+  try {
+    var md = tmBuildMatchData();
+    if(md && typeof createMatch==='function'){
+      code = await createMatch(md);   // writes matches/{code} with status 'waiting'
+    }
+  } catch(e){ console.warn('tmHostMatch createMatch failed', e); }
+  if(!code){
+    // Could not host (offline / not signed in / missing data) — fall back to a local-only code
+    code = tmGenCode();
+    _tmFlow.matchData = Object.assign({}, _tmFlow.matchData, { code, hosted:false });
+    if(el) el.textContent=code;
+    tmRenderQR(ROOT, code);
+    return;
+  }
+  _tmFlow.matchData = Object.assign({}, _tmFlow.matchData, { code, hosted:true });
+  window._activeMatchId = code; window._activeMatchRole = 'A';
+  if(el) el.textContent=code;
+  tmRenderQR(ROOT, code);
+  // When the opponent joins, jump both players into the live, synced scorecard.
+  if(typeof listenToMatch==='function'){
+    listenToMatch(code, function(data){
+      if(data && data.status==='active' && data.teamB && data.teamB.uid){
+        if(typeof showToast==='function') showToast((data.teamB.teamName||'Opponent')+' joined — starting match!', 'success');
+        setTimeout(function(){ if(typeof openLiveScorecard==='function') openLiveScorecard(data, 'A'); }, 800);
+      }
+    });
+  }
+}
+function tmRenderCode(ROOT){
+  const el=ROOT.querySelector('#tmcode_matchCode');
+  // Already hosted (e.g. screen re-render) — just show the existing code + QR
+  if(_tmFlow.matchData && _tmFlow.matchData.code){
+    if(el) el.textContent=_tmFlow.matchData.code;
+    tmRenderQR(ROOT, _tmFlow.matchData.code);
+    return;
+  }
+  if(el) el.textContent='\u00b7\u00b7\u00b7\u00b7\u00b7';
+  tmHostMatch(ROOT);
 }
 function tmInit_tmcode(ROOT){
   const code=()=>ROOT.querySelector('#tmcode_matchCode').textContent;
@@ -22475,7 +22606,10 @@ function renderMyTeams(ROOT){
       empty.textContent='No teams yet — create your first scramble team.';
       var st=ROOT.querySelector('.section-title'); if(st&&st.parentNode) st.parentNode.insertBefore(empty, st.nextSibling); }
   } else {
-    var m=teams[0];
+    var mainIdx = teams.findIndex(function(t){ return t.isMain; });
+    if(mainIdx < 0) mainIdx = 0;          // fallback: first team if none flagged
+    var m = teams[mainIdx];
+    var others = teams.filter(function(t,i){ return i !== mainIdx; });
     if(mainCard){
       mainCard.style.display='';
       var nm=mainCard.querySelector('.mt-name'); if(nm) nm.textContent=m.teamName||'My Team';
@@ -22490,10 +22624,10 @@ function renderMyTeams(ROOT){
     ROOT.querySelectorAll('.team-card').forEach(function(c){ c.remove(); });
     var sections=ROOT.querySelectorAll('.section-title');
     var otherTitle=sections[1];
-    if(teams.length>1){
+    if(others.length){
       if(otherTitle) otherTitle.style.display='';
       var frag=document.createDocumentFragment();
-      teams.slice(1).forEach(function(t){
+      others.forEach(function(t){
         var card=document.createElement('div'); card.className='team-card';
         card.innerHTML='<div class="team-avatars">'+_mtAvatars(t.players,'ta')+'</div>'+
           '<div class="team-info"><div class="team-name">'+(t.teamName||'Team')+'</div>'+
@@ -23247,12 +23381,30 @@ function renderMatchDetail(ROOT, r){
   let isMain = true;  // this demo team is already the main team
   window.setAsMain = function() {
     var t=window._activeTeam; if(!t) return;
-    if(typeof _savedTeams!=='undefined'){ _savedTeams.forEach(function(x){ x.isMain=false; }); }
-    t.isMain=true;
+    if(typeof _savedTeams!=='undefined' && Array.isArray(_savedTeams)){
+      _savedTeams.forEach(function(x){ x.isMain = !!(t.id!=null && x.id===t.id); });
+    }
+    t.isMain=true;  // live reference into _savedTeams
     var btn=document.getElementById('mainBtn'); if(btn) btn.classList.add('is-main');
     var bt=document.getElementById('mainBtnText'); if(bt) bt.textContent='Main Team';
-    try{ var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid; if(uid&&window._fbDb&&t.id) window._fbDb.collection('users').doc(uid).collection('teams').doc(t.id).set({isMain:true},{merge:true}); }catch(e){}
+    try{
+      var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid;
+      if(uid && typeof persistTeams==='function') persistTeams(uid);  // saves the whole list (incl. isMain) to saved/teams_v2
+    }catch(e){}
+    if(typeof showToast==='function') showToast('"'+(t.teamName||'Team')+'" is now your main team.', 'success');
     if(typeof renderHomeScreen==='function') renderHomeScreen();
+  };
+  window.deleteActiveTeam = function(){
+    var t=window._activeTeam;
+    if(!t || t.id==null){ if(typeof showToast==='function') showToast('No team selected.','error'); return; }
+    if(typeof deleteTeamWithConfirm==='function') deleteTeamWithConfirm(t.id);
+  };
+  window.editActiveTeam = function(){
+    var t=window._activeTeam;
+    if(!t){ if(typeof showToast==='function') showToast('No team selected.','error'); return; }
+    window._ctPendingEdit = t;
+    if(document.getElementById('screen-createteam')) showScreen('createteam');
+    else if(typeof showToast==='function') showToast('Coming soon');
   };
 })();
 
@@ -23316,6 +23468,7 @@ function renderTeamCreated(ROOT){
   let selected = new Set();  // selected buddy indices
   let guests = [];           // [{name, hcp}]
   let guestSeq = 0;
+  let editId = null;         // when set, createTeam() updates this saved team instead of creating a new one
 
   function needed() { return teamSize - 1; }          // teammates required (you = player 1)
   function filled() { return selected.size + guests.length; }
@@ -23375,11 +23528,15 @@ function renderTeamCreated(ROOT){
     if (!name) { nameEl.classList.add('error'); ok = false; } else nameEl.classList.remove('error');
     if (hcp === '' || isNaN(parseFloat(hcp))) { hcpEl.classList.add('error'); ok = false; } else hcpEl.classList.remove('error');
     if (!ok) return;
-
+    addGuestChip(name, parseFloat(hcp).toFixed(1));
+    closeGuestModal();
+    refresh();
+  };
+  // Build a guest object + carousel chip (shared by addGuest and edit-mode loading)
+  function addGuestChip(name, hcp) {
     const id = ++guestSeq;
-    guests.push({ id, name, hcp: parseFloat(hcp).toFixed(1) });
-
-    // Build a guest chip and insert before the add-guest chip
+    const hcpF = parseFloat(hcp);
+    guests.push({ id, name, hcp: (isNaN(hcpF) ? '0.0' : hcpF.toFixed(1)) });
     const carousel = document.getElementById('carousel');
     const addChip = carousel.querySelector('.add-guest-chip');
     const initial = name.charAt(0).toUpperCase();
@@ -23396,18 +23553,50 @@ function renderTeamCreated(ROOT){
         '<text x="50" y="44" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif" font-weight="900" font-size="22" fill="#8a6d00">' + initial + '</text>' +
       '</svg></div>' +
       '<div class="bc-name">' + name.split(" ")[0] + '</div>' +
-      '<div class="bc-hcp"><span>HCP</span> ' + parseFloat(hcp).toFixed(1) + '</div>' +
+      '<div class="bc-hcp"><span>HCP</span> ' + (isNaN(hcpF) ? '0.0' : hcpF.toFixed(1)) + '</div>' +
       '<div class="guest-tag">Guest</div>' +
       '<div class="bc-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>';
     carousel.insertBefore(chip, addChip);
-
-    closeGuestModal();
-    refresh();
-  };
+    return id;
+  }
   window.removeGuest = function(id) {
     guests = guests.filter(g => g.id !== id);
     const el = document.querySelector('.buddy-chip[data-guest="'+id+'"]');
     if (el) el.remove();
+    refresh();
+  };
+
+  // Load an existing saved team into the screen for editing (called after the carousel is built)
+  window._ctLoadTeam = function(team) {
+    if (!team) return;
+    editId = team.id || null;
+    var players = team.players || [];
+    teamSize = team.size || players.length || 2;
+    document.querySelectorAll('.size-pill').forEach(function(p){ p.classList.toggle('active', parseInt(p.dataset.size) === teamSize); });
+    selected.clear();
+    guests = []; guestSeq = 0;
+    document.querySelectorAll('.buddy-chip.guest').forEach(function(el){ el.remove(); });
+    document.querySelectorAll('.buddy-chip[data-idx]').forEach(function(el){ el.classList.remove('selected'); });
+    var tn = document.getElementById('teamName'); if (tn) { tn.value = team.teamName || ''; tn.classList.remove('error'); }
+    var ne = document.getElementById('nameError'); if (ne) ne.classList.remove('visible');
+    var bs = (typeof _buddies !== 'undefined' ? _buddies : []);
+    players.forEach(function(p){
+      if (p.you) return;  // captain is always P1, not a carousel selection
+      if (p.uid != null && !p.guest) {
+        var idx = -1;
+        for (var i = 0; i < bs.length; i++) { if (bs[i].uid === p.uid) { idx = i; break; } }
+        if (idx >= 0) {
+          selected.add(idx);
+          var chip = document.querySelector('.buddy-chip[data-idx="'+idx+'"]');
+          if (chip) chip.classList.add('selected');
+          return;
+        }
+      }
+      // guest, or a buddy no longer in the list → preserve the roster as a guest chip
+      addGuestChip(p.name || 'Guest', (p.hcp != null ? p.hcp : 0));
+    });
+    var titleEl = document.querySelector('#screen-createteam .sub-header .title'); if (titleEl) titleEl.textContent = 'Edit Team';
+    var cb = document.getElementById('createBtn'); if (cb) cb.textContent = 'Save Changes';
     refresh();
   };
 
@@ -23451,15 +23640,39 @@ function renderTeamCreated(ROOT){
     var players=[{ name:(prof.displayName||'You'), hcp:(prof.hcpIndex!=null?prof.hcpIndex:null), avatarId:prof.avatarId, you:true }];
     selected.forEach(function(idx){ var b=(typeof _buddies!=='undefined'?_buddies:[])[idx]; if(b) players.push({name:b.name, hcp:b.hcp, avatarId:b.avatarId, uid:b.uid}); });
     guests.forEach(function(g){ players.push({name:g.name, hcp:parseFloat(g.hcp), guest:true}); });
-    var team={ teamName:name, players:players, size:teamSize, createdAt:Date.now() };
+    var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid;
+
+    if (editId != null && typeof _savedTeams!=='undefined') {
+      // ── EDIT: update the existing team in place (preserve id, isMain, stats) ──
+      var ex=null; for(var i=0;i<_savedTeams.length;i++){ if(_savedTeams[i].id===editId){ ex=_savedTeams[i]; break; } }
+      if(ex){ ex.teamName=name; ex.players=players; ex.size=teamSize; window._activeTeam=ex; }
+      editId=null;
+      try{ if(uid && typeof persistTeams==='function') persistTeams(uid); }catch(e){}
+      if(typeof showToast==='function') showToast('Team updated.', 'success');
+      if(typeof renderHomeScreen==='function') renderHomeScreen();
+      if(document.getElementById('screen-teamoverview')) showScreen('teamoverview', { replace:true });
+      else if(document.getElementById('screen-myteams')) showScreen('myteams', { replace:true });
+      return;
+    }
+
+    // ── CREATE: brand-new team ──
+    var team={ id: Date.now().toString(), teamName:name, players:players, size:teamSize, createdAt:Date.now() };
     if(typeof _savedTeams!=='undefined'){ if(!_savedTeams.length) team.isMain=true; _savedTeams.push(team); }
-    try{ var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid; if(uid&&window._fbDb) window._fbDb.collection('users').doc(uid).collection('teams').add(team); }catch(e){}
+    try{ if(uid && typeof persistTeams==='function') persistTeams(uid); }catch(e){}
     window._activeTeam=team;
     if(typeof renderHomeScreen==='function') renderHomeScreen();
     if(document.getElementById('screen-teamcreated')) showScreen('teamcreated'); else if(document.getElementById('screen-myteams')) showScreen('myteams');
   };
 
-  window._ctResetState = function(){ selected.clear(); guests=[]; guestSeq=0; teamSize=2; document.querySelectorAll('.size-pill').forEach(function(p){ p.classList.toggle('active', parseInt(p.dataset.size)===2); }); refresh(); };
+  window._ctResetState = function(){
+    editId=null;
+    selected.clear(); guests=[]; guestSeq=0; teamSize=2;
+    document.querySelectorAll('.size-pill').forEach(function(p){ p.classList.toggle('active', parseInt(p.dataset.size)===2); });
+    document.querySelectorAll('.buddy-chip.guest').forEach(function(el){ el.remove(); });
+    var titleEl=document.querySelector('#screen-createteam .sub-header .title'); if(titleEl) titleEl.textContent='Create Team';
+    var cb=document.getElementById('createBtn'); if(cb) cb.textContent='Create Team';
+    refresh();
+  };
   refresh();
 })();
 
@@ -23482,6 +23695,7 @@ function renderCreateTeam(ROOT){
     car.innerHTML=html;
   }
   if(typeof window._ctResetState==='function') window._ctResetState();
+  if(window._ctPendingEdit && typeof window._ctLoadTeam==='function'){ var _et=window._ctPendingEdit; window._ctPendingEdit=null; window._ctLoadTeam(_et); }
 }
 
 // ── Profile cluster: Public Profile (screen-profile) ──
