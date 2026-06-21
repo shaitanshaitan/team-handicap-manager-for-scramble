@@ -5863,11 +5863,67 @@ input { transition:border-color 0.4s, background 0.2s; }
 </div>
 
 <!-- SCORECARD OVERLAY -->
+<style>
+/* ===== Live scorecard redesign — mockup Screen 33 (visual only) ===== */
+.scorecard-overlay { background:#f4f6f2; }
+.sc-header { background:#f4f6f2; padding:0; }
+.sc-subhdr { background:#e1c245; height:44px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+.sc-subhdr-title { font-family:'Roboto',sans-serif; font-weight:700; font-size:16px; color:#1a6b3c; }
+.sc-subhdr-back { background:#1a6b3c; color:#fff; border:none; border-radius:20px; padding:6px 16px; font-family:'Roboto',sans-serif; font-weight:700; font-size:12px; letter-spacing:0.06em; cursor:pointer; }
+.sc-header-top { padding:14px 16px 0; margin-bottom:10px; }
+.sc-header-top #sc_saveBtnTop, .sc-header-top #sc_backBtn { display:none !important; }
+.sc-course-name { color:#111; font-size:15px; font-weight:700; }
+.sc-meta { color:#777; font-size:11px; text-transform:none; letter-spacing:normal; font-family:'Roboto',sans-serif; }
+
+/* three-box team summary */
+.sc-match-banner { background:transparent; border:none; padding:0 16px; gap:8px; margin-bottom:16px; align-items:stretch; }
+.sc-match-team, .sc-match-status { background:#fff; border:1.5px solid #1a6b3c; border-radius:10px; padding:10px 6px; flex:1; text-align:center; }
+.sc-match-divider { display:none; }
+.sc-match-team-name { font-size:0.62rem; color:#777; letter-spacing:0.06em; }
+.sc-match-score { color:#111; font-size:1.4rem; }
+.sc-match-score.under { color:#1a6b3c; } .sc-match-score.over { color:#c85a4a; } .sc-match-score.even { color:#e1c245; }
+.sc-match-hcp { color:#777; font-size:0.6rem; }
+.sc-match-status-label { font-size:0.62rem; color:#777; letter-spacing:0.06em; text-transform:uppercase; }
+.sc-match-status-val { font-size:1.1rem; font-weight:800; color:#111; }
+
+/* hole nav */
+.sc-carousel-hole-num { color:#111; }
+.sc-carousel-par-info { color:#444; }
+.sc-carousel-btn { background:#fff; border:1.5px solid #1a6b3c; color:#1a6b3c; }
+.sc-carousel-btn:active { background:#1a6b3c; color:#fff; }
+
+/* score boxes — green border */
+.sc-carousel-score-tap { border:1.5px solid #1a6b3c; border-radius:14px; background:#fff; }
+.sc-carousel-score-tap:active { border-color:#1a6b3c; background:rgba(26,107,60,0.06); }
+.sc-carousel-score-tap.live-readonly { border-color:rgba(26,107,60,0.35); background:#fafafa; }
+.sc-carousel-score-val { color:#111; }
+.sc-carousel-team-name { color:#1a6b3c; font-size:0.82rem; }
+
+/* progress dots — blue, gold current */
+.sc-carousel-dot { background:rgba(58,123,213,0.25); width:9px; height:9px; }
+.sc-carousel-dot.both, .sc-carousel-dot.mine { background:#3a7bd5; }
+.sc-carousel-dot.current { outline:2px solid #e1c245; outline-offset:2px; }
+
+/* all-holes button — green filled */
+.sc-all-holes-btn { background:#1a6b3c; border:none; color:#fff; font-weight:700; }
+.sc-all-holes-btn:active { background:#155a31; color:#fff; }
+
+/* bottom action bar — SAVE outline + END red */
+.sc-save-bottom { display:flex; gap:10px; padding:16px; }
+.btn-save-round-full { background:#fff; border:1.5px solid #1a6b3c; color:#1a6b3c; flex:1; }
+.btn-save-round-full:active { background:rgba(26,107,60,0.06); }
+.sc-end-round-btn { flex:1; background:#c0392b; border:none; color:#fff; border-radius:24px; font-weight:700; font-size:0.95rem; padding:14px; cursor:pointer; }
+.sc-end-round-btn:active { opacity:0.9; }
+</style>
 <div class="scorecard-overlay" id="scorecardOverlay">
   <div class="scorecard-inner">
 
     <!-- Sticky header -->
     <div class="sc-header">
+      <div class="sc-subhdr">
+        <span class="sc-subhdr-title">Scorecard</span>
+        <button class="sc-subhdr-back" onclick="closeScorecard()">BACK</button>
+      </div>
       <div class="sc-header-top">
         <div class="sc-title-block">
           <div class="sc-course-name" id="sc_courseName">Scorecard</div>
@@ -5876,7 +5932,6 @@ input { transition:border-color 0.4s, background 0.2s; }
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-save-round-sm" id="sc_saveBtnTop" onclick="saveRound()">💾 Save</button>
           <button class="btn-back" id="sc_backBtn" onclick="closeScorecard()">← Back</button>
-          <button class="btn-end-match" id="sc_endMatchBtn" onclick="confirmEndMatch()" style="display:none;">🏁 End</button>
         </div>
       </div>
 
@@ -5980,9 +6035,10 @@ input { transition:border-color 0.4s, background 0.2s; }
 
     </div>
 
-    <!-- Bottom save button -->
+    <!-- Bottom action bar -->
     <div class="sc-save-bottom">
       <button class="btn-save-round-full" id="sc_saveBtnBottom" onclick="saveRound()" data-i18n="sc_save_round">💾 Save Round</button>
+      <button class="sc-end-round-btn" id="sc_endMatchBtn" onclick="confirmEndMatch()" style="display:none;">🏁 End Round</button>
     </div>
 
   </div>
@@ -13736,6 +13792,9 @@ function forceCloseScorecard() {
   document.getElementById('sc_colHeader').style.display = '';
   document.getElementById('sc_carousel').style.display  = 'none';
   hideLiveMatchBanner();
+  // After a match ends, land on the Play Golf screen — not the leftover "share code"
+  // / "waiting for opponent" screen that was sitting under the scorecard overlay.
+  if (typeof showScreen === 'function') showScreen('choosegame', { replace: true });
 }
 
 // ── LIVE MATCH BANNER ──────────────────────────────────────
@@ -13789,6 +13848,7 @@ function cancelEndMatch() {
 
 async function endMatch() {
   cancelEndMatch();
+  if (_sc) _sc._ended = true;   // mark initiator so our own listener doesn't double-handle
   const matchId = _sc.matchId;
   try { await saveRound(); } catch(e) { console.warn('saveRound in endMatch:', e); }
   if (matchId) {
@@ -13953,9 +14013,15 @@ function openLiveScorecard(matchData, role) {
     renderCarouselDots();
     updateScorecardTotals();
 
-    // Handle match completion from other side
-    if (data.status === 'complete' && _sc.isLive) {
-      showToast('Match completed by opponent — round saved.', 'info');
+    // Match ended by the other team → end here too: save this team's round and close.
+    // _sc._ended guards re-entry and is set by endMatch() on the initiating side.
+    if (data.status === 'complete' && _sc.isLive && !_sc._ended) {
+      _sc._ended = true;
+      showToast('Match ended by opponent — saving your round.', 'info');
+      (async () => {
+        try { await saveRound(); } catch(e) { console.warn('saveRound on opponent-end:', e); }
+        forceCloseScorecard();
+      })();
     }
   });
 }
@@ -14122,10 +14188,9 @@ function renderCarouselHole(i) {
   // SI active badge — colour coded by difficulty
   const siContainer = document.getElementById('sc_carouselSiBadge');
   if (siContainer) {
-    if (si && !_sc.isMatch) {
+    if (si) {
       const difficulty = si <= 6 ? t('sc_hardest') : si <= 12 ? t('sc_average') : t('sc_easiest');
-      const bg = si <= 6 ? 'var(--red)' : si <= 12 ? '#c87a3a' : 'var(--green)';
-      siContainer.innerHTML = `<span style="display:inline-block;background:${bg};color:#fff;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">SI ${si} · ${difficulty}</span>`;
+      siContainer.innerHTML = `<span style="color:#1a6b3c;font-size:0.8rem;font-weight:700;">SI ${si} · ${difficulty}</span>`;
       siContainer.style.display = '';
     } else {
       siContainer.style.display = 'none';
