@@ -6453,47 +6453,145 @@ input { transition:border-color 0.4s, background 0.2s; }
 </div>
 
 <!-- BUDDY SEARCH OVERLAY -->
+<style>
+  /* Add Buddy (Screen 43) chrome */
+  #buddySearchOverlay .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0; min-height:100vh; display:flex; flex-direction:column; background:#fff; }
+  #buddySearchOverlay .ab-appheader { height:56px; flex:0 0 56px; background:#1a6b3c; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+  #buddySearchOverlay .ab-logo { display:flex; align-items:center; gap:6px; }
+  #buddySearchOverlay .ab-logo img { width:24px; height:24px; object-fit:contain; }
+  #buddySearchOverlay .ab-logo span { font-family:'Roboto',sans-serif; font-weight:700; font-size:20px; color:#fff; }
+  #buddySearchOverlay .ab-icons { display:flex; gap:10px; }
+  #buddySearchOverlay .ab-ic { width:32px; height:32px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.85); color:#fff; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  #buddySearchOverlay .ab-subheader { flex:0 0 44px; background:#e1c245; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+  #buddySearchOverlay .ab-title { font-family:'Roboto',sans-serif; font-weight:700; font-size:18px; color:#1a6b3c; }
+  #buddySearchOverlay .ab-back { background:#1a6b3c; color:#fff; border:none; border-radius:20px; padding:7px 16px; font-family:'Roboto',sans-serif; font-weight:700; font-size:12px; letter-spacing:0.06em; cursor:pointer; }
+  #buddySearchOverlay .ab-body { flex:1 1 auto; padding:22px 16px 100px; overflow-y:auto; }
+  #buddySearchOverlay .ab-search-label { display:flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-size:15px; font-weight:700; color:#1a6b3c; margin-bottom:12px; }
+  #buddySearchOverlay .ab-search-wrap { position:relative; margin-bottom:20px; }
+  #buddySearchOverlay #buddySearchInput { width:100%; height:50px; border:1.5px solid #1a6b3c; border-radius:10px; padding:0 38px 0 16px; font-family:'Inter',sans-serif; font-size:15px; color:#111; outline:none; box-sizing:border-box; background:#fff; }
+  #buddySearchOverlay #buddySearchInput:focus { border-color:#e1c245; box-shadow:0 0 0 3px rgba(225,194,69,0.2); }
+  #buddySearchOverlay .ab-chevron { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#1a6b3c; font-size:18px; font-weight:700; pointer-events:none; }
+  #buddySearchOverlay #buddySearchStatus { font-family:'Roboto',sans-serif; font-size:13px; color:#777; text-align:center; padding:18px 0; }
+  #buddySearchOverlay .ab-section-label { font-family:'Inter',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#777; margin:18px 0 10px; }
+  #buddySearchOverlay .ab-dock { position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; height:72px; background:#1a6b3c; display:grid; grid-template-columns:1fr 1fr 96px 1fr 1fr; align-items:center; z-index:5; }
+  #buddySearchOverlay .ab-tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#fff; background:transparent; border:0; cursor:pointer; font-family:'Inter',sans-serif; font-size:10px; opacity:0.85; }
+  #buddySearchOverlay .ab-tab svg { display:block; }
+  #buddySearchOverlay .ab-play { position:relative; }
+  #buddySearchOverlay .ab-play-btn { position:absolute; left:50%; top:-26px; transform:translateX(-50%); width:84px; height:84px; border-radius:50%; background:#1a6b3c; border:4px solid #e1c245; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:13px; line-height:1.15; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; }
+  /* shared rows (global so the profile screen's buddy list matches too) */
+  .ab-row { display:flex; align-items:center; gap:10px; border:1.5px solid #e1c245; border-radius:12px; padding:12px 14px; margin-bottom:12px; background:#fff; }
+  .ab-row-name { flex:1 1 auto; min-width:0; font-family:'Inter',sans-serif; font-size:15px; font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ab-row-sub { font-family:'Roboto',sans-serif; font-size:12px; color:#777; font-weight:400; }
+  .ab-btn { border:1.5px solid #e1c245; background:#fff; color:#1a6b3c; border-radius:10px; padding:8px 13px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .ab-btn.added { border-color:#1a6b3c; background:#f0f9f4; color:#1a6b3c; cursor:default; }
+  .ab-btn.remove { border-color:#c0392b; color:#c0392b; }
+</style>
 <div class="buddy-overlay" id="buddySearchOverlay">
   <div class="buddy-overlay-inner">
-    <div class="profile-header">
-      <button class="btn-back" onclick="closeBuddySearch()">← Back</button>
-      <div class="profile-title" data-i18n="profile_findbud">Find a Buddy</div>
+    <div class="ab-appheader">
+      <div class="ab-logo"><img src="icons/home-crown.png" alt=""><span>Parmate</span></div>
+      <div class="ab-icons">
+        <button class="ab-ic" onclick="var i=document.getElementById('buddySearchInput');if(i)i.focus()" aria-label="add buddy"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 19.5c.6-3 3.2-4.8 6.5-4.8 1.5 0 2.8.4 3.9 1.1"></path><line x1="18" y1="13" x2="18" y2="20"></line><line x1="14.5" y1="16.5" x2="21.5" y2="16.5"></line></svg></button>
+        <button class="ab-ic" onclick="closeBuddySearch();showScreen('notifications')" aria-label="notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2H4.5L6 16z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path></svg></button>
+        <button class="ab-ic" onclick="closeBuddySearch();if(typeof openMenu==='function')openMenu()" aria-label="menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
+      </div>
     </div>
-    <div class="buddy-search-bar">
-      <span class="buddy-search-bar-icon">🔍</span>
-      <input type="text" id="buddySearchInput" placeholder="Search by name or email…"
-        oninput="onBuddySearchInput()" autocomplete="off">
+    <div class="ab-subheader">
+      <span class="ab-title" data-i18n="ab_title">Add Buddy</span>
+      <button class="ab-back" onclick="closeBuddySearch()" data-i18n="ab_back">BACK</button>
     </div>
-    <div id="overlayBuddiesSection" style="margin-top:18px;"><div style="font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted,#777);margin-bottom:8px;">My Buddies</div><div id="overlayBuddiesList"></div></div>
-      <div id="buddySearchStatus" style="font-size:0.8rem;color:var(--muted);text-align:center;padding:20px 0;display:none;">
-      Type a name or email to search
+    <div class="ab-body">
+      <div class="ab-search-label"><span>👥</span><span data-i18n="ab_search_label">search buddy</span></div>
+      <div class="ab-search-wrap">
+        <input type="text" id="buddySearchInput" placeholder="enter nickname or email" oninput="onBuddySearchInput()" autocomplete="off">
+        <span class="ab-chevron">⌄</span>
+      </div>
+      <div id="buddySearchStatus" style="display:none;">Type a name or email to search</div>
+      <div id="buddySearchResults"></div>
+      <div id="overlayBuddiesSection" style="margin-top:6px;"><div class="ab-section-label" data-i18n="ab_my_buddies">My Buddies</div><div id="overlayBuddiesList"></div></div>
+      <div id="sentRequestsPanel" style="margin-top:24px;display:none;">
+        <div class="ab-section-label">Pending Requests Sent</div>
+        <div id="sentRequestsList"></div>
+      </div>
     </div>
-    <div id="buddySearchResults"></div>
-
-    <!-- Sent requests panel -->
-    <div id="sentRequestsPanel" style="margin-top:24px;display:none;">
-      <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Pending Requests Sent</div>
-      <div id="sentRequestsList"></div>
+    <div class="ab-dock">
+      <button class="ab-tab" onclick="closeBuddySearch();showScreen('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg><span>Home</span></button>
+      <button class="ab-tab" onclick="closeBuddySearch();showScreen('myteams')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.5-3 2.8-4.5 5.5-4.5s5 1.5 5.5 4.5"></path></svg><span>Teams</span></button>
+      <div class="ab-play"><button class="ab-play-btn" onclick="closeBuddySearch();showScreen('choosegame')"><span>PLAY</span><span>GOLF</span></button></div>
+      <button class="ab-tab" onclick="closeBuddySearch();showScreen('matches')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"></rect><line x1="3" y1="11" x2="21" y2="11"></line></svg><span>Matches</span></button>
+      <button class="ab-tab" onclick="closeBuddySearch();showScreen('faq')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="17"></line><circle cx="12" cy="7.5" r="0.6" fill="currentColor"></circle></svg><span>Info</span></button>
     </div>
   </div>
 </div>
 
-<!-- PUBLIC PROFILE OVERLAY -->
+<!-- PUBLIC PROFILE OVERLAY (Screen 35 redesign) -->
+<style>
+  #publicProfileOverlay .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0; min-height:100vh; display:flex; flex-direction:column; background:#fff; }
+  #publicProfileOverlay .pp-appheader { height:56px; flex:0 0 56px; background:#1a6b3c; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+  #publicProfileOverlay .pp-logo { display:flex; align-items:center; gap:6px; }
+  #publicProfileOverlay .pp-logo img { width:24px; height:24px; object-fit:contain; }
+  #publicProfileOverlay .pp-logo span { font-family:'Roboto',sans-serif; font-weight:700; font-size:20px; color:#fff; }
+  #publicProfileOverlay .pp-icons { display:flex; gap:10px; }
+  #publicProfileOverlay .pp-ic { width:32px; height:32px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.9); color:#fff; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  #publicProfileOverlay .pp-subheader { flex:0 0 44px; background:#e1c245; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+  #publicProfileOverlay .pp-title { font-family:'Roboto',sans-serif; font-weight:700; font-size:18px; color:#1a6b3c; }
+  #publicProfileOverlay .pp-back { background:#1a6b3c; color:#fff; border:none; border-radius:20px; padding:7px 16px; font-family:'Roboto',sans-serif; font-weight:700; font-size:12px; letter-spacing:0.06em; cursor:pointer; }
+  #publicProfileOverlay .pp-body { flex:1 1 auto; padding:26px 20px 100px; overflow-y:auto; text-align:center; }
+  #publicProfileOverlay .pp-avatar { width:112px; height:112px; border-radius:50%; border:4px solid #1a6b3c; margin:0 auto 16px; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:48px; background:#f0f9f4; }
+  #publicProfileOverlay .pp-avatar img { width:100%; height:100%; object-fit:cover; }
+  #publicProfileOverlay .pp-name { font-family:'Inter',sans-serif; font-size:24px; font-weight:800; color:#1a6b3c; margin-bottom:8px; }
+  #publicProfileOverlay .pp-meta { font-family:'Roboto',sans-serif; font-size:14px; color:#777; margin-bottom:22px; line-height:1.5; }
+  #publicProfileOverlay .pp-meta b { color:#111; font-weight:700; }
+  #publicProfileOverlay .pp-buddycount { font-family:'Inter',sans-serif; font-size:15px; color:#111; margin-bottom:20px; }
+  #publicProfileOverlay .pp-buddycount .n { color:#e1c245; font-weight:800; font-size:18px; }
+  #publicProfileOverlay .pp-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:300px; margin:0 auto 22px; }
+  #publicProfileOverlay .pp-stat { background:#1a4d2e; border-radius:12px; padding:16px 8px; }
+  #publicProfileOverlay .pp-stat .num { font-family:'Inter',sans-serif; font-size:26px; font-weight:800; color:#e1c245; line-height:1; margin-bottom:6px; }
+  #publicProfileOverlay .pp-stat .lbl { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:#fff; line-height:1.2; }
+  #publicProfileOverlay .btn-add-buddy { display:inline-block; width:auto; min-width:170px; background:#fff; border:1.5px solid #1a6b3c; color:#1a6b3c; border-radius:24px; padding:11px 28px; font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
+  #publicProfileOverlay .btn-add-buddy.already, #publicProfileOverlay .btn-add-buddy.sent { background:#f0f9f4; border-color:#1a6b3c; color:#1a6b3c; cursor:default; }
+  #publicProfileOverlay .pp-dock { position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; height:72px; background:#1a6b3c; display:grid; grid-template-columns:1fr 1fr 96px 1fr 1fr; align-items:center; z-index:5; }
+  #publicProfileOverlay .pp-tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#fff; background:transparent; border:0; cursor:pointer; font-family:'Inter',sans-serif; font-size:10px; opacity:0.85; }
+  #publicProfileOverlay .pp-tab svg { display:block; }
+  #publicProfileOverlay .pp-play { position:relative; }
+  #publicProfileOverlay .pp-play-btn { position:absolute; left:50%; top:-26px; transform:translateX(-50%); width:84px; height:84px; border-radius:50%; background:#1a6b3c; border:4px solid #e1c245; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:13px; line-height:1.15; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; }
+</style>
 <div class="buddy-overlay" id="publicProfileOverlay">
   <div class="buddy-overlay-inner">
-    <div class="profile-header">
-      <button class="btn-back" onclick="closePublicProfile()">← Back</button>
-      <div class="profile-title">Player Profile</div>
+    <div class="pp-appheader">
+      <div class="pp-logo"><img src="icons/home-crown.png" alt=""><span>Parmate</span></div>
+      <div class="pp-icons">
+        <button class="pp-ic" onclick="closePublicProfile();if(typeof openBuddySearch==='function')openBuddySearch()" aria-label="add buddy"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 19.5c.6-3 3.2-4.8 6.5-4.8 1.5 0 2.8.4 3.9 1.1"></path><line x1="18" y1="13" x2="18" y2="20"></line><line x1="14.5" y1="16.5" x2="21.5" y2="16.5"></line></svg></button>
+        <button class="pp-ic" onclick="closePublicProfile();showScreen('notifications')" aria-label="notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2H4.5L6 16z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path></svg></button>
+        <button class="pp-ic" onclick="closePublicProfile();if(typeof openMenu==='function')openMenu()" aria-label="menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
+      </div>
     </div>
-    <div class="pub-profile-hero">
-      <div class="pub-profile-avatar" id="pubProfileAvatar">👤</div>
-      <div class="pub-profile-name"  id="pubProfileName">—</div>
-      <div class="pub-profile-hcp"   id="pubProfileHcp">—</div>
-      <div class="pub-profile-course" id="pubProfileCourse">—</div>
-      <div class="pub-profile-badges" id="pubProfileBadges"></div>
+    <div class="pp-subheader">
+      <span class="pp-title" data-i18n="pp_title">Buddy Profile</span>
+      <button class="pp-back" onclick="closePublicProfile()" data-i18n="ab_back">BACK</button>
     </div>
-    <div style="padding:0 4px;">
+    <div class="pp-body">
+      <div class="pp-avatar" id="pubProfileAvatar">👤</div>
+      <div class="pp-name" id="pubProfileName">—</div>
+      <div class="pp-meta" id="pubProfileMeta">—</div>
+      <span id="pubProfileHcp" style="display:none;"></span>
+      <span id="pubProfileCourse" style="display:none;"></span>
+      <span id="pubProfileBadges" style="display:none;"></span>
+      <div class="pp-buddycount"><span class="n" id="pubBuddyCount">0</span> <span data-i18n="pp_buddies">Buddies</span></div>
+      <div class="pp-grid">
+        <div class="pp-stat"><div class="num" id="pubStatDuo">0</div><div class="lbl" data-i18n="pp_duo">Duo rounds</div></div>
+        <div class="pp-stat"><div class="num" id="pubStatMatch">0</div><div class="lbl" data-i18n="pp_match">Team Match</div></div>
+        <div class="pp-stat"><div class="num" id="pubStatBuddies">0</div><div class="lbl" data-i18n="pp_buddies">Buddies</div></div>
+        <div class="pp-stat"><div class="num" id="pubStatTeams">0</div><div class="lbl" data-i18n="pp_teams">Teams</div></div>
+      </div>
       <button class="btn-add-buddy" id="addBuddyBtn" onclick="addBuddyFromProfile()">+ Add as Buddy</button>
+    </div>
+    <div class="pp-dock">
+      <button class="pp-tab" onclick="closePublicProfile();showScreen('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg><span>Home</span></button>
+      <button class="pp-tab" onclick="closePublicProfile();showScreen('myteams')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.5-3 2.8-4.5 5.5-4.5s5 1.5 5.5 4.5"></path></svg><span>Teams</span></button>
+      <div class="pp-play"><button class="pp-play-btn" onclick="closePublicProfile();showScreen('choosegame')"><span>PLAY</span><span>GOLF</span></button></div>
+      <button class="pp-tab" onclick="closePublicProfile();showScreen('matches')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"></rect><line x1="3" y1="11" x2="21" y2="11"></line></svg><span>Matches</span></button>
+      <button class="pp-tab" onclick="closePublicProfile();showScreen('faq')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="17"></line><circle cx="12" cy="7.5" r="0.6" fill="currentColor"></circle></svg><span>Info</span></button>
     </div>
   </div>
 </div>
@@ -6524,6 +6622,19 @@ input { transition:border-color 0.4s, background 0.2s; }
     <div class="end-match-btns">
       <button class="end-match-btn-cancel" onclick="cancelEndMatch()">Keep Playing</button>
       <button class="end-match-btn-confirm" onclick="endMatch()">End Match</button>
+    </div>
+  </div>
+</div>
+
+<!-- OPEN / REJOIN MATCH MODAL -->
+<div id="rejoinModal" class="end-match-modal" style="display:none;">
+  <div class="end-match-backdrop" onclick="dismissRejoinModal()"></div>
+  <div class="end-match-sheet">
+    <div class="end-match-title" id="rejoinModalTitle">⚡ Open match found</div>
+    <p class="end-match-body" id="rejoinModalBody">You have a match in progress.</p>
+    <div class="end-match-btns">
+      <button class="end-match-btn-cancel" id="rejoinModalSecondary" onclick="rejoinModalSecondary()">Dismiss</button>
+      <button class="end-match-btn-confirm" id="rejoinModalPrimary" onclick="rejoinModalPrimary()">Rejoin</button>
     </div>
   </div>
 </div>
@@ -6704,6 +6815,8 @@ input { transition:border-color 0.4s, background 0.2s; }
 // ═══════════════════════════════════
 const LANG = {
   en: {
+    nine_hole_tag:  '9-hole basis',
+    nine_hole_note: '9-hole round: Course Handicaps use half your 18-hole Handicap Index (WHS), so these come out about half your usual figure.',
     // Tabs
     tab_calc:        'Calculator',
     tab_my:          'My Scramble',
@@ -6873,7 +6986,61 @@ const LANG = {
     ms_setup_title:   'Start Match',
     // Join match
     join_overlay_title: 'Join Match',
-    join_enter_code:  'Enter the 5-character code from your opponent',
+    join_enter_code:  'Enter the 5-letter match code shared by your opponent',
+    join_find_btn:    'Join Match',
+    join_scan_qr:     'Scan QR Code',
+    js2_match_code:   'Match code',
+    js2_open_btn:     'Open Scorecard →',
+    js2_opponent:     'Opponent Team',
+    js2_courseformat: 'Course & Format',
+    js2_teesel:       'Tee Selection',
+    js2_teamname:     'Team name',
+    js2_teamhcp:      'Team HCP',
+    js2_course:       'Course',
+    js2_loop:         'Loop',
+    js2_holes:        'Holes',
+    js2_format:       'Scramble format',
+    js2_player:       'Player',
+    rejoin_title:            'Open match found',
+    rejoin_banner_active:    'Active match vs {opp} — tap to rejoin',
+    rejoin_banner_waiting:   'Open match waiting for an opponent — tap to resume',
+    rejoin_body_active:      'You have a match in progress against {opp}. Jump back in?',
+    rejoin_body_waiting:     'You have a match waiting for an opponent (code {code}). Resume it so they can still join, or cancel it.',
+    rejoin_primary_active:   'Rejoin',
+    rejoin_secondary_active: 'Dismiss',
+    rejoin_primary_waiting:  'Resume',
+    rejoin_secondary_waiting:'Cancel match',
+    rejoin_opp_fallback:     'opponent',
+    og_section:               'Open games',
+    og_title_active:          'Match in progress vs {opp}',
+    og_title_waiting:         'Waiting for an opponent',
+    og_badge_active:          'Live',
+    og_badge_waiting:         'Waiting',
+    og_code:                  'Code',
+    og_cancel:                'Cancel',
+    og_continue:              'Continue',
+    og_cancel_confirm_waiting:'Cancel this match and delete it? Opponents will no longer be able to join.',
+    og_cancel_confirm_active: 'Cancel this match? It will be ended and removed from your open games.',
+    og_cancelled:             'Match cancelled',
+    notif_clear_confirm:      'Delete all notifications? This cannot be undone.',
+    notif_cleared:            'Notifications cleared',
+    notif_none:               'No notifications to clear',
+    ab_title:                 'Add Buddy',
+    ab_back:                  'BACK',
+    ab_search_label:          'search buddy',
+    ab_search_ph:             'enter nickname or email',
+    ab_my_buddies:            'My Buddies',
+    ab_status_default:        'Type a name or email to search',
+    ab_profile:               'profile',
+    ab_add:                   'buddy',
+    ab_remove:                'remove',
+    ab_buddy:                 'Buddy',
+    ab_pending:               'Pending',
+    pp_title:                 'Buddy Profile',
+    pp_buddies:               'Buddies',
+    pp_duo:                   'Duo rounds',
+    pp_match:                 'Team Match',
+    pp_teams:                 'Teams',
     // ── Keys used by data-i18n HTML attributes ──────────────────
     btn_calculate:       'Calculate Team Handicap',
     btn_signout:         'Sign Out',
@@ -6926,6 +7093,8 @@ const LANG = {
     sc_hardest:       'Hardest',
   },
   nl: {
+    nine_hole_tag:  '9-holes basis',
+    nine_hole_note: '9-holes ronde: course handicaps gebruiken de helft van je 18-holes Handicap Index (WHS), dus deze vallen ongeveer half zo hoog uit.',
     // Tabs
     tab_calc:        'Calculator',
     tab_my:          'Mijn Scramble',
@@ -7095,7 +7264,61 @@ const LANG = {
     ms_setup_title:   'Match starten',
     // Join match
     join_overlay_title: 'Match joinen',
-    join_enter_code:  'Voer de 5-cijferige code in van je tegenstander',
+    join_enter_code:  'Voer de 5-letter matchcode in die je tegenstander deelt',
+    join_find_btn:    'Match joinen',
+    join_scan_qr:     'Scan QR-code',
+    js2_match_code:   'Matchcode',
+    js2_open_btn:     'Open scorekaart →',
+    js2_opponent:     'Tegenstander',
+    js2_courseformat: 'Baan & format',
+    js2_teesel:       'Tee-keuze',
+    js2_teamname:     'Teamnaam',
+    js2_teamhcp:      'Team HCP',
+    js2_course:       'Baan',
+    js2_loop:         'Loop',
+    js2_holes:        'Holes',
+    js2_format:       'Scramble-format',
+    js2_player:       'Speler',
+    rejoin_title:            'Open match gevonden',
+    rejoin_banner_active:    'Actieve match tegen {opp} — tik om terug te keren',
+    rejoin_banner_waiting:   'Open match wacht op tegenstander — tik om te hervatten',
+    rejoin_body_active:      'Je hebt een match bezig tegen {opp}. Verdergaan?',
+    rejoin_body_waiting:     'Je hebt een match die wacht op een tegenstander (code {code}). Hervat zodat ze nog kunnen joinen, of annuleer.',
+    rejoin_primary_active:   'Terug naar match',
+    rejoin_secondary_active: 'Sluiten',
+    rejoin_primary_waiting:  'Hervatten',
+    rejoin_secondary_waiting:'Match annuleren',
+    rejoin_opp_fallback:     'tegenstander',
+    og_section:               'Open spellen',
+    og_title_active:          'Match bezig tegen {opp}',
+    og_title_waiting:         'Wacht op een tegenstander',
+    og_badge_active:          'Live',
+    og_badge_waiting:         'Wachten',
+    og_code:                  'Code',
+    og_cancel:                'Annuleren',
+    og_continue:              'Verdergaan',
+    og_cancel_confirm_waiting:'Deze match annuleren en verwijderen? Tegenstanders kunnen dan niet meer joinen.',
+    og_cancel_confirm_active: 'Deze match annuleren? Hij wordt beëindigd en uit je open spellen verwijderd.',
+    og_cancelled:             'Match geannuleerd',
+    notif_clear_confirm:      'Alle meldingen verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    notif_cleared:            'Meldingen gewist',
+    notif_none:               'Geen meldingen om te wissen',
+    ab_title:                 'Buddy toevoegen',
+    ab_back:                  'TERUG',
+    ab_search_label:          'zoek buddy',
+    ab_search_ph:             'voer bijnaam of e-mail in',
+    ab_my_buddies:            'Mijn buddies',
+    ab_status_default:        'Typ een naam of e-mail om te zoeken',
+    ab_profile:               'profiel',
+    ab_add:                   'buddy',
+    ab_remove:                'verwijder',
+    ab_buddy:                 'Buddy',
+    ab_pending:               'In afwachting',
+    pp_title:                 'Buddy-profiel',
+    pp_buddies:               'Buddies',
+    pp_duo:                   'Duo-rondes',
+    pp_match:                 'Team match',
+    pp_teams:                 'Teams',
     // ── Keys used by data-i18n HTML attributes ──────────────────
     btn_calculate:       'Teamhandicap berekenen',
     btn_signout:         'Uitloggen',
@@ -7287,6 +7510,7 @@ let _navFromPop = false;
 function _activeScreenId(){ var el=document.querySelector('.screen.active'); return el ? el.id.replace('screen-','') : 'home'; }
 function showScreen(id, opts) {
   opts = opts || {};
+  if (id !== 'tmscore' && id !== 'tmfull') window._tmView = null;  // leave saved-match view
   const el = document.getElementById('screen-' + id);
   if (!el) { console.warn('showScreen: no #screen-' + id); return; }
   document.querySelectorAll('.screen.active').forEach(function(s){ s.classList.remove('active'); });
@@ -8641,7 +8865,7 @@ function trCalcTeam() {
     const rating = tee ? Number(tee.rating) : 0;
     const slope  = tee ? Number(tee.slope)  : 113;
     const par    = tee ? Number(tee.par)    : (f.course.par || 72);
-    p.courseHcp = getCH(parseFloat(p.hcp), slope, rating, par); // raw (unrounded)
+    p.courseHcp = getCH(whsPlayIndex(p.hcp, f.course), slope, rating, par); // raw (unrounded; 9-hole halves index)
     p.chRounded = Math.round(p.courseHcp);
     p.teeLabel = tee ? tee.label : '—';
   });
@@ -9042,7 +9266,8 @@ function trRenderResult(scr) {
       '</span>|<span>Slope '+(medal.slope!=null?medal.slope:(c.slope!=null?c.slope:'—'))+'</span>|<span>Par '+(c.par!=null?c.par:'—')+'</span>';
   }
   if (metas[1]) {
-    metas[1].innerHTML = '<span>'+(c._playedLoopName||c.name||'')+'</span>|<span>'+trFormatLabel()+' allowance</span>';
+    metas[1].innerHTML = '<span>'+(c._playedLoopName||c.name||'')+'</span>|<span>'+trFormatLabel()+' allowance</span>'+
+      (((c.holes||18)<=9) ? '|<span style="color:#1a6b3c;font-weight:700;">'+t('nine_hole_tag')+'</span>' : '');
   }
   if (!res) { if(valEl) valEl.textContent='—'; return; }
   if (valEl) valEl.textContent = res.teamHcp;
@@ -9257,7 +9482,16 @@ async function trcSaveRound() {
 }
 
 function screenBack() {
-  if (_screenStack.length > 1) { _screenStack.pop(); showScreen(_screenStack[_screenStack.length - 1], { replace: true }); }
+  // Anchor to the screen actually on display (the stack top can drift out of sync,
+  // which is what caused needing two taps). Drop every stack entry for the current
+  // screen, then show the first screen beneath it that's different.
+  var cur = (typeof _activeScreenId === 'function')
+    ? _activeScreenId()
+    : (_screenStack.length ? _screenStack[_screenStack.length - 1] : null);
+  while (_screenStack.length && _screenStack[_screenStack.length - 1] === cur) _screenStack.pop();
+  var target = _screenStack.length ? _screenStack[_screenStack.length - 1] : 'home';
+  if (!target || target === cur) target = 'home';
+  showScreen(target, { replace: true });
 }
 
 // NEW-UI: Choose Game card actions -> existing engine entry points
@@ -9406,6 +9640,7 @@ function openJoinMatch() {
   document.getElementById('joinCodeError').style.display = 'none';
   document.getElementById('joinStep1').style.display = '';
   document.getElementById('joinStep2').style.display = 'none';
+  if(typeof joinSyncBoxesFromInput==='function') joinSyncBoxesFromInput();
 
   // Check for ?join=CODE in URL (QR code scan entry point)
   const urlParams = new URLSearchParams(window.location.search);
@@ -9413,6 +9648,7 @@ function openJoinMatch() {
   if (codeFromUrl) {
     document.getElementById('joinCodeInput').value = codeFromUrl.toUpperCase();
     document.getElementById('joinLookupBtn').disabled = false;
+    if(typeof joinSyncBoxesFromInput==='function') joinSyncBoxesFromInput();
   }
 
   const el = document.getElementById('joinMatchOverlay');
@@ -9436,6 +9672,40 @@ function joinCodeTyped(input) {
   input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   document.getElementById('joinLookupBtn').disabled = input.value.length < 5;
   document.getElementById('joinCodeError').style.display = 'none';
+}
+
+// ── Join Match: 5-box code entry (mirrors into the hidden joinCodeInput) ──
+function joinBoxEls(){ return ['jc0','jc1','jc2','jc3','jc4'].map(function(id){return document.getElementById(id);}); }
+function joinBoxSync(){
+  var els=joinBoxEls();
+  var v=els.map(function(b){ return (b&&b.value||'').toUpperCase(); }).join('');
+  els.forEach(function(b){ if(b) b.classList.toggle('filled', !!b.value); });
+  var hid=document.getElementById('joinCodeInput');
+  if(hid){ hid.value=v; if(typeof joinCodeTyped==='function') joinCodeTyped(hid); }
+}
+function joinBoxInput(i){
+  var els=joinBoxEls(); var b=els[i]; if(!b) return;
+  b.value=(b.value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,1);
+  if(b.value && i<4 && els[i+1]) els[i+1].focus();
+  joinBoxSync();
+}
+function joinBoxKey(e,i){
+  var els=joinBoxEls();
+  if(e.key==='Backspace' && !(els[i]&&els[i].value) && i>0 && els[i-1]){ els[i-1].focus(); els[i-1].value=''; joinBoxSync(); e.preventDefault(); }
+  else if(e.key==='Enter'){ var hid=document.getElementById('joinCodeInput'); if(hid && hid.value.length>=5 && typeof joinLookupCode==='function') joinLookupCode(); }
+}
+function joinBoxPaste(e){
+  if(e.preventDefault) e.preventDefault();
+  var txt=((((e.clipboardData||window.clipboardData)||{}).getData ? (e.clipboardData||window.clipboardData).getData('text') : '')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+  var els=joinBoxEls();
+  for(var i=0;i<5;i++){ if(els[i]) els[i].value=txt[i]||''; }
+  joinBoxSync();
+  var n=Math.min(txt.length,4); if(els[n]) els[n].focus();
+}
+function joinSyncBoxesFromInput(){
+  var hid=document.getElementById('joinCodeInput'); var v=((hid&&hid.value)||'').toUpperCase();
+  var els=joinBoxEls();
+  for(var i=0;i<5;i++){ if(els[i]){ els[i].value=v[i]||''; els[i].classList.toggle('filled', !!v[i]); } }
 }
 
 async function joinLookupCode() {
@@ -9549,19 +9819,31 @@ function joinShowConfirm(data) {
   };
   const fmtLabel = data.format ? (fmtMap[data.format] || data.format) : '—';
 
-  document.getElementById('joinConfirmContent').innerHTML = `
-    <div class="join-confirm-card">
-      <div class="join-confirm-card-title">Course</div>
-      <div class="join-confirm-row"><span>Name</span><span>${esc(data.course.name)}</span></div>
-      <div class="join-confirm-row"><span>Holes</span><span>${data.holes}</span></div>
-      <div class="join-confirm-row"><span>Rating / Slope / Par</span><span>${data.course.rating} / ${data.course.slope} / ${data.course.par}</span></div>
-      <div class="join-confirm-row"><span>Format</span><span>${fmtLabel}</span></div>
-    </div>
-    <div class="join-confirm-card">
-      <div class="join-confirm-card-title">Opponent — ${esc(data.teamA.teamName)}</div>
-      ${oppRows || '<div class="join-confirm-row"><span>No player data</span></div>'}
-      <div><span class="join-confirm-hcp">Team HCP: ${data.teamA.teamHcp ?? '—'}</span></div>
-    </div>`;
+  // Match Summary (M07b) — read-only; the host set both teams when creating the match
+  const oppRowsHtml = oppPlayers.map((p,i)=>{
+    const hcp = p.hcpIndex ?? p.hcp ?? '—';
+    return '<div class="js2-row"><span class="js2-key">'+t('js2_player')+' '+(i+1)+'</span><span class="js2-val">'+esc(p.name||'—')+' · HCP '+hcp+'</span></div>';
+  }).join('');
+  const myPlayers = (data.teamB && data.teamB.players) || [];
+  const teeDot = (label)=>{ const l=(label||'').toLowerCase(); if(l.includes('champ'))return '#3a7bd5'; if(l.includes('senior'))return '#3a7bd5'; if(l.includes('forward'))return '#c85a4a'; return '#e1c245'; };
+  const teeRowsHtml = myPlayers.map((p,i)=>{
+    const lbl = teeLabelFor(p);
+    return '<div class="js2-row"><span class="js2-key">'+t('js2_player')+' '+(i+1)+'</span><span class="js2-val"><span class="js2-teedot" style="background:'+teeDot(lbl)+'"></span>'+esc(lbl)+'</span></div>';
+  }).join('');
+  const loopName = (data.course && (data.course._playedLoopName || data.course.name)) || '—';
+  document.getElementById('joinConfirmContent').innerHTML =
+    '<div class="js2-section">'+t('js2_opponent')+'</div>'+
+    '<div class="js2-row"><span class="js2-key">'+t('js2_teamname')+'</span><span class="js2-val">'+esc(data.teamA.teamName||'—')+'</span></div>'+
+    oppRowsHtml+
+    '<div class="js2-row"><span class="js2-key">'+t('js2_teamhcp')+'</span><span class="js2-val js2-thcp">'+(data.teamA.teamHcp ?? '—')+'</span></div>'+
+    '<div class="js2-section">'+t('js2_courseformat')+'</div>'+
+    '<div class="js2-row"><span class="js2-key">'+t('js2_course')+'</span><span class="js2-val">'+esc(data.course.name)+'</span></div>'+
+    '<div class="js2-row"><span class="js2-key">'+t('js2_loop')+'</span><span class="js2-val">'+esc(loopName)+' ('+data.holes+')</span></div>'+
+    '<div class="js2-row"><span class="js2-key">'+t('js2_holes')+'</span><span class="js2-val">'+data.holes+' '+t('js2_holes').toLowerCase()+'</span></div>'+
+    '<div class="js2-row"><span class="js2-key">'+t('js2_format')+'</span><span class="js2-val">'+fmtLabel+'</span></div>'+
+    '<div class="js2-section">'+t('js2_teesel')+'</div>'+
+    (teeRowsHtml || '<div class="js2-row"><span class="js2-val">—</span></div>');
+  var _cb=document.getElementById('js2_code'); if(_cb) _cb.textContent = data.matchId || (_joinMatchData&&_joinMatchData.matchId) || '—';
 
   // Build dynamic Your Team fields — use teamType to determine player count
   const teamBPlayers = data.teamB.players || [];
@@ -9595,44 +9877,26 @@ function joinShowConfirm(data) {
       <div class="field"><label>Tee</label><div class="tee-pills">${teePills}</div></div>`;
   }
 
-  document.getElementById('joinTeamFields').innerHTML = teamFieldsHtml;
+  var _jtf=document.getElementById('joinTeamFields'); if(_jtf) _jtf.innerHTML = teamFieldsHtml;
   document.getElementById('joinStep1').style.display = 'none';
   document.getElementById('joinStep2').style.display = '';
   document.getElementById('joinMatchOverlay').scrollTop = 0;
   document.getElementById('joinLookupBtn').disabled = false;
-  document.getElementById('joinLookupBtn').textContent = 'Find Match →';
+  document.getElementById('joinLookupBtn').textContent = (typeof t==='function') ? t('join_find_btn') : 'Join Match';
 }
 
 async function joinConfirm() {
   if (!_joinMatchData) return;
 
-  const p1name = document.getElementById('join_t2p1_name')?.value.trim();
-  const p2name = document.getElementById('join_t2p2_name')?.value.trim();
-  if (!p1name) { showToast('Please enter Player 1 name.', 'error'); return; }
-  if (!p2name) { showToast('Please enter Player 2 name.', 'error'); return; }
-
   const btn = document.getElementById('joinConfirmBtn');
-  btn.disabled = true;
-  btn.textContent = 'Joining match…';
+  if (btn) { btn.disabled = true; btn.textContent = 'Joining…'; }
 
-  const teamName   = document.getElementById('join_t2_name')?.value.trim() || _joinMatchData.teamB.teamName;
-  const teamType   = _joinMatchData.teamB.teamType || _joinMatchData.teamType || '2P';
-  const expectedCount = teamType === '4P' ? 4 : teamType === '3P' ? 3 : 2;
-  const playerCount = Math.max(expectedCount, _joinMatchData.teamB.players?.length || 2);
-  const uid = window._fbAuth?.currentUser?.uid;
+  const uid  = window._fbAuth?.currentUser?.uid;
   const code = _joinMatchData.matchId;
-
-  // Collect all players
-  const players = [];
-  for (let pi = 1; pi <= playerCount; pi++) {
-    const name = document.getElementById(`join_t2p${pi}_name`)?.value.trim();
-    const hcp  = parseFloat(document.getElementById(`join_t2p${pi}_hcp`)?.value);
-    const tee  = document.querySelector(`input[name="join_t2p${pi}_tee"]:checked`)?.value || '0';
-    const g    = document.querySelector(`input[name="join_t2p${pi}_g"]:checked`)?.value || 'M';
-    if (name || pi <= 2) {
-      players.push({ name: name || '', hcpIndex: isNaN(hcp) ? 0 : hcp, tee, gender: g });
-    }
-  }
+  // The host already set Team B (the opponent roster) when creating the match — use it
+  // as-is. The joiner simply claims the slot and opens the scorecard.
+  const teamName = _joinMatchData.teamB.teamName || 'Opponent';
+  const players  = (_joinMatchData.teamB.players || []).slice();
 
   try {
     await window._fbDb.collection('matches').doc(code).update({
@@ -10536,6 +10800,16 @@ function matchFallback() {
   if (opp) opp.style.display = '';
 }
 function getCH(index, slope, rating, par) { return index * (slope / 113) + (rating - par); }
+
+// WHS 9-hole play: use one half of the 18-hole Handicap Index, rounded to one decimal
+// (per the USGA Course Handicap method), before computing the Course Handicap with the
+// 9-hole rating/slope/par. 18-hole play is unchanged.
+function whsPlayIndex(rawIndex, course) {
+  const idx = parseFloat(rawIndex);
+  let holes = (course && course.holes) ||
+              ((typeof _trFlow !== 'undefined' && _trFlow) ? ((_trFlow.course && _trFlow.course.holes) || _trFlow.holes) : 0) || 18;
+  return (holes <= 9) ? Math.round((idx / 2) * 10) / 10 : idx;
+}
 
 function getTee(teeKey) {
   if (teeKey === 'champ') {
@@ -12294,10 +12568,10 @@ function openBuddySearch() {
   ov.style.display = '';
   requestAnimationFrame(() => ov.classList.add('open'));
   const inp = document.getElementById('buddySearchInput');
-  if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 350); }
+  if (inp) { inp.value = ''; if(typeof t==='function') inp.placeholder = t('ab_search_ph'); setTimeout(() => inp.focus(), 350); }
   document.getElementById('buddySearchResults').innerHTML = '';
   const stat = document.getElementById('buddySearchStatus');
-  if (stat) { stat.textContent = 'Type a name or email to search'; stat.style.display = ''; }
+  if (stat) { stat.textContent = (typeof t==='function') ? t('ab_status_default') : 'Type a name or email to search'; stat.style.display = ''; }
   renderSentRequests();
   if(typeof renderBuddiesList==='function') renderBuddiesList();
 }
@@ -12345,27 +12619,20 @@ async function _doBuddySearch(q) {
     }
     if (stat) stat.style.display = 'none';
     res.innerHTML = results.slice(0, 10).map(r => {
-      const av = r.avatarId && AVATARS[r.avatarId]
-        ? `<img src="${AVATARS[r.avatarId]}" alt="">`
-        : `<span>🏌️</span>`;
-      const hcp    = r.hcpIndex != null ? `HCP ${r.hcpIndex}` : 'HCP not set';
-      const course = r.homeCourse ? ` · ${esc(r.homeCourse)}` : '';
+      const hcp = r.hcpIndex != null ? `HCP ${r.hcpIndex}` : '';
+      const nm  = esc(r.displayName || '—');
+      const safeName = (r.displayName || '').replace(/['"\\]/g, ' ');
       const isBuddy   = _buddies.find(b => b.uid === r.uid);
       const isPending = _sentBuddyRequests.find(s => s.toUid === r.uid);
-      const tag = isBuddy
-        ? `<span style="font-size:0.63rem;color:var(--green);font-weight:700;background:rgba(42,122,72,0.12);padding:2px 7px;border-radius:8px;">✓ Buddy</span>`
-        : isPending
-          ? `<span style="font-size:0.63rem;color:#c87800;font-weight:700;background:rgba(200,120,0,0.10);padding:2px 7px;border-radius:8px;">⏳ Pending</span>`
-          : '';
-      return `
-        <div class="buddy-result-card" onclick="openPublicProfile('${r.uid}')">
-          <div class="buddy-result-avatar">${av}</div>
-          <div style="flex:1;min-width:0;">
-            <div class="buddy-result-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${esc(r.displayName || '—')} ${tag}</div>
-            <div class="buddy-result-meta">${hcp}${course}</div>
-          </div>
-          <div class="buddy-result-arrow">›</div>
-        </div>`;
+      let addBtn;
+      if (isBuddy)        addBtn = `<button class="ab-btn added" disabled>\u2713 ${t('ab_buddy')}</button>`;
+      else if (isPending) addBtn = `<button class="ab-btn added" disabled>\u23f3 ${t('ab_pending')}</button>`;
+      else                addBtn = `<button class="ab-btn add" onclick="addBuddyDirect('${r.uid}','${safeName}')">+ ${t('ab_add')}</button>`;
+      return `<div class="ab-row">
+        <div class="ab-row-name">${nm}${hcp ? ` <span class="ab-row-sub">${hcp}</span>` : ''}</div>
+        <button class="ab-btn" onclick="openPublicProfile('${r.uid}')">${t('ab_profile')}</button>
+        ${addBtn}
+      </div>`;
     }).join('');
   } catch(e) {
     if (stat) { stat.textContent = 'Search failed: ' + e.message; stat.style.display = ''; }
@@ -12471,45 +12738,58 @@ async function openPublicProfile(buddyUid) {
       ? `<img src="${AVATARS[d.avatarId]}" alt="">`
       : '🏌️';
 
-    // Name / HCP / Course
-    const nameEl   = document.getElementById('pubProfileName');
-    const hcpEl    = document.getElementById('pubProfileHcp');
-    const courseEl = document.getElementById('pubProfileCourse');
-    if (nameEl)   nameEl.textContent   = d.displayName || '—';
-    if (hcpEl)    hcpEl.textContent    = d.hcpIndex != null ? `HCP ${d.hcpIndex}` : 'HCP not set';
-    if (courseEl) courseEl.textContent = d.homeCourse || '';
-
-    // Team count badge — count from their teams subcollection
-    const badgesEl = document.getElementById('pubProfileBadges');
-    if (badgesEl) {
-      try {
-        const tSnap = await window._fbDb.collection('users').doc(buddyUid).collection('teams').get();
-        const count = tSnap.size;
-        badgesEl.innerHTML = count > 0
-          ? `<span class="pub-profile-badge">🏌️ ${count} team${count !== 1 ? 's' : ''}</span>`
-          : `<span class="pub-profile-badge">No teams yet</span>`;
-      } catch(e) { badgesEl.innerHTML = ''; }
-    }
+    // Name + meta line (HCP · home course; country appended once stats load)
+    const nameEl = document.getElementById('pubProfileName');
+    const metaEl = document.getElementById('pubProfileMeta');
+    if (nameEl) nameEl.textContent = d.displayName || '—';
+    const hcpStr = d.hcpIndex != null ? `<b>HCP</b> ${d.hcpIndex}` : 'HCP not set';
+    const baseMeta = [hcpStr];
+    if (d.homeCourse) baseMeta.push(esc(d.homeCourse));
+    if (metaEl) metaEl.innerHTML = baseMeta.join(' &nbsp;|&nbsp; ');
 
     // Add Buddy button state
     _updateAddBuddyBtn(buddyUid);
+
+    // Stats grid + buddies count + country (best-effort reads of their subcollections)
+    const stats = await _loadPublicStats(buddyUid);
+    const setNum = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setNum('pubBuddyCount', stats.buddies);
+    setNum('pubStatDuo',     stats.duo);
+    setNum('pubStatMatch',   stats.match);
+    setNum('pubStatBuddies', stats.buddies);
+    setNum('pubStatTeams',   stats.teams);
+    if (metaEl && stats.country) metaEl.innerHTML = baseMeta.concat([esc(stats.country)]).join(' &nbsp;|&nbsp; ');
 
   } catch(e) { showToast('Could not load profile: ' + e.message, 'error'); }
 }
 
 function _renderPublicProfileLoading() {
-  const avEl     = document.getElementById('pubProfileAvatar');
-  const nameEl   = document.getElementById('pubProfileName');
-  const hcpEl    = document.getElementById('pubProfileHcp');
-  const courseEl = document.getElementById('pubProfileCourse');
-  const badgesEl = document.getElementById('pubProfileBadges');
-  const btn      = document.getElementById('addBuddyBtn');
-  if (avEl)     avEl.innerHTML    = '👤';
-  if (nameEl)   nameEl.textContent  = '…';
-  if (hcpEl)    hcpEl.textContent   = '';
-  if (courseEl) courseEl.textContent = '';
-  if (badgesEl) badgesEl.innerHTML  = '';
+  const set = (id, v, html) => { const el = document.getElementById(id); if (el) { if (html) el.innerHTML = v; else el.textContent = v; } };
+  set('pubProfileAvatar', '👤', true);
+  set('pubProfileName', '…');
+  set('pubProfileMeta', '');
+  ['pubBuddyCount','pubStatDuo','pubStatMatch','pubStatBuddies','pubStatTeams'].forEach(id => set(id, '0'));
+  const btn = document.getElementById('addBuddyBtn');
   if (btn) { btn.textContent = 'Loading…'; btn.className = 'btn-add-buddy sent'; btn.disabled = true; }
+}
+
+// Best-effort counts from a player's own subcollections (graceful 0s if rules block reads).
+async function _loadPublicStats(buddyUid) {
+  const stats = { duo:0, match:0, buddies:0, teams:0, country:'' };
+  const safe = p => p.catch(() => null);
+  try {
+    const [teamsS, buddiesS, roundsS, profS] = await Promise.all([
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('teams').get()),
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('buddies').get()),
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('rounds').get()),
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('profile').doc('data').get())
+    ]);
+    if (teamsS)   stats.teams   = teamsS.size || 0;
+    if (buddiesS) stats.buddies = buddiesS.size || 0;
+    if (roundsS)  roundsS.forEach(doc => { const r = doc.data() || {}; if (r.isMatch) stats.match++; else stats.duo++; });
+    if (profS && profS.exists) { const pd = profS.data() || {}; stats.country = pd.country || ''; }
+  } catch(e) { console.warn('_loadPublicStats', e); }
+  return stats;
 }
 
 function _updateAddBuddyBtn(buddyUid) {
@@ -12537,6 +12817,28 @@ function closePublicProfile() {
   const ov = document.getElementById('publicProfileOverlay');
   ov.classList.remove('open');
   setTimeout(() => { ov.style.display = 'none'; _viewingPublicUid = null; }, 350);
+}
+
+// Send a buddy request straight from a search row (no need to open the profile first).
+async function addBuddyDirect(buddyUid, toName){
+  const uid = window._fbAuth?.currentUser?.uid;
+  if (!uid || !buddyUid || !_profile) { showToast('Save your profile first.', 'error'); return; }
+  if (_buddies.find(b => b.uid === buddyUid)) { showToast('Already your buddy.', 'info'); return; }
+  if (_sentBuddyRequests.find(s => s.toUid === buddyUid)) { showToast('Request already pending.', 'info'); return; }
+  try {
+    const reqId = Date.now().toString();
+    await window._fbDb.collection('users').doc(buddyUid).collection('buddyRequests').doc(reqId).set({
+      type:'buddy_request', fromUid:uid, fromName:_profile.displayName, fromAvatar:_profile.avatarId||null,
+      fromHcp:_profile.hcpIndex ?? null, sentAt:new Date().toISOString(), status:'pending'
+    });
+    await window._fbDb.collection('users').doc(uid).collection('sentRequests').doc(reqId).set({
+      toUid:buddyUid, toName:toName||buddyUid, sentAt:new Date().toISOString(), status:'pending', type:'buddy_request'
+    });
+    _sentBuddyRequests.push({ id:reqId, toUid:buddyUid, toName:toName||buddyUid });
+    showToast('Buddy request sent! 🏌️','success');
+    if (typeof renderSentRequests==='function') renderSentRequests();
+    if (typeof onBuddySearchInput==='function') onBuddySearchInput(); // refresh to show pending state
+  } catch(e){ showToast('Could not send request: '+e.message,'error'); }
 }
 
 async function addBuddyFromProfile() {
@@ -12590,18 +12892,12 @@ function renderBuddiesList() {
     html = `<div style="font-size:0.8rem;color:var(--muted);padding:4px 0 8px;">No buddies yet — tap Find Buddy to search for players.</div>`;
   } else {
     html = _buddies.map(b => {
-      const av = b.avatarId && AVATARS[b.avatarId]
-        ? `<img src="${AVATARS[b.avatarId]}" alt="" style="width:100%;height:100%;object-fit:cover;">`
-        : `<span style="font-size:1rem;">🏌️</span>`;
       const hcp = b.hcp != null ? `HCP ${b.hcp}` : '';
-      return `
-      <div class="buddy-list-card" onclick="_openBuddyProfile('${b.uid}')" style="cursor:pointer;">
-        <div class="buddy-result-avatar" style="width:36px;height:36px;font-size:1.1rem;">${av}</div>
-        <div style="flex:1;">
-          <div class="buddy-list-name">${esc(b.name || '—')}</div>
-          ${hcp ? `<div class="buddy-list-hcp">${hcp}</div>` : ''}
-        </div>
-        <button class="btn-decline" onclick="event.stopPropagation();removeBuddy('${b.uid}')" style="padding:5px 10px;font-size:0.65rem;" title="Remove buddy">✕</button>
+      const nm  = esc(b.name || '—');
+      return `<div class="ab-row">
+        <div class="ab-row-name">${nm}${hcp ? ` <span class="ab-row-sub">${hcp}</span>` : ''}</div>
+        <button class="ab-btn" onclick="_openBuddyProfile('${b.uid}')">${t('ab_profile')}</button>
+        <button class="ab-btn remove" onclick="removeBuddy('${b.uid}')">\u2715 ${t('ab_remove')}</button>
       </div>`;
     }).join('');
   }
@@ -13353,6 +13649,7 @@ async function onSignedIn(user) {
   startBuddyRequestListener(user.uid);
   startNotifListener(user.uid);
   checkForActiveMatch(user.uid);
+  loadOpenGames(user.uid).then(function(){ if(typeof updateNotifBadge==='function') updateNotifBadge(); }).catch(function(){});
   checkWhatsNew();
   applyLang();
   initSectionState();
@@ -13867,59 +14164,130 @@ async function endMatch() {
 
 // ── CHECK FOR ACTIVE MATCH ON LOGIN ───────────────────────
 async function checkForActiveMatch(uid) {
-  try {
-    // Try compound queries first (requires Firestore index)
-    const snapA = await window._fbDb.collection('matches')
-      .where('teamA.uid', '==', uid)
-      .where('status', '==', 'active')
-      .limit(1).get();
-    if (!snapA.empty) {
-      const data = snapA.docs[0].data();
-      window._activeMatchId   = data.matchId;
-      window._activeMatchRole = 'A';
-      showLiveMatchBanner(`⚡ Active match vs ${data.teamB?.teamName || 'opponent'} — tap to rejoin`);
-      return;
-    }
-    const snapB = await window._fbDb.collection('matches')
-      .where('teamB.uid', '==', uid)
-      .where('status', '==', 'active')
-      .limit(1).get();
-    if (!snapB.empty) {
-      const data = snapB.docs[0].data();
-      window._activeMatchId   = data.matchId;
-      window._activeMatchRole = 'B';
-      showLiveMatchBanner(`⚡ Active match vs ${data.teamA?.teamName || 'opponent'} — tap to rejoin`);
-      return;
-    }
-  } catch(err) {
-    // Firestore index may not exist — fall back to single-field queries + JS filter
-    console.warn('checkForActiveMatch compound query failed, trying fallback:', err.message);
+  if (!uid || !window._fbDb) return;
+  const isActive  = d => d.data().status === 'active';
+  const isWaiting = d => d.data().status === 'waiting' && !(d.data().teamB && d.data().teamB.uid);
+  // Active matches this user already ended (round saved with matchComplete) must never
+  // re-prompt — even if the Firestore status update was blocked (e.g. role-B can't write
+  // the host's doc). Treat them as done and best-effort clean them up.
+  const endedLocally = (matchId) => {
     try {
-      // Query by teamA.uid only (no compound index needed)
-      const snapA = await window._fbDb.collection('matches')
-        .where('teamA.uid', '==', uid).limit(5).get();
-      const activeA = snapA.docs.find(d => d.data().status === 'active');
-      if (activeA) {
-        const data = activeA.data();
-        window._activeMatchId   = data.matchId;
-        window._activeMatchRole = 'A';
-        showLiveMatchBanner(`⚡ Active match vs ${data.teamB?.teamName || 'opponent'} — tap to rejoin`);
-        return;
-      }
-      const snapB = await window._fbDb.collection('matches')
-        .where('teamB.uid', '==', uid).limit(5).get();
-      const activeB = snapB.docs.find(d => d.data().status === 'active');
-      if (activeB) {
-        const data = activeB.data();
-        window._activeMatchId   = data.matchId;
-        window._activeMatchRole = 'B';
-        showLiveMatchBanner(`⚡ Active match vs ${data.teamA?.teamName || 'opponent'} — tap to rejoin`);
-      }
-    } catch(err2) {
-      console.warn('checkForActiveMatch fallback also failed:', err2.message);
+      const arr = (typeof _savedRounds !== 'undefined' && _savedRounds) || window._savedRounds || [];
+      return arr.some(r => r && r.id === ('m_' + matchId) && r.matchComplete);
+    } catch (_) { return false; }
+  };
+  const bestEffortComplete = (matchId) => {
+    try { window._fbDb.collection('matches').doc(matchId).update({ status:'complete', completedAt: Date.now() }); } catch (_) {}
+  };
+  // First active doc for a uid-field that the user hasn't already ended.
+  const findLive = async (field, role) => {
+    let docs;
+    try {
+      const s = await window._fbDb.collection('matches').where(field,'==',uid).where('status','==','active').limit(5).get();
+      docs = s.docs;
+    } catch (err) {
+      console.warn('checkForActiveMatch compound query failed, falling back:', err.message);
+      const s = await window._fbDb.collection('matches').where(field,'==',uid).limit(15).get();
+      docs = s.docs.filter(isActive);
     }
+    for (const d of docs) {
+      const data = d.data();
+      if (endedLocally(data.matchId)) { bestEffortComplete(data.matchId); continue; }
+      _onOpenMatchFound(data, role);
+      return true;
+    }
+    return false;
+  };
+  try {
+    if (await findLive('teamA.uid', 'A')) return;
+    if (await findLive('teamB.uid', 'B')) return;
+    // No active match — surface my own match still waiting for an opponent
+    const wA = await window._fbDb.collection('matches').where('teamA.uid','==',uid).limit(15).get();
+    const w = wA.docs.find(isWaiting);
+    if (w) { _onOpenMatchFound(w.data(), 'A'); return; }
+  } catch (err) {
+    console.warn('checkForActiveMatch failed:', err.message);
   }
 }
+
+// Shared handler when an open match is found on login: persistent banner + prominent modal.
+function _onOpenMatchFound(data, role) {
+  if (!data || !data.matchId) return;
+  window._activeMatchId   = data.matchId;
+  window._activeMatchRole = role;
+  const _t = (typeof t === 'function') ? t : (k => k);
+  const oppName = (role === 'A' ? (data.teamB && data.teamB.teamName) : (data.teamA && data.teamA.teamName)) || _t('rejoin_opp_fallback');
+  const waiting = (data.status === 'waiting');
+  if (typeof showLiveMatchBanner === 'function') {
+    showLiveMatchBanner('\u26a1 ' + (waiting
+      ? _t('rejoin_banner_waiting')
+      : _t('rejoin_banner_active').replace('{opp}', oppName)));
+  }
+  // Open/waiting games are now managed in the notification bell (see loadOpenGames);
+  // the login modal is intentionally not shown here anymore.
+}
+
+// Prominent login modal: Rejoin/Dismiss (active) or Resume/Cancel (waiting).
+function showRejoinModal(info) {
+  window._rejoinInfo = info;
+  const _t = (typeof t === 'function') ? t : (k => k);
+  const waiting = (info.status === 'waiting');
+  const titleEl = document.getElementById('rejoinModalTitle');
+  const bodyEl  = document.getElementById('rejoinModalBody');
+  const primEl  = document.getElementById('rejoinModalPrimary');
+  const secEl   = document.getElementById('rejoinModalSecondary');
+  if (titleEl) titleEl.textContent = '\u26a1 ' + _t('rejoin_title');
+  if (bodyEl)  bodyEl.textContent  = waiting
+    ? _t('rejoin_body_waiting').replace('{code}', info.code || '\u2014')
+    : _t('rejoin_body_active').replace('{opp}', info.oppName || _t('rejoin_opp_fallback'));
+  if (primEl) primEl.textContent = waiting ? _t('rejoin_primary_waiting') : _t('rejoin_primary_active');
+  if (secEl)  secEl.textContent  = waiting ? _t('rejoin_secondary_waiting') : _t('rejoin_secondary_active');
+  const m = document.getElementById('rejoinModal'); if (m) m.style.display = 'flex';
+}
+function dismissRejoinModal() {
+  const m = document.getElementById('rejoinModal'); if (m) m.style.display = 'none';
+}
+function rejoinModalPrimary() {
+  const info = window._rejoinInfo || {};
+  dismissRejoinModal();
+  if (info.status === 'waiting') {
+    window._activeMatchId = info.id; window._activeMatchRole = 'A';
+    if (typeof openMatchCode === 'function') openMatchCode(info.code);
+  } else {
+    if (typeof resumeLiveScorecard === 'function') resumeLiveScorecard();
+  }
+}
+function rejoinModalSecondary() {
+  const info = window._rejoinInfo || {};
+  if (info.status === 'waiting') {
+    if (typeof abandonMatch === 'function') abandonMatch(info.id);
+    window._activeMatchId = null; window._activeMatchRole = null;
+    if (typeof hideLiveMatchBanner === 'function') hideLiveMatchBanner();
+  } else {
+    // Active match, user chose not to rejoin. If they've already recorded this match
+    // (a saved round exists), flag it done on their own side so it stops re-prompting.
+    _markMatchDoneLocally(info.id);
+    window._activeMatchId = null; window._activeMatchRole = null;
+    if (typeof hideLiveMatchBanner === 'function') hideLiveMatchBanner();
+  }
+  dismissRejoinModal();
+}
+// Persist a "done" flag on the user's OWN saved round for a match (never touches the
+// shared match doc, so the opponent is unaffected). Only flags an existing round.
+async function _markMatchDoneLocally(matchId) {
+  try {
+    const uid = window._fbAuth?.currentUser?.uid;
+    if (!uid || !matchId) return;
+    const rid = 'm_' + matchId;
+    const arr = (typeof _savedRounds !== 'undefined' && _savedRounds) || [];
+    const idx = arr.findIndex(r => r && r.id === rid);
+    if (idx < 0) return; // nothing recorded — don't create a phantom round
+    arr[idx].matchComplete = true;
+    await window._fbDb.collection('users').doc(uid).collection('rounds').doc(rid)
+      .update({ matchComplete: true, endedAt: Date.now() });
+  } catch (_) {}
+}
+
 function openLiveScorecard(matchData, role) {
   const n = matchData.holes;
   const isA = role === 'A';
@@ -14828,8 +15196,11 @@ async function saveRound() {
   const parPlayed = _sc.par.filter((_,i) => _sc.scores[i] > 0).reduce((a,b) => a+b, 0);
   const vsPar     = gross - parPlayed;
 
+  // Stable id per match/session so repeated saves (Save Round, then End Round) upsert
+  // the SAME document instead of creating duplicates.
+  if (!_sc.savedRoundId) _sc.savedRoundId = _sc.matchId ? ('m_' + _sc.matchId) : ('r_' + Date.now());
   const round = {
-    id: Date.now().toString(),
+    id: _sc.savedRoundId,
     courseName: _sc.courseName,
     teamName:   _sc.teamName,  teamHcp:   _sc.teamHcp,
     oppName:    _sc.oppName,   oppHcp:    _sc.oppHcp,
@@ -14837,14 +15208,41 @@ async function saveRound() {
     holes: _sc.holes, holesPlayed: played,
     par: _sc.par.slice(), scores: _sc.scores.slice(), oppScores: _sc.oppScores.slice(),
     index: _sc.index && _sc.index.length ? _sc.index.slice() : null,
+    si:    _sc.index && _sc.index.length ? _sc.index.slice() : null,
     totalPar, gross, oppGross, vsPar,
     playedAt: new Date().toISOString(),
   };
+  // If this save came from END ROUND (endMatch sets _sc._ended first), record that the
+  // match is finished from this user's side — even if the Firestore status update is
+  // later blocked by rules, the rejoin detector will treat it as done.
+  if (_sc && _sc._ended) { round.matchComplete = true; round.endedAt = Date.now(); }
 
+  // For matches, also store nested team objects + the computed result so the history
+  // card (which reads teamA/teamB.hcp and result.teamAWon/teamBWon) is correct.
+  if (_sc.isMatch) {
+    const _diff = Math.abs((_sc.teamHcp||0) - (_sc.oppHcp||0));
+    const _teamRecv = (_sc.teamHcp||0) >= (_sc.oppHcp||0);   // higher hcp receives strokes
+    const _siArr = (_sc.siRank && _sc.siRank.length) ? _sc.siRank : (_sc.index||[]);
+    let _aWon=0,_bWon=0,_drawn=0; const _holeResults=[];
+    for (let i=0;i<_sc.holes;i++){
+      const a=_sc.scores[i], b=_sc.oppScores[i];
+      if (a==null||a===0||b==null||b===0){ _holeResults.push(null); continue; }
+      const str = (typeof strokeOnHoleWithIndex==='function') ? strokeOnHoleWithIndex(i,_diff,_siArr,_sc.holes) : 0;
+      const na = a-(_teamRecv?str:0), nb = b-(_teamRecv?0:str);
+      const res = na<nb?1:(na>nb?-1:0);
+      if(res===1)_aWon++; else if(res===-1)_bWon++; else _drawn++;
+      _holeResults.push(res);
+    }
+    round.teamA  = { name:_sc.teamName, hcp:_sc.teamHcp, scores:_sc.scores.slice() };
+    round.teamB  = { name:_sc.oppName,  hcp:_sc.oppHcp,  scores:_sc.oppScores.slice() };
+    round.result = { teamAWon:_aWon, teamBWon:_bWon, drawn:_drawn, winner:(_aWon>_bWon?_sc.teamName:(_bWon>_aWon?_sc.oppName:'AS')) };
+    round.holeResults = _holeResults;
+  }
   setSaveBtnsState(true);
   try {
     await window._fbDb.collection('users').doc(uid).collection('rounds').doc(round.id).set(round);
-    _savedRounds.unshift(round);
+    const _exist = _savedRounds.findIndex(r => r && r.id === round.id);
+    if (_exist >= 0) _savedRounds[_exist] = round; else _savedRounds.unshift(round);
     renderMyData();
     ['sc_saveBtnTop','sc_saveBtnBottom'].forEach(id => {
       const btn = document.getElementById(id);
@@ -15357,50 +15755,58 @@ document.addEventListener('DOMContentLoaded', applyLang);
       <div class="match-overlay-title" data-i18n="gate_join_title">Join Match</div>
     </div>
 
-    <!-- Step 1: Enter code -->
+    <!-- Step 1: Enter code (M07 redesign) -->
+    <style>
+      #joinMatchOverlay .join-instruction { font-family:'Inter',sans-serif; font-size:14px; font-weight:500; color:#444; text-align:center; line-height:1.6; margin:10px 0 18px; }
+      #joinMatchOverlay .join-code-row { display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:18px; }
+      #joinMatchOverlay .join-cbox { width:52px; height:64px; border:2px solid #1a6b3c; border-radius:10px; font-family:'Inter',sans-serif; font-size:28px; font-weight:800; color:#1a6b3c; text-align:center; background:#fff; outline:none; text-transform:uppercase; transition:border-color .15s, box-shadow .15s; }
+      #joinMatchOverlay .join-cbox.filled { background:#f0f9f4; }
+      #joinMatchOverlay .join-cbox:focus { border-color:#e1c245; border-width:2.5px; box-shadow:0 0 0 3px rgba(225,194,69,0.2); }
+      #joinMatchOverlay .join-qr-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; height:52px; background:#fff; color:#1a6b3c; border:1.5px solid #1a6b3c; border-radius:10px; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s; margin-bottom:12px; }
+      #joinMatchOverlay .join-qr-btn:active { background:#f0f9f4; }
+      #joinMatchOverlay .join-go-btn { width:100%; height:52px; background:#1a6b3c; color:#fff; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:15px; font-weight:700; letter-spacing:0.06em; cursor:pointer; text-transform:uppercase; opacity:1; transition:opacity .2s; }
+      #joinMatchOverlay .join-go-btn:disabled { opacity:0.4; pointer-events:none; cursor:default; }
+    </style>
     <div id="joinStep1">
-      <p class="match-gate-sub" style="margin-top:4px;" data-i18n="join_enter_code">Enter the 5-character code from your opponent</p>
+      <p class="join-instruction" data-i18n="join_enter_code">Enter the 5-letter match code shared by your opponent</p>
 
-      <div class="join-code-input-wrap">
-        <input
-          type="text"
-          id="joinCodeInput"
-          class="join-code-input"
-          placeholder="e.g. GX4K9"
-          maxlength="5"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="characters"
-          spellcheck="false"
-          oninput="joinCodeTyped(this)"
-        >
+      <div class="join-code-row">
+        <input class="join-cbox" id="jc0" maxlength="1" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="joinBoxInput(0)" onkeydown="joinBoxKey(event,0)" onpaste="joinBoxPaste(event)">
+        <input class="join-cbox" id="jc1" maxlength="1" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="joinBoxInput(1)" onkeydown="joinBoxKey(event,1)" onpaste="joinBoxPaste(event)">
+        <input class="join-cbox" id="jc2" maxlength="1" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="joinBoxInput(2)" onkeydown="joinBoxKey(event,2)" onpaste="joinBoxPaste(event)">
+        <input class="join-cbox" id="jc3" maxlength="1" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="joinBoxInput(3)" onkeydown="joinBoxKey(event,3)" onpaste="joinBoxPaste(event)">
+        <input class="join-cbox" id="jc4" maxlength="1" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="joinBoxInput(4)" onkeydown="joinBoxKey(event,4)" onpaste="joinBoxPaste(event)">
       </div>
+      <input type="hidden" id="joinCodeInput">
 
-      <button class="btn-calc" id="joinLookupBtn" onclick="joinLookupCode()" style="margin-top:20px;" data-i18n="join_find_btn" disabled>
-        Find Match →
+      <button class="join-qr-btn" onclick="joinScanQR()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        <span data-i18n="join_scan_qr">Scan QR Code</span>
       </button>
 
-      <div style="text-align:center;margin-top:20px;">
-        <button class="match-code-share-btn" onclick="joinScanQR()">📷 Scan QR Code</button>
-      </div>
+      <button class="join-go-btn" id="joinLookupBtn" onclick="joinLookupCode()" data-i18n="join_find_btn" disabled>Join Match</button>
 
-      <div id="joinCodeError" class="join-code-error" style="display:none;"></div>
+      <div id="joinCodeError" class="join-code-error" style="display:none;margin-top:16px;"></div>
     </div>
 
-    <!-- Step 2: Confirm match details -->
+    <!-- Step 2: Match Summary (M07b) -->
+    <style>
+      #joinStep2 .js2-code-badge { display:flex; align-items:center; justify-content:center; gap:8px; margin:6px 0 20px; background:#f0f9f4; border:1.5px solid #1a6b3c; border-radius:8px; padding:10px 14px; }
+      #joinStep2 .js2-code-label { font-family:'Inter',sans-serif; font-size:12px; color:#777; }
+      #joinStep2 .js2-code-val { font-family:'Inter',sans-serif; font-size:16px; font-weight:800; color:#1a6b3c; letter-spacing:0.12em; }
+      #joinStep2 .js2-section { font-family:'Inter',sans-serif; font-size:11px; font-weight:700; color:#1a6b3c; letter-spacing:0.08em; text-transform:uppercase; margin:16px 0 8px; }
+      #joinStep2 .js2-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.06); font-family:'Roboto',sans-serif; font-size:13px; gap:12px; }
+      #joinStep2 .js2-key { color:#777; flex:0 0 auto; }
+      #joinStep2 .js2-val { color:#111; font-weight:500; text-align:right; }
+      #joinStep2 .js2-thcp { font-family:'Inter',sans-serif; font-size:18px; font-weight:800; color:#1a6b3c; }
+      #joinStep2 .js2-teedot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+      #joinStep2 .js2-open-btn { width:100%; height:52px; background:#1a6b3c; color:#fff; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:15px; font-weight:700; letter-spacing:0.04em; cursor:pointer; margin-top:22px; }
+      #joinStep2 .js2-open-btn:disabled { opacity:0.5; cursor:default; }
+    </style>
     <div id="joinStep2" style="display:none;">
-      <p class="match-gate-sub" style="margin-top:4px;">Confirm you are joining the right match</p>
+      <div class="js2-code-badge"><span class="js2-code-label" data-i18n="js2_match_code">Match code</span><span class="js2-code-val" id="js2_code">—</span></div>
       <div id="joinConfirmContent"></div>
-
-      <div class="match-step-label" style="margin-top:20px;" data-i18n="join_your_team">Your Team Details</div>
-      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Check your details below — correct anything that's wrong before joining.</p>
-
-      <!-- Dynamic team fields injected by joinShowConfirm() -->
-      <div id="joinTeamFields"></div>
-
-      <button class="btn-calc" id="joinConfirmBtn" onclick="joinConfirm()" style="margin-top:20px;" data-i18n="join_confirm_btn">
-        Join &amp; Start Scoring →
-      </button>
+      <button class="js2-open-btn" id="joinConfirmBtn" onclick="joinConfirm()" data-i18n="js2_open_btn">Open Scorecard →</button>
     </div>
 
   </div>
@@ -16987,6 +17393,22 @@ document.addEventListener('DOMContentLoaded', applyLang);
         </button>
       </div>
 </section>
+      <style>
+        #screen-notifications .og-section-label { font-family:'Inter',sans-serif; font-size:11px; font-weight:700; color:#1a6b3c; letter-spacing:0.08em; text-transform:uppercase; margin:2px 0 10px; }
+        #screen-notifications .open-game-card { display:flex; align-items:stretch; gap:12px; background:#f0f9f4; border:1.5px solid #1a6b3c; border-radius:12px; padding:12px; margin-bottom:10px; }
+        #screen-notifications .og-btns { display:flex; flex-direction:column; gap:8px; flex:0 0 auto; justify-content:center; }
+        #screen-notifications .og-btn { border:none; border-radius:8px; padding:9px 14px; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; min-width:96px; }
+        #screen-notifications .og-cancel { background:#fff; border:1.5px solid #c0392b; color:#c0392b; }
+        #screen-notifications .og-continue { background:#1a6b3c; color:#fff; }
+        #screen-notifications .og-info { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; justify-content:center; }
+        #screen-notifications .og-badge { align-self:flex-start; display:inline-block; font-family:'Inter',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:2px 8px; border-radius:10px; margin-bottom:5px; }
+        #screen-notifications .og-badge.active { background:#1a6b3c; color:#fff; }
+        #screen-notifications .og-badge.waiting { background:#e1c245; color:#1a6b3c; }
+        #screen-notifications .og-title { font-family:'Inter',sans-serif; font-size:14px; font-weight:700; color:#111; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #screen-notifications .og-sub { font-family:'Roboto',sans-serif; font-size:12px; color:#777; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #screen-notifications .notif-del { flex:0 0 auto; margin-left:8px; width:28px; height:28px; border:none; border-radius:50%; background:transparent; color:#bbb; font-size:14px; line-height:1; cursor:pointer; align-self:center; }
+        #screen-notifications .notif-del:hover, #screen-notifications .notif-del:active { background:#fbeae8; color:#c0392b; }
+      </style>
       <section id="screen-notifications" class="screen" data-screen="notifications">
       <div class="app-header">
         <div class="logo">
@@ -16999,7 +17421,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
           <button class="icon-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
         </div>
       </div>
-      <div class="sub-header"><span class="title">Notifications</span><div class="actions"><button class="back-pill" onclick="markAllNotifsRead()">Mark all read</button><button class="back-pill" onclick="screenBack()">BACK</button></div></div>
+      <div class="sub-header"><span class="title">Notifications</span><div class="actions"><button class="back-pill" onclick="markAllNotifsRead()">Mark all read</button><button class="back-pill" style="background:#c0392b;" onclick="clearAllNotifs()">Clear all</button><button class="back-pill" onclick="screenBack()">BACK</button></div></div>
       <div class="body-area">
         <div id="notifList" class="notif-list"></div>
       </div>
@@ -19870,7 +20292,7 @@ function tmCalcSide(players) {
     const rating = tee ? Number(tee.rating) : 0;
     const slope  = tee ? Number(tee.slope)  : 113;
     const par    = tee ? Number(tee.par)    : ((f.course && f.course.par) || 72);
-    p.courseHcp = getCH(parseFloat(p.hcp), slope, rating, par);
+    p.courseHcp = getCH(whsPlayIndex(p.hcp, f.course), slope, rating, par);
     p.chRounded = Math.round(p.courseHcp);
     p.teeLabel  = tee ? tee.label : '—';
   });
@@ -22365,12 +22787,13 @@ var qrcode = function() {
 if (typeof _tmScores === 'undefined') var _tmScores = { u: [], o: [] };
 if (typeof _tmEdit === 'undefined') var _tmEdit = { cell:null, team:null, hole:null, buf:'', root:null };
 
-function tmHoleCount(){ return (typeof trcTotal==='function') ? trcTotal() : ((_trFlow&&_trFlow.holes)||9); }
-function tmPar(i){ return (typeof trcPar==='function') ? trcPar(i) : 4; }
-function tmSI(i){ return (typeof trcSI==='function') ? trcSI(i) : (i+1); }
+function tmHoleCount(){ if(window._tmView) return window._tmView.holes; return (typeof trcTotal==='function') ? trcTotal() : ((_trFlow&&_trFlow.holes)||9); }
+function tmPar(i){ if(window._tmView) return (window._tmView.par[i]!=null?window._tmView.par[i]:4); return (typeof trcPar==='function') ? trcPar(i) : 4; }
+function tmSI(i){ if(window._tmView) return (window._tmView.si[i]!=null?window._tmView.si[i]:(i+1)); return (typeof trcSI==='function') ? trcSI(i) : (i+1); }
 
 // THCP per side (reuse tmCalcSide); returns {u, o}
 function tmSideHcps(){
+  if(window._tmView) return window._tmView.hcps;
   const mine = (typeof tmCalcSide==='function') ? tmCalcSide(_trFlow.team ? _trFlow.team.players : []) : null;
   const oppData = (typeof _tmFlow!=='undefined' && _tmFlow.opponent) ? _tmFlow.opponent : null;
   const opp  = (typeof tmCalcSide==='function') ? tmCalcSide(oppData ? oppData.players : []) : null;
@@ -22394,17 +22817,19 @@ function tmEnsureScores(){
 }
 
 function tmTeamNames(){
+  if(window._tmView) return window._tmView.names;
   return { u: (_trFlow.team && _trFlow.team.name) || 'Your team',
            o: (typeof _tmFlow!=='undefined' && _tmFlow.opponent && _tmFlow.opponent.teamName) || 'Opponent' };
 }
 
 // Build the table body for a given perspective (flip=true => opponent on left)
-function tmBuildRows(ROOT, flip){
+function tmBuildRows(ROOT, flip, lo, hi){
   const n=tmHoleCount(); const sm=tmStrokeMap();
   tmEnsureScores();
+  if(lo==null) lo=0; if(hi==null) hi=n;
   const colA = flip ? 'o' : 'u', colB = flip ? 'u' : 'o';
   let rows='';
-  for(let i=0;i<n;i++){
+  for(let i=lo;i<hi;i++){
     const h=i+1, par=tmPar(i);
     const sA=_tmScores[colA][i], sB=_tmScores[colB][i];
     // net for hole result (always from displayed-left vs displayed-right)
@@ -22427,9 +22852,9 @@ function tmBuildRows(ROOT, flip){
       '<td style="background:'+udBg+';font-weight:700;color:'+udColor+';">'+udLabel+'</td>'+
     '</tr>';
   }
-  const sumA=_tmScores[colA].reduce((a,b)=>a+(b||0),0);
-  const sumB=_tmScores[colB].reduce((a,b)=>a+(b||0),0);
-  const totPar=Array.from({length:n},(_,i)=>tmPar(i)).reduce((a,b)=>a+b,0);
+  const sumA=_tmScores[colA].slice(lo,hi).reduce((a,b)=>a+(b||0),0);
+  const sumB=_tmScores[colB].slice(lo,hi).reduce((a,b)=>a+(b||0),0);
+  let totPar=0; for(let i=lo;i<hi;i++) totPar+=tmPar(i);
   rows+='<tr class="totals-row"><td>SCORE</td><td>'+totPar+'</td><td>'+(sumA||'–')+'</td><td>'+(sumB||'–')+'</td><td>-</td></tr>';
   return rows;
 }
@@ -22438,15 +22863,40 @@ function tmScoreView(ROOT, flip){
   ROOT._flip=flip;
   const nm=tmTeamNames();
   const q=s=>ROOT.querySelector(s);
-  const tb=ROOT.querySelector('.sc-table tbody'); if(tb) tb.innerHTML=tmBuildRows(ROOT, flip);
   const leftName  = flip ? nm.o : nm.u, rightName = flip ? nm.u : nm.o;
-  const heads=ROOT.querySelectorAll('.sc-table thead th');
-  if(heads[2]) heads[2].innerHTML='SCORE<br><small>'+leftName+'</small>';
-  if(heads[3]) heads[3].innerHTML='SCORE<br><small>'+rightName+'</small>';
+  const nH=tmHoleCount(), smap=tmStrokeMap();
+  const cL = flip ? 'o' : 'u', cR = flip ? 'u' : 'o';
+  // stroke-note for a hole range [lo,hi): which holes each side receives a stroke on
+  const strokeNote=(lo,hi)=>{
+    const lh=[], rh=[];
+    for(let i=lo;i<hi;i++){ if((smap[cL][i]||0)>0) lh.push(i+1); if((smap[cR][i]||0)>0) rh.push(i+1); }
+    if(!lh.length && !rh.length) return 'No strokes given on these holes.';
+    let s='';
+    if(lh.length) s+='<span style="color:var(--green);font-weight:700;">★</span> '+leftName+': '+lh.join(', ');
+    if(rh.length) s+=(s?'&nbsp;&nbsp;·&nbsp;&nbsp;':'')+'<span style="color:var(--red);font-weight:700;">★</span> '+rightName+': '+rh.join(', ');
+    return s;
+  };
+  const fb=ROOT.querySelector('#tmfl_frontBody'), bb=ROOT.querySelector('#tmfl_backBody');
+  if(fb && bb){
+    // 18-hole split view: Front 9 + Back 9, each its own table + note
+    fb.innerHTML=tmBuildRows(ROOT, flip, 0, Math.min(9,nH));
+    bb.innerHTML=tmBuildRows(ROOT, flip, 9, nH);
+    const setH=(id,name)=>{ const e=ROOT.querySelector('#'+id); if(e) e.innerHTML='SCORE<br><small>'+name+'</small>'; };
+    setH('tmfl_f1h',leftName); setH('tmfl_f2h',rightName); setH('tmfl_b1h',leftName); setH('tmfl_b2h',rightName);
+    const fn=ROOT.querySelector('#tmfl_frontNote'); if(fn) fn.innerHTML=strokeNote(0,Math.min(9,nH));
+    const bn=ROOT.querySelector('#tmfl_backNote'); if(bn) bn.innerHTML=strokeNote(9,nH);
+  } else {
+    // single-table view (9 holes)
+    const tb=ROOT.querySelector('.sc-table tbody'); if(tb) tb.innerHTML=tmBuildRows(ROOT, flip, 0, nH);
+    const heads=ROOT.querySelectorAll('.sc-table thead th');
+    if(heads[2]) heads[2].innerHTML='SCORE<br><small>'+leftName+'</small>';
+    if(heads[3]) heads[3].innerHTML='SCORE<br><small>'+rightName+'</small>';
+    const sn=ROOT.querySelector('.stroke-note'); if(sn) sn.innerHTML=strokeNote(0,nH);
+  }
   // perspective buttons
   const pbtns=ROOT.querySelectorAll('.persp-btn'); const bUser=pbtns[0], bOpp=pbtns[1];
-  if(bUser){ bUser.textContent=nm.u+' view'; bUser.classList.toggle('active',!flip); }
-  if(bOpp){ bOpp.textContent=nm.o+' view'; bOpp.classList.toggle('active',flip); }
+  if(bUser){ bUser.textContent=nm.u+' view'; bUser.classList.toggle('active',!flip); bUser.onclick=function(){ tmScoreView(ROOT,false); }; }
+  if(bOpp){ bOpp.textContent=nm.o+' view'; bOpp.classList.toggle('active',flip); bOpp.onclick=function(){ tmScoreView(ROOT,true); }; }
   // result (holes won/lost/drawn from current perspective)
   const n=tmHoleCount(), sm=tmStrokeMap();
   let lw=0, rw=0, dr=0;
@@ -22474,11 +22924,61 @@ function tmScoreView(ROOT, flip){
     sb[3].textContent=played.length+' / '+n;
   }
   // course header
-  const c=_trFlow.course||{};
-  if(ROOT.querySelector('.course-name')) ROOT.querySelector('.course-name').textContent=c.name||'Course';
-  const cm=ROOT.querySelector('.course-meta'); if(cm) cm.innerHTML=n+' HOLES – '+nm.u+' vs '+nm.o;
-  if(q('.best-score-label span')) q('.best-score-label span').textContent=(lw>rw?leftName:lw<rw?rightName:'Even');
-  tmAttachEdit(ROOT);
+  const c=(_trFlow && _trFlow.course) || {};
+  const courseName=(window._tmView && window._tmView.courseName) || c.name || 'Course';
+  if(ROOT.querySelector('.course-name')) ROOT.querySelector('.course-name').textContent=courseName;
+  const hh=tmSideHcps();
+  const cm=ROOT.querySelector('.course-meta'); if(cm) cm.innerHTML=n+' HOLES · HCP '+hh.u+' vs '+hh.o+' · '+nm.u+' vs '+nm.o;
+  // best score = lowest gross of the two teams
+  const grU=(_tmScores.u||[]).reduce((a,b)=>a+(b||0),0), grO=(_tmScores.o||[]).reduce((a,b)=>a+(b||0),0);
+  const bestNm=(grU>0&&grO>0)?(grU<grO?nm.u:(grU>grO?nm.o:'Even')):(grU>0?nm.u:(grO>0?nm.o:'–'));
+  if(q('.best-score-label span')) q('.best-score-label span').textContent=bestNm;
+  // chrome: read-only saved view vs live/flow scoring
+  const _np=ROOT.querySelector('.play-btn'); if(_np) _np.style.display = (window._tmView ? 'none' : '');
+  const _bp=ROOT.querySelector('.sub-header .back-pill');
+  if(_bp) _bp.onclick = function(){ if(window._tmView){ window._tmView=null; showScreen('matches'); } else { showScreen('tmcode'); } };
+  const _ti=ROOT.querySelector('.sub-header .title');
+  if(_ti) _ti.textContent = window._tmView ? 'Match Detail' : (ROOT.id==='screen-tmfull' ? 'Full Scorecard' : 'Scorecard');
+  // read-only saved view: offer a Delete button (below the result card)
+  var _del=ROOT.querySelector('.tm-delete-btn');
+  if(window._tmView){
+    if(!_del){
+      _del=document.createElement('button');
+      _del.className='tm-delete-btn'; _del.type='button';
+      _del.textContent='🗑 '+((typeof t==='function')?t('btn_delete'):'Delete');
+      _del.style.cssText='display:block;width:calc(100% - 32px);margin:14px 16px 8px;padding:13px;background:#fff;border:1.5px solid #c0392b;color:#c0392b;border-radius:24px;font-weight:700;font-size:0.95rem;cursor:pointer;';
+      _del.onclick=function(){ if(typeof deleteActiveScorecard==='function') deleteActiveScorecard(); };
+      var _rc=ROOT.querySelector('.result-card');
+      if(_rc && _rc.parentNode) _rc.parentNode.insertBefore(_del, _rc.nextSibling);
+      else { var _ba=ROOT.querySelector('.body-area'); if(_ba) _ba.appendChild(_del); }
+    }
+    _del.style.display='block';
+  } else if(_del){ _del.style.display='none'; }
+  if(!(window._tmView && window._tmView.readonly)) tmAttachEdit(ROOT);
+}
+
+// Open a SAVED match in the full-scorecard screens (read-only), reusing tmScoreView.
+// Handles both save schemas: live _sc (scores/oppScores/teamName/oppName) and
+// local-flow (teamA/teamB objects).
+function tmOpenSaved(round){
+  if(!round){ if(typeof showToast==='function') showToast('Round not found.'); return; }
+  const A=round.teamA||{}, B=round.teamB||{};
+  const n = round.holes || (round.par ? round.par.length : 9) || 9;
+  const teamScores = (round.scores || A.scores || []).slice();
+  const oppScores  = (round.oppScores || B.scores || []).slice();
+  window._tmView = {
+    holes: n,
+    courseName: round.courseName || A.courseName || B.courseName || 'Course',
+    par: (round.par||[]).slice(),
+    si:  (round.index||round.si||[]).slice(),
+    names: { u: round.teamName || A.name || 'Your team', o: round.oppName || B.name || 'Opponent' },
+    hcps:  { u: (round.teamHcp!=null?round.teamHcp:(A.hcp!=null?A.hcp:0)),
+             o: (round.oppHcp!=null ?round.oppHcp :(B.hcp!=null?B.hcp:0)) },
+    readonly: true
+  };
+  _tmScores = { u: teamScores, o: oppScores };
+  ['u','o'].forEach(function(t){ while(_tmScores[t].length<n) _tmScores[t].push(null); _tmScores[t].length=n; });
+  showScreen(n>=18 ? 'tmfull' : 'tmscore');
 }
 
 // ── numpad editing ──
@@ -23806,6 +24306,28 @@ function renderProfile(ROOT){
 
 // ── Menu cluster: Game History (screen-matches) — TR rounds + TM matches ──
 function _mDate(iso){ try{ return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return ''; } }
+// Backfill nested team objects + computed result from flat fields, for matches
+// saved before these were stored. Mutates and returns the record.
+function _ensureMatchFields(m){
+  if(!m) return m;
+  if(!m.teamA) m.teamA={ name:m.teamName||'Your team', hcp:(m.teamHcp!=null?m.teamHcp:null), scores:m.scores||[] };
+  if(!m.teamB) m.teamB={ name:m.oppName ||'Opponent',  hcp:(m.oppHcp!=null ?m.oppHcp :null), scores:m.oppScores||[] };
+  if(!m.result || m.result.teamAWon==null){
+    var n=m.holes||(Array.isArray(m.par)?m.par.length:9);
+    var si=m.si||m.index||[];
+    var ranks=(typeof _denseSIRanks==='function')?_denseSIRanks(si,n):si;
+    var sa=m.teamA.scores||[], sb=m.teamB.scores||[];
+    var diff=Math.abs((m.teamA.hcp||0)-(m.teamB.hcp||0));
+    var aRecv=(m.teamA.hcp||0)>=(m.teamB.hcp||0);
+    var aw=0,bw=0,dr=0;
+    for(var i=0;i<n;i++){ var a=sa[i],b=sb[i]; if(a==null||a===0||b==null||b===0) continue;
+      var str=(typeof strokeOnHoleWithIndex==='function')?strokeOnHoleWithIndex(i,diff,ranks,n):0;
+      var na=a-(aRecv?str:0), nb=b-(aRecv?0:str);
+      if(na<nb)aw++; else if(na>nb)bw++; else dr++; }
+    m.result={ teamAWon:aw, teamBWon:bw, drawn:dr, winner:(aw>bw?m.teamA.name:(bw>aw?m.teamB.name:'AS')) };
+  }
+  return m;
+}
 function _matchOutcome(m){ var r=m.result||{}; var a=r.teamAWon||0,b=r.teamBWon||0; return a>b?'Win':(a<b?'Loss':'Draw'); }
 function _ghHoles(r){ return r.holes || (Array.isArray(r.par)?r.par.length:9); }
 function _ghPassFilter(r, f){
@@ -23836,18 +24358,26 @@ function renderNotifRow(n){
     +'<div class="notif-ic">'+m.icon+'</div>'
     +'<div class="notif-body"><div class="notif-title">'+esc2(m.title)+'</div>'
     +(m.sub?'<div class="notif-sub">'+esc2(m.sub)+'</div>':'')+'</div>'
-    +(unread?'<span class="notif-dot"></span>':'')+'</div>';
+    +(unread?'<span class="notif-dot"></span>':'')
+    +'<button class="notif-del" title="Delete" onclick="deleteNotif(\''+n._id+'\',event)">\u2715</button>'
+    +'</div>';
 }
 function renderNotifList(ROOT){
   ROOT=ROOT||document.getElementById('screen-notifications'); if(!ROOT) return;
   var list=ROOT.querySelector('#notifList'); if(!list) return;
-  list.innerHTML = _notifications.length ? _notifications.map(renderNotifRow).join('') : '<div class="notif-empty">No notifications yet.</div>';
+  var _t=(typeof t==='function')?t:function(k){return k;};
+  var og=(window._openGames||[]);
+  var ogHtml = og.length ? ('<div class="og-section-label">'+_t('og_section')+'</div>'+og.map(renderOpenGameCard).join('')) : '';
+  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : (og.length ? '' : '<div class="notif-empty">No notifications yet.</div>');
+  list.innerHTML = ogHtml + notifHtml;
 }
 async function renderNotifications(ROOT){
   ROOT=ROOT||document.getElementById('screen-notifications'); if(!ROOT) return;
   var list=ROOT.querySelector('#notifList'); if(!list) return;
   var uid=(window._fbAuth&&window._fbAuth.currentUser)?window._fbAuth.currentUser.uid:null;
   if(!uid||!window._fbDb){ list.innerHTML='<div class="notif-empty">Sign in to see notifications.</div>'; return; }
+  try{ await loadOpenGames(uid); }catch(_){}
+  if(typeof updateNotifBadge==='function') updateNotifBadge();
   if(_notifUnsub){ renderNotifList(ROOT); markNotifsReadSilently(uid); return; }   // listener keeps cache fresh
   list.innerHTML='<div class="notif-empty">Loading\u2026</div>';
   try{
@@ -23865,7 +24395,7 @@ function markNotifsReadSilently(uid){
     .catch(function(e){ console.warn('markNotifsReadSilently',e); });
 }
 function updateNotifBadge(){
-  var n=_notifUnread||0;
+  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0);
   document.querySelectorAll('.header-icons').forEach(function(hdr){
     var icons=hdr.querySelectorAll('.icon-btn'); var bell=icons[1]; if(!bell) return;
     bell.style.position='relative';
@@ -23899,6 +24429,35 @@ function startNotifListener(uid){
   }catch(e){ console.warn('startNotifListener',e); }
 }
 function stopNotifListener(){ if(_notifUnsub){ try{_notifUnsub();}catch(e){} _notifUnsub=null; } _notifUnread=0; _notifications=[]; updateNotifBadge(); }
+// Delete a single notification.
+async function deleteNotif(id, ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  var uid=(window._fbAuth&&window._fbAuth.currentUser)?window._fbAuth.currentUser.uid:null;
+  if(!uid||!window._fbDb||!id) return;
+  try{
+    await window._fbDb.collection('users').doc(uid).collection('notifications').doc(id).delete();
+    _notifications=_notifications.filter(function(n){return n._id!==id;});
+    _notifUnread=_notifications.filter(function(n){return !n.read;}).length;
+    renderNotifList(document.getElementById('screen-notifications'));
+    if(typeof updateNotifBadge==='function') updateNotifBadge();
+  }catch(e){ console.warn('deleteNotif',e); if(typeof showToast==='function') showToast('Could not delete','error'); }
+}
+// Delete every notification (does not touch open-game cards, which come from matches).
+async function clearAllNotifs(){
+  var _t=(typeof t==='function')?t:function(k){return k;};
+  var uid=(window._fbAuth&&window._fbAuth.currentUser)?window._fbAuth.currentUser.uid:null;
+  if(!uid||!window._fbDb) return;
+  if(!_notifications.length){ if(typeof showToast==='function') showToast(_t('notif_none'),'info'); return; }
+  if(typeof confirm==='function' && !confirm(_t('notif_clear_confirm'))) return;
+  try{
+    var snap=await window._fbDb.collection('users').doc(uid).collection('notifications').get();
+    if(!snap.empty){ var batch=window._fbDb.batch(); snap.forEach(function(d){ batch.delete(d.ref); }); await batch.commit(); }
+    _notifications=[]; _notifUnread=0;
+    renderNotifList(document.getElementById('screen-notifications'));
+    if(typeof updateNotifBadge==='function') updateNotifBadge();
+    if(typeof showToast==='function') showToast(_t('notif_cleared'),'success');
+  }catch(e){ console.warn('clearAllNotifs',e); if(typeof showToast==='function') showToast('Could not clear','error'); }
+}
 async function markAllNotifsRead(){
   var uid=(window._fbAuth&&window._fbAuth.currentUser)?window._fbAuth.currentUser.uid:null;
   if(!uid||!window._fbDb) return;
@@ -23912,6 +24471,88 @@ async function markAllNotifsRead(){
     // listener will refresh cache + badge; fallback if no listener
     if(!_notifUnsub) renderNotifications();
   }catch(e){ console.warn('markAllNotifsRead',e); if(typeof showToast==='function') showToast('Could not update','error'); }
+}
+
+// ── OPEN GAMES IN NOTIFICATION BELL ──────────────────────
+// Loads every active + waiting game for the user (skipping ones already ended locally)
+// so they can be listed in the bell with Cancel / Continue actions.
+async function loadOpenGames(uid){
+  uid = uid || (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid);
+  window._openGames = [];
+  if(!uid || !window._fbDb) return [];
+  var _t = (typeof t==='function')?t:function(k){return k;};
+  function endedLocally(matchId){
+    try{ var arr=(typeof _savedRounds!=='undefined'&&_savedRounds)||[]; return arr.some(function(r){return r&&r.id===('m_'+matchId)&&r.matchComplete;}); }catch(_){ return false; }
+  }
+  var seen={}, out=[];
+  async function gather(field){
+    var docs=[];
+    try{ var s=await window._fbDb.collection('matches').where(field,'==',uid).limit(30).get(); docs=s.docs; }catch(e){ return; }
+    docs.forEach(function(d){
+      var data=d.data(); var st=data.status;
+      if(st!=='active' && st!=='waiting') return;
+      if(!data.matchId || seen[data.matchId]) return;
+      if(st==='active' && endedLocally(data.matchId)) return;
+      var role=(data.teamA && data.teamA.uid===uid)?'A':'B';
+      if(st==='waiting'){
+        if(role!=='A') return;                          // only the host owns a waiting game
+        if(data.teamB && data.teamB.uid) return;        // slot already filled
+      }
+      seen[data.matchId]=1;
+      out.push({
+        id:data.matchId, code:data.matchId, role:role, status:st,
+        oppName:(role==='A'?(data.teamB&&data.teamB.teamName):(data.teamA&&data.teamA.teamName))||_t('rejoin_opp_fallback'),
+        courseName:(data.course&&data.course.name)||'', holes:data.holes||''
+      });
+    });
+  }
+  await gather('teamA.uid');
+  await gather('teamB.uid');
+  out.sort(function(a,b){ return (a.status==='active'?0:1)-(b.status==='active'?0:1); });
+  window._openGames = out;
+  return out;
+}
+function renderOpenGameCard(g){
+  var _t=(typeof t==='function')?t:function(k){return k;};
+  var esc2=(typeof esc==='function')?esc:function(x){return x;};
+  var waiting=(g.status==='waiting');
+  var title = waiting ? _t('og_title_waiting') : _t('og_title_active').replace('{opp}', g.oppName);
+  var bits=[]; if(g.courseName) bits.push(g.courseName); if(g.holes) bits.push(g.holes+'H'); bits.push(_t('og_code')+' '+g.code);
+  var badge = waiting
+    ? '<span class="og-badge waiting">'+_t('og_badge_waiting')+'</span>'
+    : '<span class="og-badge active">'+_t('og_badge_active')+'</span>';
+  return '<div class="open-game-card">'
+    +'<div class="og-btns">'
+      +'<button class="og-btn og-cancel" onclick="openGameCancel(\''+g.id+'\',\''+g.status+'\')">\u2715 '+_t('og_cancel')+'</button>'
+      +'<button class="og-btn og-continue" onclick="openGameContinue(\''+g.id+'\',\''+g.role+'\',\''+g.status+'\',\''+g.code+'\')">\u25B6 '+_t('og_continue')+'</button>'
+    +'</div>'
+    +'<div class="og-info">'+badge
+      +'<div class="og-title">'+esc2(title)+'</div>'
+      +'<div class="og-sub">'+esc2(bits.join(' \u00b7 '))+'</div>'
+    +'</div></div>';
+}
+function openGameContinue(id, role, status, code){
+  window._activeMatchId=id; window._activeMatchRole=role||'A';
+  if(status==='waiting'){ if(typeof openMatchCode==='function') openMatchCode(code); }
+  else { if(typeof resumeLiveScorecard==='function') resumeLiveScorecard(); }
+}
+async function openGameCancel(id, status){
+  var _t=(typeof t==='function')?t:function(k){return k;};
+  var msg = (status==='waiting') ? _t('og_cancel_confirm_waiting') : _t('og_cancel_confirm_active');
+  if(typeof confirm==='function' && !confirm(msg)) return;
+  try{
+    if(status==='waiting'){
+      if(typeof abandonMatch==='function') await abandonMatch(id);   // deletes the waiting doc
+    } else {
+      try{ await window._fbDb.collection('matches').doc(id).update({ status:'complete', completedAt:Date.now() }); }catch(e){}
+      if(typeof _markMatchDoneLocally==='function') await _markMatchDoneLocally(id);  // leaves my list even if write blocked
+    }
+  }catch(e){ console.warn('openGameCancel',e); }
+  if(window._activeMatchId===id){ window._activeMatchId=null; window._activeMatchRole=null; if(typeof hideLiveMatchBanner==='function') hideLiveMatchBanner(); }
+  await loadOpenGames();
+  if(typeof updateNotifBadge==='function') updateNotifBadge();
+  renderNotifList(document.getElementById('screen-notifications'));
+  if(typeof showToast==='function') showToast(_t('og_cancelled'),'success');
 }
 
 function renderMatches(ROOT){
@@ -23948,7 +24589,7 @@ function renderMatches(ROOT){
         '<div class="round-right"><div class="round-gross">'+(gross||'\u2013')+'</div><div class="round-par-label">Gross</div>'+
         '<div class="round-vspar" style="color:'+vsCol+';">'+(gross?(vs>0?'+'+vs:vs):'\u2013')+'</div><div class="round-vspar-label">vs Par</div></div>'+
         '<div class="round-chevron">\u203a</div>';
-      card.onclick=function(){ window._activeRound=r; if(document.getElementById('screen-rounddetail')) showScreen('rounddetail'); else if(typeof showToast==='function') showToast('Coming soon'); };
+      card.onclick=function(){ window._activeRound=r; if(r.isMatch){ tmOpenSaved(r); } else if(document.getElementById('screen-rounddetail')) showScreen('rounddetail'); else if(typeof showToast==='function') showToast('Coming soon'); };
       trWrap.appendChild(card);
     });
   }
@@ -23957,7 +24598,7 @@ function renderMatches(ROOT){
     if(!tmList.length){ tmWrap.innerHTML='<div style="text-align:center;color:var(--text-3);font-family:Inter,sans-serif;font-size:14px;padding:32px 0;">'+(matches.length?'No matches in this filter.':'No team matches yet.')+'</div>'; }
     var OC={Win:'var(--green)',Loss:'var(--red)',Draw:'var(--gold)'};
     tmList.forEach(function(m){
-      var r=m.result||{}; var a=r.teamAWon||0,b=r.teamBWon||0; var o=_matchOutcome(m); var col=OC[o];
+      var r=(_ensureMatchFields(m).result)||{}; var a=r.teamAWon||0,b=r.teamBWon||0; var o=_matchOutcome(m); var col=OC[o];
       var card=document.createElement('div'); card.className='round-card';
       card.innerHTML='<div class="round-left"><div class="round-date">'+_mDate(m.playedAt)+'</div>'+
         '<div class="round-course">'+(m.courseName||'Course')+'</div>'+
@@ -23966,7 +24607,7 @@ function renderMatches(ROOT){
         '<div class="round-right"><div class="round-gross" style="color:'+col+';">'+a+'\u2013'+b+'</div><div class="round-par-label">Result</div>'+
         '<div class="round-vspar" style="color:'+col+';">'+o+'</div><div class="round-vspar-label">Outcome</div></div>'+
         '<div class="round-chevron">\u203a</div>';
-      card.onclick=function(){ window._activeRound=m; if(document.getElementById('screen-rounddetail')) showScreen('rounddetail'); else if(typeof showToast==='function') showToast('Coming soon'); };
+      card.onclick=function(){ window._activeRound=m; tmOpenSaved(m); };
       tmWrap.appendChild(card);
     });
   }
