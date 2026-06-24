@@ -12764,6 +12764,7 @@ async function openPublicProfile(buddyUid) {
     const hcpStr = d.hcpIndex != null ? `<b>HCP</b> ${d.hcpIndex}` : 'HCP not set';
     const baseMeta = [hcpStr];
     if (d.homeCourse) baseMeta.push(esc(d.homeCourse));
+    if (d.country) baseMeta.push(esc(d.country));
     if (metaEl) metaEl.innerHTML = baseMeta.join(' &nbsp;|&nbsp; ');
 
     // Add Buddy button state
@@ -12798,16 +12799,14 @@ async function _loadPublicStats(buddyUid) {
   const stats = { duo:0, match:0, buddies:0, teams:0, country:'' };
   const safe = p => p.catch(() => null);
   try {
-    const [teamsS, buddiesS, roundsS, profS] = await Promise.all([
+    const [teamsS, buddiesS, roundsS] = await Promise.all([
       safe(window._fbDb.collection('users').doc(buddyUid).collection('teams').get()),
       safe(window._fbDb.collection('users').doc(buddyUid).collection('buddies').get()),
-      safe(window._fbDb.collection('users').doc(buddyUid).collection('rounds').get()),
-      safe(window._fbDb.collection('users').doc(buddyUid).collection('profile').doc('data').get())
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('rounds').get())
     ]);
     if (teamsS)   stats.teams   = teamsS.size || 0;
     if (buddiesS) stats.buddies = buddiesS.size || 0;
     if (roundsS)  roundsS.forEach(doc => { const r = doc.data() || {}; if (r.isMatch) stats.match++; else stats.duo++; });
-    if (profS && profS.exists) { const pd = profS.data() || {}; stats.country = pd.country || ''; }
   } catch(e) { console.warn('_loadPublicStats', e); }
   return stats;
 }
@@ -23350,7 +23349,7 @@ function _tmOpenTeam(team){
         await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch,{merge:true});
         // Mirror public-facing fields (incl. cover/avatar) so others' Public Profile stays current
         try{
-          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverUrl:_profile.coverUrl||null };
+          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, country:_profile.country||null, avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverUrl:_profile.coverUrl||null };
           await window._fbDb.collection('public_profiles').doc(uid).set(_pub,{merge:true});
         }catch(_pe){ console.warn('public_profiles sync', _pe); }
       }
