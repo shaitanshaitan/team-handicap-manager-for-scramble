@@ -4375,43 +4375,39 @@ input { transition:border-color 0.4s, background 0.2s; }
 #screen-home .home-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 112px; }
 
 /* hero cover */
-#screen-home .hh-cover { position: relative; height: 190px; background-size: cover; background-position: center;
+#screen-home .hh-cover { position: relative; height: 176px; background-size: cover; background-position: center;
   background-image: linear-gradient(180deg,#dff1f6 0%,#c4e6cf 42%,#5fae79 78%,#2f8a52 100%); }
-#screen-home .hh-cover::after { content:""; position:absolute; left:0; right:0; bottom:0; height:120px;
-  background: linear-gradient(transparent, rgba(8,30,16,0.58)); pointer-events:none; }
+#screen-home .hh-cover::after { content:""; position:absolute; left:0; right:0; bottom:0; height:110px;
+  background: linear-gradient(transparent, rgba(8,30,16,0.62)); pointer-events:none; }
 #screen-home .hh-cover-cam { position: absolute; right: 14px; bottom: 14px; width: 36px; height: 36px; border-radius: 50%;
   border: none; background: rgba(14,61,34,0.55); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:3; }
 #screen-home .hh-cover-cam:active { background: rgba(14,61,34,0.8); }
 
-/* avatar + name — overlaid on the cover, bottom-left */
-#screen-home .hh-id { position: absolute; left: 18px; right: 64px; bottom: 14px; z-index: 2; }
-#screen-home .hh-avatar-wrap { position: relative; width: 80px; height: 80px; }
-#screen-home .hh-avatar { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #e1c245;
-  object-fit: cover; background: #2d7a4f; box-shadow: 0 6px 16px rgba(0,0,0,0.32); display:block; }
-#screen-home .hh-avatar-cam { position: absolute; right: -2px; bottom: 2px; width: 28px; height: 28px; border-radius: 50%;
-  border: 2px solid #fff; background: #1a6b3c; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-#screen-home .hh-name { margin-top: 8px; font-family: Inter, sans-serif; font-size: 21px; font-weight: 800;
-  color: #fff; letter-spacing:-0.2px; text-shadow: 0 1px 6px rgba(0,0,0,0.45); }
+/* buddies + hcp — green box overlaid top-right on the cover */
+#screen-home .hh-cover-stats { position:absolute; top:14px; right:14px; z-index:3; background:#1a6b3c;
+  border-radius:14px; padding:8px 15px; display:flex; flex-direction:column; gap:1px; box-shadow:0 6px 16px rgba(8,30,16,0.35); }
+#screen-home .hh-cs-row { font-family:Inter,sans-serif; font-size:12px; font-weight:600; letter-spacing:0.05em; color:rgba(255,255,255,0.92); line-height:1.55; white-space:nowrap; }
+#screen-home .hh-cs-row b { font-size:17px; font-weight:800; margin-right:5px; color:#fff; }
+#screen-home .hh-cs-buddies { cursor:pointer; }
+#screen-home .hh-cs-buddies b { color:#e1c245; }
 
-/* buddies + hcp */
-#screen-home .hh-stats { display: flex; gap: 10px; padding: 14px 18px 2px; }
-#screen-home .hh-buddies { flex: 1; display: flex; align-items: center; gap: 4px; background: #1a6b3c; border-radius: 12px; padding: 9px 13px; cursor:pointer; }
-#screen-home .hh-buddy-avatars { display: flex; }
-#screen-home .hh-buddy-avatars img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #1a6b3c; margin-right: -11px; object-fit: cover; background:#2d7a4f; }
-#screen-home .hh-buddy-avatars img:last-child { margin-right: 0; }
-#screen-home .hh-buddy-count { color: rgba(255,255,255,0.92); font-family: Inter, sans-serif; font-size: 12px; font-weight: 600; letter-spacing:0.04em; margin-left: 12px; }
-#screen-home .hh-buddy-count b { color: #e1c245; font-size: 15px; font-weight: 800; margin-right: 3px; }
-#screen-home .hh-hcp { background: #1a6b3c; border-radius: 12px; padding: 9px 16px; color: rgba(255,255,255,0.92);
-  font-family: Inter, sans-serif; font-size: 12px; font-weight: 600; letter-spacing:0.04em; display:flex; align-items:center; gap:6px; }
-#screen-home .hh-hcp b { color:#fff; font-size: 17px; font-weight: 800; }
+/* avatar (top-left) + name (bottom-left), overlaid on the cover */
+#screen-home .hh-avatar-wrap { position:absolute; top:16px; left:16px; z-index:2; width:74px; height:74px; }
+#screen-home .hh-avatar { width:74px; height:74px; border-radius:50%; border:3px solid #e1c245;
+  object-fit:cover; background:#2d7a4f; box-shadow:0 6px 16px rgba(0,0,0,0.32); display:block; }
+#screen-home .hh-avatar-cam { position:absolute; right:-2px; bottom:2px; width:28px; height:28px; border-radius:50%;
+  border:2px solid #fff; background:#1a6b3c; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+#screen-home .hh-name { position:absolute; left:18px; bottom:14px; right:96px; z-index:2; font-family:Inter,sans-serif; font-size:21px; font-weight:800;
+  color:#fff; letter-spacing:-0.2px; text-shadow:0 1px 6px rgba(0,0,0,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* sections */
-#screen-home .hh-section { padding: 16px 0 0; }
-#screen-home .hh-sec-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 18px 10px; }
+/* sections — elevated cards for depth */
+#screen-home .hh-section { margin: 14px 14px 0; background:#fff; border:1px solid #e6f0ea; border-radius:18px;
+  padding: 15px 0 14px; box-shadow: 0 8px 22px rgba(16,61,34,0.10), 0 2px 5px rgba(0,0,0,0.045); }
+#screen-home .hh-sec-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 16px 12px; }
 #screen-home .hh-sec-title { font-family: Inter, sans-serif; font-size: 16px; font-weight: 800; color: #14321f; }
 #screen-home .hh-sec-title span { color: #9aa3a0; font-weight: 600; font-size: 13px; }
 #screen-home .hh-viewall { background: none; border: none; color: #1a6b3c; font-family: Inter, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; padding:4px 2px; }
-#screen-home .hh-row { display: flex; gap: 12px; overflow-x: auto; padding: 0 18px 6px; }
+#screen-home .hh-row { display: flex; gap: 12px; overflow-x: auto; padding: 0 16px 4px; }
 #screen-home .hh-empty { color:#9aa3a0; font-family:Inter,sans-serif; font-size:13px; padding: 2px 18px 8px; }
 #screen-home .hh-course-card { flex:0 0 auto; min-width:132px; background:#fff; border:1px solid #e7ece9; border-radius:14px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.05); cursor:pointer; }
 #screen-home .hh-course-name { font-family:Inter,sans-serif; font-size:14px; font-weight:700; color:#14321f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
@@ -4430,8 +4426,8 @@ input { transition:border-color 0.4s, background 0.2s; }
 .header-icons .icon-btn .notif-badge { position:absolute; top:-2px; right:-2px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#e1c245; color:#14321f; font-family:Inter,sans-serif; font-size:10px; font-weight:800; line-height:16px; text-align:center; box-shadow:0 0 0 2px var(--green); }
 
 /* round/match card */
-#screen-home .hh-card { flex: 0 0 80%; max-width: 290px; background:#fff; border:1px solid #e7ece9; border-radius:14px;
-  padding:13px 15px; display:flex; align-items:center; justify-content:space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+#screen-home .hh-card { flex: 0 0 80%; max-width: 290px; background:#fafcfb; border:1px solid #e9f0ec; border-radius:14px;
+  padding:13px 15px; display:flex; align-items:center; justify-content:space-between; box-shadow: none; }
 #screen-home .hh-card-date { font-family:Inter,sans-serif; font-size:11px; color:#9aa3a0; font-weight:500; }
 #screen-home .hh-card-course { font-family:Inter,sans-serif; font-size:15px; font-weight:700; color:#14321f; margin:2px 0 1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
 #screen-home .hh-card-meta { font-family:Inter,sans-serif; font-size:12px; color:#777; }
@@ -6455,7 +6451,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 <!-- BUDDY SEARCH OVERLAY -->
 <style>
   /* Add Buddy (Screen 43) chrome */
-  #buddySearchOverlay .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0; min-height:100vh; display:flex; flex-direction:column; background:#fff; }
+  #buddySearchOverlay .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0; height:100%; display:flex; flex-direction:column; background:#fff; }
   #buddySearchOverlay .ab-appheader { height:56px; flex:0 0 56px; background:#1a6b3c; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
   #buddySearchOverlay .ab-logo { display:flex; align-items:center; gap:6px; }
   #buddySearchOverlay .ab-logo img { width:24px; height:24px; object-fit:contain; }
@@ -6465,7 +6461,7 @@ input { transition:border-color 0.4s, background 0.2s; }
   #buddySearchOverlay .ab-subheader { flex:0 0 44px; background:#e1c245; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
   #buddySearchOverlay .ab-title { font-family:'Roboto',sans-serif; font-weight:700; font-size:18px; color:#1a6b3c; }
   #buddySearchOverlay .ab-back { background:#1a6b3c; color:#fff; border:none; border-radius:20px; padding:7px 16px; font-family:'Roboto',sans-serif; font-weight:700; font-size:12px; letter-spacing:0.06em; cursor:pointer; }
-  #buddySearchOverlay .ab-body { flex:1 1 auto; padding:22px 16px 100px; overflow-y:auto; }
+  #buddySearchOverlay .ab-body { flex:1 1 auto; min-height:0; padding:22px 16px 24px; overflow-y:auto; }
   #buddySearchOverlay .ab-search-label { display:flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-size:15px; font-weight:700; color:#1a6b3c; margin-bottom:12px; }
   #buddySearchOverlay .ab-search-wrap { position:relative; margin-bottom:20px; }
   #buddySearchOverlay #buddySearchInput { width:100%; height:50px; border:1.5px solid #1a6b3c; border-radius:10px; padding:0 38px 0 16px; font-family:'Inter',sans-serif; font-size:15px; color:#111; outline:none; box-sizing:border-box; background:#fff; }
@@ -6473,11 +6469,11 @@ input { transition:border-color 0.4s, background 0.2s; }
   #buddySearchOverlay .ab-chevron { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#1a6b3c; font-size:18px; font-weight:700; pointer-events:none; }
   #buddySearchOverlay #buddySearchStatus { font-family:'Roboto',sans-serif; font-size:13px; color:#777; text-align:center; padding:18px 0; }
   #buddySearchOverlay .ab-section-label { font-family:'Inter',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#777; margin:18px 0 10px; }
-  #buddySearchOverlay .ab-dock { position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; height:72px; background:#1a6b3c; display:grid; grid-template-columns:1fr 1fr 96px 1fr 1fr; align-items:center; z-index:5; }
+  #buddySearchOverlay .ab-dock { position:static; flex:0 0 72px; width:100%; height:72px; background:#1a6b3c; display:grid; grid-template-columns:1fr 1fr 96px 1fr 1fr; align-items:center; }
   #buddySearchOverlay .ab-tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#fff; background:transparent; border:0; cursor:pointer; font-family:'Inter',sans-serif; font-size:10px; opacity:0.85; }
   #buddySearchOverlay .ab-tab svg { display:block; }
-  #buddySearchOverlay .ab-play { position:relative; }
-  #buddySearchOverlay .ab-play-btn { position:absolute; left:50%; top:-26px; transform:translateX(-50%); width:84px; height:84px; border-radius:50%; background:#1a6b3c; border:4px solid #e1c245; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:13px; line-height:1.15; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; }
+  #buddySearchOverlay .ab-play { position:relative; align-self:stretch; }
+  #buddySearchOverlay .ab-play-btn { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); width:84px; height:84px; border-radius:50%; background:#1a6b3c; border:4px solid #e1c245; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:13px; line-height:1.15; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,0.25); z-index:4; }
   /* shared rows (global so the profile screen's buddy list matches too) */
   .ab-row { display:flex; align-items:center; gap:10px; border:1.5px solid #e1c245; border-radius:12px; padding:12px 14px; margin-bottom:12px; background:#fff; }
   .ab-row-name { flex:1 1 auto; min-width:0; font-family:'Inter',sans-serif; font-size:15px; font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -6526,7 +6522,7 @@ input { transition:border-color 0.4s, background 0.2s; }
 
 <!-- PUBLIC PROFILE OVERLAY (Screen 35 redesign) -->
 <style>
-  #publicProfileOverlay .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0; min-height:100vh; display:flex; flex-direction:column; background:#fff; }
+  #publicProfileOverlay .buddy-overlay-inner { max-width:480px; margin:0 auto; padding:0; height:100%; display:flex; flex-direction:column; background:#fff; }
   #publicProfileOverlay .pp-appheader { height:56px; flex:0 0 56px; background:#1a6b3c; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
   #publicProfileOverlay .pp-logo { display:flex; align-items:center; gap:6px; }
   #publicProfileOverlay .pp-logo img { width:24px; height:24px; object-fit:contain; }
@@ -6536,8 +6532,10 @@ input { transition:border-color 0.4s, background 0.2s; }
   #publicProfileOverlay .pp-subheader { flex:0 0 44px; background:#e1c245; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
   #publicProfileOverlay .pp-title { font-family:'Roboto',sans-serif; font-weight:700; font-size:18px; color:#1a6b3c; }
   #publicProfileOverlay .pp-back { background:#1a6b3c; color:#fff; border:none; border-radius:20px; padding:7px 16px; font-family:'Roboto',sans-serif; font-weight:700; font-size:12px; letter-spacing:0.06em; cursor:pointer; }
-  #publicProfileOverlay .pp-body { flex:1 1 auto; padding:26px 20px 100px; overflow-y:auto; text-align:center; }
-  #publicProfileOverlay .pp-avatar { width:112px; height:112px; border-radius:50%; border:4px solid #1a6b3c; margin:0 auto 16px; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:48px; background:#f0f9f4; }
+  #publicProfileOverlay .pp-body { flex:1 1 auto; min-height:0; padding:26px 20px 24px; overflow-y:auto; text-align:center; }
+  #publicProfileOverlay .pp-cover { height:140px; margin:-26px -20px 0; background:#1a6b3c center/cover no-repeat; background-image:linear-gradient(135deg,#1a6b3c 0%,#0e3d22 100%); position:relative; }
+  #publicProfileOverlay .pp-cover::after { content:""; position:absolute; left:0; right:0; bottom:0; height:70px; background:linear-gradient(transparent, rgba(8,30,16,0.30)); pointer-events:none; }
+  #publicProfileOverlay .pp-avatar { width:112px; height:112px; border-radius:50%; border:4px solid #fff; margin:-58px auto 16px; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:48px; background:#f0f9f4; position:relative; z-index:1; box-shadow:0 6px 16px rgba(0,0,0,0.22); }
   #publicProfileOverlay .pp-avatar img { width:100%; height:100%; object-fit:cover; }
   #publicProfileOverlay .pp-name { font-family:'Inter',sans-serif; font-size:24px; font-weight:800; color:#1a6b3c; margin-bottom:8px; }
   #publicProfileOverlay .pp-meta { font-family:'Roboto',sans-serif; font-size:14px; color:#777; margin-bottom:22px; line-height:1.5; }
@@ -6550,11 +6548,11 @@ input { transition:border-color 0.4s, background 0.2s; }
   #publicProfileOverlay .pp-stat .lbl { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:#fff; line-height:1.2; }
   #publicProfileOverlay .btn-add-buddy { display:inline-block; width:auto; min-width:170px; background:#fff; border:1.5px solid #1a6b3c; color:#1a6b3c; border-radius:24px; padding:11px 28px; font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
   #publicProfileOverlay .btn-add-buddy.already, #publicProfileOverlay .btn-add-buddy.sent { background:#f0f9f4; border-color:#1a6b3c; color:#1a6b3c; cursor:default; }
-  #publicProfileOverlay .pp-dock { position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; height:72px; background:#1a6b3c; display:grid; grid-template-columns:1fr 1fr 96px 1fr 1fr; align-items:center; z-index:5; }
+  #publicProfileOverlay .pp-dock { position:static; flex:0 0 72px; width:100%; height:72px; background:#1a6b3c; display:grid; grid-template-columns:1fr 1fr 96px 1fr 1fr; align-items:center; }
   #publicProfileOverlay .pp-tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#fff; background:transparent; border:0; cursor:pointer; font-family:'Inter',sans-serif; font-size:10px; opacity:0.85; }
   #publicProfileOverlay .pp-tab svg { display:block; }
-  #publicProfileOverlay .pp-play { position:relative; }
-  #publicProfileOverlay .pp-play-btn { position:absolute; left:50%; top:-26px; transform:translateX(-50%); width:84px; height:84px; border-radius:50%; background:#1a6b3c; border:4px solid #e1c245; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:13px; line-height:1.15; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; }
+  #publicProfileOverlay .pp-play { position:relative; align-self:stretch; }
+  #publicProfileOverlay .pp-play-btn { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); width:84px; height:84px; border-radius:50%; background:#1a6b3c; border:4px solid #e1c245; color:#fff; font-family:'Inter',sans-serif; font-weight:800; font-size:13px; line-height:1.15; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,0.25); z-index:4; }
 </style>
 <div class="buddy-overlay" id="publicProfileOverlay">
   <div class="buddy-overlay-inner">
@@ -6571,6 +6569,7 @@ input { transition:border-color 0.4s, background 0.2s; }
       <button class="pp-back" onclick="closePublicProfile()" data-i18n="ab_back">BACK</button>
     </div>
     <div class="pp-body">
+      <div class="pp-cover" id="pubProfileCover"></div>
       <div class="pp-avatar" id="pubProfileAvatar">👤</div>
       <div class="pp-name" id="pubProfileName">—</div>
       <div class="pp-meta" id="pubProfileMeta">—</div>
@@ -7022,6 +7021,9 @@ const LANG = {
     og_cancel_confirm_waiting:'Cancel this match and delete it? Opponents will no longer be able to join.',
     og_cancel_confirm_active: 'Cancel this match? It will be ended and removed from your open games.',
     og_cancelled:             'Match cancelled',
+    bell_requests:            'Requests',
+    bell_wants_buddy:         'Wants to be your buddy',
+    bell_team_invite:         'Team invite',
     notif_clear_confirm:      'Delete all notifications? This cannot be undone.',
     notif_cleared:            'Notifications cleared',
     notif_none:               'No notifications to clear',
@@ -7300,6 +7302,9 @@ const LANG = {
     og_cancel_confirm_waiting:'Deze match annuleren en verwijderen? Tegenstanders kunnen dan niet meer joinen.',
     og_cancel_confirm_active: 'Deze match annuleren? Hij wordt beëindigd en uit je open spellen verwijderd.',
     og_cancelled:             'Match geannuleerd',
+    bell_requests:            'Verzoeken',
+    bell_wants_buddy:         'Wil je buddy worden',
+    bell_team_invite:         'Teamuitnodiging',
     notif_clear_confirm:      'Alle meldingen verwijderen? Dit kan niet ongedaan worden gemaakt.',
     notif_cleared:            'Meldingen gewist',
     notif_none:               'Geen meldingen om te wissen',
@@ -9091,7 +9096,7 @@ function trbRenderCarousel() {
     const atMax=!isSel && maxMates>0 && _trbCarousel.selected.size>=maxMates;
     const card=document.createElement('div');
     card.className='player-card'+(isSel?' selected':'')+(atMax?' dimmed':'');
-    const avatar = (p.avatarId && AV[p.avatarId]) ? AV[p.avatarId] : 'icons/home-crown.png';
+    const avatar = (typeof _avatarFor==='function') ? _avatarFor(p) : ((p.avatarId && AV[p.avatarId]) ? AV[p.avatarId] : 'icons/home-crown.png');
     card.innerHTML='<div class="avatar-wrap"><img src="'+avatar+'" alt=""></div>'+
       '<div class="player-nickname">'+(p.name||'?')+(p.isMe?' (you)':'')+'</div>'+
       '<div class="player-hcp">hcp '+(p.hcp!=null?p.hcp:'—')+'</div>';
@@ -12732,11 +12737,15 @@ async function openPublicProfile(buddyUid) {
     if (!snap.exists) { showToast('Profile not found.', 'error'); return; }
     const d = snap.data();
 
-    // Avatar
+    // Cover band (uploaded cover, else default green gradient)
+    const covEl = document.getElementById('pubProfileCover');
+    if (covEl) covEl.style.backgroundImage = d.coverUrl ? `url('${d.coverUrl}')` : '';
+
+    // Avatar (uploaded URL preferred, else built-in avatarId, else emoji)
     const avEl = document.getElementById('pubProfileAvatar');
-    if (avEl) avEl.innerHTML = d.avatarId && AVATARS[d.avatarId]
-      ? `<img src="${AVATARS[d.avatarId]}" alt="">`
-      : '🏌️';
+    if (avEl) avEl.innerHTML = d.avatarUrl
+      ? `<img src="${d.avatarUrl}" alt="">`
+      : (d.avatarId && AVATARS[d.avatarId] ? `<img src="${AVATARS[d.avatarId]}" alt="">` : '🏌️');
 
     // Name + meta line (HCP · home course; country appended once stats load)
     const nameEl = document.getElementById('pubProfileName');
@@ -12766,6 +12775,7 @@ async function openPublicProfile(buddyUid) {
 function _renderPublicProfileLoading() {
   const set = (id, v, html) => { const el = document.getElementById(id); if (el) { if (html) el.innerHTML = v; else el.textContent = v; } };
   set('pubProfileAvatar', '👤', true);
+  const _cov = document.getElementById('pubProfileCover'); if (_cov) _cov.style.backgroundImage = '';
   set('pubProfileName', '…');
   set('pubProfileMeta', '');
   ['pubBuddyCount','pubStatDuo','pubStatMatch','pubStatBuddies','pubStatTeams'].forEach(id => set(id, '0'));
@@ -12976,6 +12986,19 @@ async function loadBuddiesData(uid) {
     const snap = await window._fbDb.collection('users').doc(uid).collection('buddies').get();
     _buddies = [];
     snap.forEach(doc => _buddies.push({ uid: doc.id, ...doc.data() }));
+    // Enrich with the buddy's uploaded avatar/cover (best-effort; falls back to avatarId)
+    try {
+      await Promise.all(_buddies.map(async b => {
+        try {
+          const ps = await window._fbDb.collection('public_profiles').doc(b.uid).get();
+          if (ps.exists) { const d = ps.data() || {};
+            if (d.avatarUrl) b.avatarUrl = d.avatarUrl;
+            if (d.coverUrl)  b.coverUrl  = d.coverUrl;
+            if (d.avatarId != null && b.avatarId == null) b.avatarId = d.avatarId;
+          }
+        } catch(e) {}
+      }));
+    } catch(e) {}
     renderBuddiesList();
   } catch(e) { console.warn('Could not load buddies:', e); }
 
@@ -13032,8 +13055,9 @@ function renderBuddyPicker() {
       Pick ${maxBuddies} Buddy${maxBuddies > 1 ? ' (up to ' + maxBuddies + ')' : ''}
     </div>
     ${_buddies.map(b => {
-      const av = b.avatarId && AVATARS[b.avatarId]
-        ? `<img src="${AVATARS[b.avatarId]}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+      const _bav = (typeof _avatarFor==='function') ? _avatarFor(b) : ((b.avatarId && AVATARS[b.avatarId]) || null);
+      const av = _bav
+        ? `<img src="${_bav}" alt="" style="width:100%;height:100%;object-fit:cover;">`
         : `<span style="font-size:0.85rem;">🏌️</span>`;
       const hcp = b.hcp != null ? ` HCP ${b.hcp}` : '';
       return `
@@ -13397,10 +13421,28 @@ function startBuddyRequestListener(uid){
         first = false;
         if(typeof updateRequestBadge==='function') updateRequestBadge();
         if(typeof renderPendingRequests==='function') renderPendingRequests();
+        if(typeof updateNotifBadge==='function') updateNotifBadge();
+        if(typeof renderNotifList==='function') renderNotifList(document.getElementById('screen-notifications'));
       }, function(err){ console.warn('buddyRequests listener error', err); });
   }catch(e){ console.warn('startBuddyRequestListener', e); }
 }
 function stopBuddyRequestListener(){ if(_reqUnsub){ try{ _reqUnsub(); }catch(e){} _reqUnsub = null; } }
+
+// Mobile browsers/PWAs suspend background tabs, which pauses Firestore live streams.
+// When the app returns to the foreground, re-attach the buddy-request listener so any
+// requests that arrived while backgrounded show up immediately — no logout/login needed.
+let _bellRefreshT = null;
+function _refreshLiveOnFocus(){
+  const uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
+  if(!uid || !window._fbDb) return;
+  clearTimeout(_bellRefreshT);
+  _bellRefreshT = setTimeout(function(){
+    if(typeof startBuddyRequestListener==='function') startBuddyRequestListener(uid); // fresh snapshot → badge+bell
+    if(typeof loadOpenGames==='function') loadOpenGames(uid).then(function(){ if(typeof updateNotifBadge==='function') updateNotifBadge(); }).catch(function(){});
+  }, 150);
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') _refreshLiveOnFocus(); });
+window.addEventListener('focus', _refreshLiveOnFocus);
 
 async function loadProfileData(uid) {
   // Load profile
@@ -13487,8 +13529,6 @@ function renderHomeScreen() {
   if (cover) cover.style.backgroundImage = prof.coverUrl ? ("url('" + prof.coverUrl + "')") : '';
 
   const bc = document.getElementById('homeBuddyCount'); if (bc) bc.textContent = (_buddies ? _buddies.length : 0);
-  const ba = document.getElementById('homeBuddyAvatars');
-  if (ba) ba.innerHTML = ((_buddies||[]).slice(0,3).map(b => '<img src="' + ((b.avatarId && AV[b.avatarId]) || 'icons/home-crown.png') + '" alt="">').join('')) || '<img src="icons/home-crown.png" alt="">';
 
   const all = _savedRounds || [];
   const fmtDate = d => { if(!d) return ''; try { return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); } catch(e){ return ''; } };
@@ -13554,7 +13594,7 @@ function renderHomeScreen() {
     };
     const teamCard = (name, tag) => {
       const t=teamByName(name)||{teamName:name, players:[]};
-      const av=(t.players&&t.players[0]&&t.players[0].avatarId&&AV[t.players[0].avatarId])||'icons/home-crown.png';
+      const av=(t.players&&t.players[0]&&typeof _avatarFor==='function')?_avatarFor(t.players[0]):((t.players&&t.players[0]&&t.players[0].avatarId&&AV[t.players[0].avatarId])||'icons/home-crown.png');
       const s=stats(name);
       return '<div class="hh-team-card" onclick="showScreen(&quot;myteams&quot;)">'
         + '<div class="hh-team-top"><span class="hh-team-label">SCRAMBLE TEAM</span>'+(tag?'<span class="hh-team-main">'+tag+'</span>':'')+'</div>'
@@ -13598,18 +13638,34 @@ function _downscaleToDataUrl(file, maxDim, quality){
     rd.readAsDataURL(file);
   });
 }
+// Resolves true only if the URL actually loads as an image (Storage rules can hand back
+// URLs that 404/403 as a background), so we never store a non-viewable cover/avatar URL.
+function _imageLoads(url){
+  return new Promise(function(resolve){
+    if(!url){ resolve(false); return; }
+    if(/^data:/.test(url)){ resolve(true); return; }
+    var im=new Image(), done=false;
+    var t=setTimeout(function(){ if(!done){ done=true; resolve(false); } }, 6000);
+    im.onload=function(){ if(!done){ done=true; clearTimeout(t); resolve((im.naturalWidth||0)>0); } };
+    im.onerror=function(){ if(!done){ done=true; clearTimeout(t); resolve(false); } };
+    im.src=url;
+  });
+}
 async function _homeUpload(kind, file){
   var uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
   if(!uid){ if(typeof showToast==='function') showToast('Sign in to change photos'); return; }
   try {
     if(typeof showToast==='function') showToast('Uploading\u2026');
     var url = null;
-    // 1) Preferred: Firebase Storage (keeps the Firestore doc small)
+    // 1) Preferred: Firebase Storage (keeps the Firestore doc small) — but only adopt the
+    //    returned URL if it is actually viewable; Storage rules can yield non-readable URLs.
     if(window._fbStorage){
       try {
         var ref = window._fbStorage.ref('users/'+uid+'/'+kind+'.jpg');
         await ref.put(file);
-        url = await ref.getDownloadURL();
+        var _su = await ref.getDownloadURL();
+        if(await _imageLoads(_su)) url = _su;
+        else console.warn('storage URL not viewable, using inline fallback');
       } catch(se){ console.warn('storage upload failed, using inline fallback', se); url = null; }
     }
     // 2) Fallback: downscale and store inline in Firestore (works without Storage rules)
@@ -13617,7 +13673,10 @@ async function _homeUpload(kind, file){
     _profile = _profile || {}; _profile[kind+'Url'] = url;
     var patch={}; patch[kind+'Url']=url;
     if(window._fbDb) await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch, {merge:true});
+    // Also surface the image on the public profile others see
+    if(window._fbDb){ try{ await window._fbDb.collection('public_profiles').doc(uid).set(patch, {merge:true}); }catch(_pe){ console.warn('public_profiles image sync', _pe); } }
     if(typeof renderHomeScreen==='function') renderHomeScreen();
+    if(typeof renderProfile==='function'){ var _ps=document.getElementById('screen-profile'); if(_ps) renderProfile(_ps); }
     // refresh Edit Profile previews from the saved url (not just the local preview)
     var bn=document.getElementById('bannerImg'); if(kind==='cover' && bn){ bn.src=url; bn.style.display='block'; }
     var mainAv=document.getElementById('main-avatar'); if(kind==='avatar' && mainAv){ mainAv.src=url; }
@@ -15876,23 +15935,16 @@ document.addEventListener('DOMContentLoaded', applyLang);
 
       <div class="home-body">
 
-        <!-- Hero: cover + avatar + name -->
+        <!-- Hero: cover + avatar + name + stats overlay -->
         <div class="hh-cover" id="homeCover" onclick="showScreen('profile')" style="cursor:pointer;">
-          <div class="hh-id">
+          <div class="hh-cover-stats">
+            <div class="hh-cs-row hh-cs-buddies" onclick="event.stopPropagation();openBuddySearch()"><b id="homeBuddyCount">0</b> BUDDIES</div>
+            <div class="hh-cs-row"><b id="homeHcp">&ndash;</b> HCP</div>
+          </div>
           <div class="hh-avatar-wrap">
             <img class="hh-avatar" id="homeAvatarImg" src="icons/home-crown.png" alt="">
           </div>
           <div class="hh-name" id="homeUsername">username</div>
-          </div>
-        </div>
-
-        <!-- Buddies + HCP -->
-        <div class="hh-stats">
-          <div class="hh-buddies" onclick="openBuddySearch()">
-            <div class="hh-buddy-avatars" id="homeBuddyAvatars"></div>
-            <span class="hh-buddy-count"><b id="homeBuddyCount">0</b> BUDDIES</span>
-          </div>
-          <div class="hh-hcp"><b id="homeHcp">&ndash;</b> HCP</div>
         </div>
 
         <!-- Team Rounds | Best 5 -->
@@ -15925,7 +15977,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
         <!-- Main Team -->
         <div class="hh-section">
           <div class="hh-sec-head">
-            <div class="hh-sec-title">Main Team</div>
+            <div class="hh-sec-title">My Teams <span>| Most played</span></div>
             <button class="hh-viewall" type="button" onclick="showScreen('myteams')">view all</button>
           </div>
           <div class="hh-row" id="homeTeamsRow"></div>
@@ -17408,6 +17460,18 @@ document.addEventListener('DOMContentLoaded', applyLang);
         #screen-notifications .og-sub { font-family:'Roboto',sans-serif; font-size:12px; color:#777; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         #screen-notifications .notif-del { flex:0 0 auto; margin-left:8px; width:28px; height:28px; border:none; border-radius:50%; background:transparent; color:#bbb; font-size:14px; line-height:1; cursor:pointer; align-self:center; }
         #screen-notifications .notif-del:hover, #screen-notifications .notif-del:active { background:#fbeae8; color:#c0392b; }
+        #screen-notifications .sub-header { gap:6px; padding:0 12px; }
+        #screen-notifications .sub-header .title { font-size:14px; flex:0 0 auto; white-space:nowrap; }
+        #screen-notifications .sub-header .actions { gap:6px; flex-wrap:nowrap; }
+        #screen-notifications .sub-header .back-pill { padding:6px 11px; font-size:11px; line-height:1; white-space:nowrap; letter-spacing:0.02em; }
+        #screen-notifications .bell-req-card { display:flex; align-items:center; gap:10px; border:1.5px solid #1a6b3c; background:#f0f9f4; border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+        #screen-notifications .bell-req-info { flex:1 1 auto; min-width:0; }
+        #screen-notifications .bell-req-name { font-family:'Inter',sans-serif; font-size:15px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #screen-notifications .bell-req-sub { font-family:'Roboto',sans-serif; font-size:12px; color:#777; }
+        #screen-notifications .bell-req-actions { display:flex; gap:8px; flex:0 0 auto; }
+        #screen-notifications .bell-req-accept, #screen-notifications .bell-req-decline { width:36px; height:36px; border-radius:50%; border:1.5px solid; font-size:15px; font-weight:700; cursor:pointer; }
+        #screen-notifications .bell-req-accept { background:#1a6b3c; border-color:#1a6b3c; color:#fff; }
+        #screen-notifications .bell-req-decline { background:#fff; border-color:#c0392b; color:#c0392b; }
       </style>
       <section id="screen-notifications" class="screen" data-screen="notifications">
       <div class="app-header">
@@ -17421,7 +17485,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
           <button class="icon-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
         </div>
       </div>
-      <div class="sub-header"><span class="title">Notifications</span><div class="actions"><button class="back-pill" onclick="markAllNotifsRead()">Mark all read</button><button class="back-pill" style="background:#c0392b;" onclick="clearAllNotifs()">Clear all</button><button class="back-pill" onclick="screenBack()">BACK</button></div></div>
+      <div class="sub-header"><span class="title">Notifications</span><div class="actions"><button class="back-pill" onclick="markAllNotifsRead()">Mark read</button><button class="back-pill" style="background:#c0392b;" onclick="clearAllNotifs()">Clear</button><button class="back-pill" onclick="screenBack()">BACK</button></div></div>
       <div class="body-area">
         <div id="notifList" class="notif-list"></div>
       </div>
@@ -23275,6 +23339,11 @@ function _tmOpenTeam(team){
         if(window._editAvatarId!=null) patch.avatarUrl=null; else if(_profile.avatarUrl) patch.avatarUrl=_profile.avatarUrl;
         if(_profile.coverUrl) patch.coverUrl=_profile.coverUrl;
         await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch,{merge:true});
+        // Mirror public-facing fields (incl. cover/avatar) so others' Public Profile stays current
+        try{
+          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverUrl:_profile.coverUrl||null };
+          await window._fbDb.collection('public_profiles').doc(uid).set(_pub,{merge:true});
+        }catch(_pe){ console.warn('public_profiles sync', _pe); }
       }
     }catch(err){ console.warn('save profile', err); }
     if(typeof renderHomeScreen==='function') renderHomeScreen();
@@ -23317,8 +23386,46 @@ function renderBuddyProfile(ROOT){
   set('.hcp-value', (b.hcp!=null&&!isNaN(b.hcp))?Number(b.hcp).toFixed(1):'\u2014');
   set('.hcp-course-name', b.homeCourse||'\u2014');
   ROOT.querySelectorAll('.stats-grid .stat-value').forEach(function(e){ e.textContent='\u2013'; });
+  if(b.uid && typeof _loadBuddyStatsInto==='function') _loadBuddyStatsInto(b.uid, ROOT);
   var primary=ROOT.querySelector('.action-btn.primary'); if(primary){ var _bpSvg=primary.querySelector('svg'); primary.innerHTML=(_bpSvg?_bpSvg.outerHTML:'')+' Remove Buddy'; primary.onclick=function(){ if(typeof removeBuddy==='function') removeBuddy(b.uid); if(typeof screenBack==='function') screenBack(); }; }
   var secondary=ROOT.querySelector('.action-btn.secondary'); if(secondary) secondary.onclick=function(){ if(typeof showToast==='function') showToast('Coming soon'); };
+}
+
+// Loads the buddy's Rounds/Matches/Wins/Teams/Buddies/Win-rate + Best Result from their
+// own subcollections (readable per the public-profile rules) and fills the stats grid.
+async function _loadBuddyStatsInto(buddyUid, ROOT){
+  if(!buddyUid || !window._fbDb || !ROOT) return;
+  var safe=function(p){ return p.catch(function(){ return null; }); };
+  try{
+    var res=await Promise.all([
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('rounds').get()),
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('teams').get()),
+      safe(window._fbDb.collection('users').doc(buddyUid).collection('buddies').get())
+    ]);
+    var roundsS=res[0], teamsS=res[1], buddiesS=res[2];
+    var all=roundsS?roundsS.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); }):[];
+    var rounds=all.filter(function(r){return !r.isMatch;});
+    var matches=all.filter(function(r){return r.isMatch;});
+    var wins=matches.filter(function(m){ var mm=(typeof _ensureMatchFields==='function')?_ensureMatchFields(m):m; return mm.result && mm.result.teamAWon>mm.result.teamBWon; }).length;
+    var teams=teamsS?teamsS.size:0;
+    var buddies=buddiesS?buddiesS.size:0;
+    var winRate=matches.length? Math.round(wins/matches.length*100)+'%' : '\u2014';
+    var vals=[rounds.length, matches.length, wins, teams, buddies, winRate];
+    var sv=ROOT.querySelectorAll('.stats-grid .stat-value');
+    sv.forEach(function(e,i){ if(vals[i]!=null) e.textContent=vals[i]; });
+    // Best result (best round by vs par)
+    var bc=ROOT.querySelector('.best-card');
+    if(bc){
+      if(rounds.length){
+        var best=rounds.map(function(r){ var g=(r.scores||[]).reduce(function(a,b){return a+(b||0);},0); var pp=(r.par||[]).reduce(function(a,b){return a+(b||0);},0); return Object.assign({_g:g,_vs:g-pp},r); }).sort(function(a,b){return a._vs-b._vs;})[0];
+        var course=bc.querySelector('.best-course, .best-name'); if(course) course.textContent=best.courseName||'Course';
+        var meta=bc.querySelector('.best-meta');
+        if(meta){ var hh=best.holes||((best.par||[]).length||9); var parts=[hh+'H']; if(best.format) parts.push(best.format); if(best.teamName) parts.push(best.teamName); if(best.playedAt) parts.push(new Date(best.playedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})); meta.textContent=parts.join(' \u00b7 '); }
+        var score=bc.querySelector('.best-score, .best-value, .best-gross'); if(score) score.textContent=(best._vs>0?'+'+best._vs:best._vs);
+        bc.style.display='';
+      } else { bc.style.display='none'; }
+    }
+  }catch(e){ console.warn('_loadBuddyStatsInto', e); }
 }
 
 // -- Profile cluster: Account Settings (screen-settings) --
@@ -23423,6 +23530,8 @@ function renderAccountSettings(ROOT){
   if(q('.acct-email')) q('.acct-email').textContent=(cu&&cu.email)||prof.email||'';
   if(q('.acct-tier')) q('.acct-tier').textContent=prof.tier||'Free';
   if(q('.acct-avatar img')) q('.acct-avatar img').src=prof.avatarUrl||(prof.avatarId&&AV[prof.avatarId])||'icons/home-crown.png';
+  var _ah=q('.account-header');
+  if(_ah){ if(prof.coverUrl){ _ah.style.backgroundImage="linear-gradient(160deg,rgba(26,107,60,0.82),rgba(14,61,34,0.92)), url('"+prof.coverUrl+"')"; _ah.style.backgroundSize='cover'; _ah.style.backgroundPosition='center'; } else { _ah.style.backgroundImage=''; } }
   if(q('#name-display')) q('#name-display').textContent=prof.displayName||'Player';
   if(q('#email-display')) q('#email-display').textContent=(cu&&cu.email)||prof.email||'';
   var parts=(prof.displayName||'').split(' ');
@@ -23974,6 +24083,19 @@ function renderMatchDetail(ROOT, r){
 })();
 
 
+// Resolves the best avatar image for a person object: uploaded photo first (direct, or
+// looked up by uid from _profile/self or _buddies), then built-in avatarId, then default.
+function _avatarFor(p){
+  p = p || {};
+  var AV=(typeof AVATARS!=='undefined')?AVATARS:{};
+  var me=window._fbAuth&&window._fbAuth.currentUser; var uid=p.uid||p.id;
+  if(p.avatarUrl) return p.avatarUrl;
+  if(p.you||p.isMe||(me&&uid&&uid===me.uid)){ if(typeof _profile!=='undefined'&&_profile&&_profile.avatarUrl) return _profile.avatarUrl; }
+  if(uid&&typeof _buddies!=='undefined'&&_buddies){ var b=_buddies.find(function(x){return x.uid===uid;}); if(b&&b.avatarUrl) return b.avatarUrl; }
+  if(p.avatarId!=null&&AV[p.avatarId]) return AV[p.avatarId];
+  return 'icons/home-crown.png';
+}
+
 function renderTeamOverview(ROOT){
   ROOT=ROOT||document.getElementById('screen-teamoverview'); if(!ROOT) return;
   var t=window._activeTeam||{}; var AV=(typeof AVATARS!=='undefined')?AVATARS:{};
@@ -23982,7 +24104,7 @@ function renderTeamOverview(ROOT){
   var nm=ROOT.querySelector('.th-name'); if(nm) nm.textContent=t.teamName||'Team';
   var mc=ROOT.querySelector('.th-members');
   if(mc){ mc.innerHTML=players.map(function(p,i){
-    var av=p.avatarUrl||(p.avatarId&&AV[p.avatarId])||'icons/home-crown.png';
+    var av=_avatarFor(p);
     var role=p.you?'You \u00b7 Captain':(p.guest?'Guest':('@'+((p.name||'').toLowerCase().replace(/\s+/g,''))));
     var hcp=(p.hcp!=null&&!isNaN(p.hcp))?Number(p.hcp).toFixed(1):'\u2014';
     return '<div class="th-member"><div class="thm-avatar"><img src="'+av+'"></div><div class="thm-info"><div class="thm-name">'+(p.name||'Player')+'</div><div class="thm-role">'+role+'</div></div><div class="thm-hcp"><div class="thm-hcp-val">'+hcp+'</div><div class="thm-hcp-lbl">HCP</div></div></div>';
@@ -24019,7 +24141,7 @@ function renderTeamCreated(ROOT){
   var t=window._activeTeam||{}; var AV=(typeof AVATARS!=='undefined')?AVATARS:{};
   var nm=ROOT.querySelector('.tc-name'); if(nm) nm.textContent=t.teamName||'Your Team';
   var mem=ROOT.querySelector('.tc-members');
-  if(mem){ mem.innerHTML=(t.players||[]).slice(0,4).map(function(p){ var av=p.avatarUrl||(p.avatarId&&AV[p.avatarId])||'icons/home-crown.png'; return '<div class="tc-avatar"><img src="'+av+'"></div>'; }).join(''); }
+  if(mem){ mem.innerHTML=(t.players||[]).slice(0,4).map(function(p){ var av=(typeof _avatarFor==='function')?_avatarFor(p):(p.avatarUrl||(p.avatarId&&AV[p.avatarId])||'icons/home-crown.png'); return '<div class="tc-avatar"><img src="'+av+'"></div>'; }).join(''); }
   var vals=ROOT.querySelectorAll('.tc-meta-val');
   if(vals[0]) vals[0].textContent=(t.players||[]).length||t.size||2;
   if(vals[1]) vals[1].textContent='35%';
@@ -24362,14 +24484,30 @@ function renderNotifRow(n){
     +'<button class="notif-del" title="Delete" onclick="deleteNotif(\''+n._id+'\',event)">\u2715</button>'
     +'</div>';
 }
+function renderBellRequest(r){
+  var _t=(typeof t==='function')?t:function(k){return k;};
+  var esc2=(typeof esc==='function')?esc:function(x){return x;};
+  var isBuddy = r.type==='buddy_request';
+  var sub = isBuddy
+    ? (_t('bell_wants_buddy')+(r.fromHcp!=null?(' \u00b7 HCP '+r.fromHcp):''))
+    : (_t('bell_team_invite')+': '+esc2(r.teamName||'\u2014'));
+  return '<div class="bell-req-card">'
+    +'<div class="bell-req-info"><div class="bell-req-name">'+esc2(r.fromName||'\u2014')+'</div><div class="bell-req-sub">'+sub+'</div></div>'
+    +'<div class="bell-req-actions">'
+      +'<button class="bell-req-accept" title="Accept" onclick="acceptBuddyRequest(\''+r.id+'\')">\u2713</button>'
+      +'<button class="bell-req-decline" title="Decline" onclick="declineBuddyRequest(\''+r.id+'\')">\u2715</button>'
+    +'</div></div>';
+}
 function renderNotifList(ROOT){
   ROOT=ROOT||document.getElementById('screen-notifications'); if(!ROOT) return;
   var list=ROOT.querySelector('#notifList'); if(!list) return;
   var _t=(typeof t==='function')?t:function(k){return k;};
+  var reqs=(typeof _pendingRequests!=='undefined'&&_pendingRequests)||[];
   var og=(window._openGames||[]);
+  var reqHtml = reqs.length ? ('<div class="og-section-label">'+_t('bell_requests')+'</div>'+reqs.map(renderBellRequest).join('')) : '';
   var ogHtml = og.length ? ('<div class="og-section-label">'+_t('og_section')+'</div>'+og.map(renderOpenGameCard).join('')) : '';
-  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : (og.length ? '' : '<div class="notif-empty">No notifications yet.</div>');
-  list.innerHTML = ogHtml + notifHtml;
+  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : ((reqs.length||og.length) ? '' : '<div class="notif-empty">No notifications yet.</div>');
+  list.innerHTML = reqHtml + ogHtml + notifHtml;
 }
 async function renderNotifications(ROOT){
   ROOT=ROOT||document.getElementById('screen-notifications'); if(!ROOT) return;
@@ -24395,7 +24533,7 @@ function markNotifsReadSilently(uid){
     .catch(function(e){ console.warn('markNotifsReadSilently',e); });
 }
 function updateNotifBadge(){
-  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0);
+  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0)+((typeof _pendingRequests!=='undefined'&&_pendingRequests)?_pendingRequests.length:0);
   document.querySelectorAll('.header-icons').forEach(function(hdr){
     var icons=hdr.querySelectorAll('.icon-btn'); var bell=icons[1]; if(!bell) return;
     bell.style.position='relative';
