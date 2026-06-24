@@ -9141,6 +9141,16 @@ function trRenderTees(scr) {
     if (!p) continue;
     const nick=block.querySelector('.player-nickname');
     if (nick) nick.textContent = p.name || ('Player '+i);
+    const avEl=block.querySelector('.player-avatar-wrap img');
+    if (avEl) {
+      var _tav=null;
+      if (_teeTarget==='team' && i===1 && typeof _profile!=='undefined' && _profile && (_profile.avatarUrl||_profile.avatarId!=null)) {
+        var _TAV=(typeof AVATARS!=='undefined')?AVATARS:{};
+        _tav=_profile.avatarUrl||(_profile.avatarId!=null&&_TAV[_profile.avatarId])||null;
+      }
+      if (!_tav && typeof _avatarFor==='function') _tav=_avatarFor(p);
+      if (_tav) avEl.src=_tav;
+    }
     const hcpEl=block.querySelector('.player-hcp');
     if (hcpEl) hcpEl.textContent = 'hcp ' + (p.hcp!=null ? p.hcp : '—');
     // show only tees the course actually offers
@@ -23214,8 +23224,7 @@ async function tmSummaryFinish(){
 // ── Menu cluster: My Teams ──
 function _mtAvatars(players, cls){
   return (players||[]).slice(0,4).map(function(p){
-    var id = p && (p.avatarId || p.avatar);
-    var src = (id && typeof AVATARS !== 'undefined' && AVATARS[id]) ? AVATARS[id] : 'icons/home-crown.png';
+    var src = (typeof _avatarFor==='function') ? _avatarFor(p) : (function(){ var id=p&&(p.avatarId||p.avatar); return (id&&typeof AVATARS!=='undefined'&&AVATARS[id])?AVATARS[id]:'icons/home-crown.png'; })();
     return '<div class="'+cls+'"><img src="'+src+'" alt="" onerror="this.onerror=null;this.src=\'icons/home-crown.png\'"></div>';
   }).join('');
 }
@@ -25010,6 +25019,8 @@ function menuSignOut(){ closeMenu(); if(typeof doSignOut==="function") doSignOut
 function renderMenu(ov){
   var nm=ov.querySelector('.menu-user-name');
   if(nm) nm.textContent=(typeof _profile!=='undefined' && _profile && _profile.displayName) ? _profile.displayName : 'Your profile';
+  var _mav=ov.querySelector('.menu-avatar-wrap img');
+  if(_mav){ var _MAV=(typeof AVATARS!=='undefined')?AVATARS:{}; _mav.src=(typeof _profile!=='undefined'&&_profile)?(_profile.avatarUrl||(_profile.avatarId&&_MAV[_profile.avatarId])||'icons/home-crown.png'):'icons/home-crown.png'; }
   var tier=ov.querySelector('.menu-account-tier');
   if(tier) tier.textContent=(typeof _profile!=='undefined' && _profile && _profile.tier) ? _profile.tier : 'Free account';
   var go=function(target){
