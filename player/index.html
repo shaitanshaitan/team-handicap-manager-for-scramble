@@ -6814,6 +6814,18 @@ input { transition:border-color 0.4s, background 0.2s; }
 // ═══════════════════════════════════
 const LANG = {
   en: {
+    bell_new_messages: 'new messages',
+    bell_tap_open:     'Tap to open your inbox',
+    inbox_title:       'Messages',
+    inbox_empty:       'No conversations yet. Message a buddy to start! 💬',
+    inbox_loading:     'Loading…',
+    menu_messages:     'Messages',
+    chat_message:     'Message',
+    chat_placeholder:  'Message…',
+    chat_empty:        'No messages yet. Say hi! 👋',
+    chat_blocked:      "This user doesn't accept messages",
+    chat_banned:       'Please remove inappropriate language before sending.',
+    chat_send_failed:  'Could not send. Please try again.',
     nine_hole_tag:  '9-hole basis',
     nine_hole_note: '9-hole round: Course Handicaps use half your 18-hole Handicap Index (WHS), so these come out about half your usual figure.',
     // Tabs
@@ -7095,6 +7107,18 @@ const LANG = {
     sc_hardest:       'Hardest',
   },
   nl: {
+    bell_new_messages: 'nieuwe berichten',
+    bell_tap_open:     'Tik om je inbox te openen',
+    inbox_title:       'Berichten',
+    inbox_empty:       'Nog geen gesprekken. Stuur een buddy een bericht! 💬',
+    inbox_loading:     'Laden…',
+    menu_messages:     'Berichten',
+    chat_message:     'Bericht',
+    chat_placeholder:  'Bericht…',
+    chat_empty:        'Nog geen berichten. Zeg hallo! 👋',
+    chat_blocked:      'Deze gebruiker accepteert geen berichten',
+    chat_banned:       'Verwijder ongepaste taal voordat je verzendt.',
+    chat_send_failed:  'Verzenden mislukt. Probeer het opnieuw.',
     nine_hole_tag:  '9-holes basis',
     nine_hole_note: '9-holes ronde: course handicaps gebruiken de helft van je 18-holes Handicap Index (WHS), dus deze vallen ongeveer half zo hoog uit.',
     // Tabs
@@ -13447,6 +13471,7 @@ function _refreshLiveOnFocus(){
   clearTimeout(_bellRefreshT);
   _bellRefreshT = setTimeout(function(){
     if(typeof startBuddyRequestListener==='function') startBuddyRequestListener(uid); // fresh snapshot → badge+bell
+    if(typeof startThreadsBellListener==='function') startThreadsBellListener(uid); // re-attach messages unread
     if(typeof loadOpenGames==='function') loadOpenGames(uid).then(function(){ if(typeof updateNotifBadge==='function') updateNotifBadge(); }).catch(function(){});
   }, 150);
 }
@@ -13716,6 +13741,7 @@ async function onSignedIn(user) {
   } catch (e) { console.warn('sign-in load', e); }
   startBuddyRequestListener(user.uid);
   startNotifListener(user.uid);
+  if(typeof startThreadsBellListener==='function') startThreadsBellListener(user.uid);
   checkForActiveMatch(user.uid);
   loadOpenGames(user.uid).then(function(){ if(typeof updateNotifBadge==='function') updateNotifBadge(); }).catch(function(){});
   checkWhatsNew();
@@ -13754,6 +13780,7 @@ function onSignedOut() {
   document.getElementById('lockedHero').style.display = '';
   stopBuddyRequestListener();
   stopNotifListener();
+  if(typeof stopThreadsBellListener==='function') stopThreadsBellListener();
   document.getElementById('appContent').classList.remove('unlocked');
   document.getElementById('bottomTabs').classList.remove('visible');
   _savedCourses = []; _savedTeams = []; _savedRounds = [];
@@ -16629,6 +16656,74 @@ document.addEventListener('DOMContentLoaded', applyLang);
       </div>
 </section>
 
+
+      <style>
+      #screen-chat.screen.active{display:flex;flex-direction:column;}
+      #screen-chat .app-header{height:56px;flex:0 0 56px;background:var(--green);display:flex;align-items:center;padding:0 16px;}
+      #screen-chat .sub-header{flex:0 0 54px;background:var(--gold);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px;}
+      #screen-chat .back-pill{background:var(--green);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-weight:700;font-size:12px;letter-spacing:0.06em;cursor:pointer;}
+      #screen-chat .chat-peer{display:flex;align-items:center;gap:10px;min-width:0;}
+      #screen-chat .chat-peer img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#fff;flex:0 0 34px;border:2px solid rgba(255,255,255,0.7);}
+      #screen-chat .chat-peer .nm{font-weight:700;font-size:1rem;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      #screen-chat .chat-msgs{flex:1 1 auto;overflow-y:auto;min-height:0;background:var(--canvas-tint);padding:14px 12px;display:flex;flex-direction:column;gap:8px;}
+      #screen-chat .cbubble{max-width:78%;padding:8px 12px;border-radius:14px;font-size:0.9rem;line-height:1.35;word-wrap:break-word;}
+      #screen-chat .cbubble.me{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px;}
+      #screen-chat .cbubble.them{align-self:flex-start;background:#fff;color:var(--text);border:1px solid rgba(0,0,0,0.08);border-bottom-left-radius:4px;}
+      #screen-chat .cbubble .ct{display:block;white-space:pre-wrap;}
+      #screen-chat .cbubble .cmeta{display:block;font-size:0.62rem;opacity:0.6;margin-top:3px;text-align:right;}
+      #screen-chat .chat-empty{margin:auto;text-align:center;color:var(--text-3);font-size:0.85rem;padding:20px;}
+      #screen-chat .chat-counter{flex:0 0 auto;display:none;font-size:0.62rem;color:var(--text-3);text-align:right;padding:0 14px 4px;background:#fff;}
+      #screen-chat .chat-counter.over{color:#c85a4a;font-weight:700;}
+      #screen-chat .chat-composer{flex:0 0 auto;display:flex;align-items:flex-end;gap:8px;padding:8px 12px calc(12px + env(safe-area-inset-bottom, 0px));background:#fff;border-top:1px solid rgba(0,0,0,0.08);}
+      #screen-chat .chat-composer textarea{flex:1 1 auto;resize:none;border:1px solid rgba(0,0,0,0.15);border-radius:18px;padding:9px 14px;font-family:inherit;font-size:0.9rem;min-height:40px;max-height:96px;line-height:1.3;outline:none;box-sizing:border-box;}
+      #screen-chat .chat-composer textarea:focus{border-color:var(--green);}
+      #screen-chat .chat-send{flex:0 0 40px;width:40px;height:40px;border-radius:50%;border:none;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+      #screen-chat .chat-send:disabled{opacity:0.4;cursor:default;}
+      </style>
+      <section id="screen-chat" class="screen" data-screen="chat">
+        <div class="sub-header">
+          <div class="chat-peer">
+            <img id="chatPeerAvatar" src="icons/home-crown.png" alt="">
+            <span class="nm" id="chatPeerName">&mdash;</span>
+          </div>
+          <div class="actions"><button class="back-pill" onclick="closeChat()">BACK</button></div>
+        </div>
+        <div class="chat-msgs" id="chatMessages"></div>
+        <div class="chat-counter" id="chatCounter"></div>
+        <div class="chat-composer">
+          <textarea id="chatInput" rows="1" maxlength="280" placeholder="Message&hellip;" data-i18n="chat_placeholder" oninput="onChatInput()" onkeydown="chatKeydown(event)"></textarea>
+          <button class="chat-send" id="chatSendBtn" onclick="sendChatMessage()" disabled aria-label="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <style>
+      #screen-inbox.screen.active{display:flex;flex-direction:column;}
+      #screen-inbox .sub-header{flex:0 0 54px;background:var(--gold);display:flex;align-items:center;justify-content:space-between;padding:0 14px;}
+      #screen-inbox .sub-header .title{font-family:'Roboto',sans-serif;font-weight:700;font-size:16px;color:var(--green);}
+      #screen-inbox .back-pill{background:var(--green);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-weight:700;font-size:12px;letter-spacing:0.06em;cursor:pointer;}
+      #screen-inbox .inbox-list{flex:1 1 auto;overflow-y:auto;min-height:0;background:var(--bg);padding:4px 0 calc(4px + env(safe-area-inset-bottom, 0px));}
+      #screen-inbox .ibx-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.06);}
+      #screen-inbox .ibx-row:active{background:#f0f4f1;}
+      #screen-inbox .ibx-row img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#eee;flex:0 0 46px;}
+      #screen-inbox .ibx-main{flex:1 1 auto;min-width:0;}
+      #screen-inbox .ibx-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+      #screen-inbox .ibx-name{font-weight:700;font-size:0.95rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      #screen-inbox .ibx-time{font-size:0.68rem;color:var(--text-3);flex:0 0 auto;}
+      #screen-inbox .ibx-prev{font-size:0.82rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+      #screen-inbox .ibx-row.unread .ibx-name{color:var(--green);}
+      #screen-inbox .ibx-row.unread .ibx-prev{color:var(--text);font-weight:600;}
+      #screen-inbox .ibx-badge{flex:0 0 auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--green);color:#fff;font-size:0.66rem;font-weight:800;line-height:20px;text-align:center;}
+      #screen-inbox .inbox-empty{margin:40px auto;text-align:center;color:var(--text-3);font-size:0.88rem;padding:20px;line-height:1.5;}
+      </style>
+      <section id="screen-inbox" class="screen" data-screen="inbox">
+        <div class="sub-header">
+          <span class="title" data-i18n="inbox_title">Messages</span>
+          <div class="actions"><button class="back-pill" onclick="screenBack()">BACK</button></div>
+        </div>
+        <div class="inbox-list" id="inboxList"></div>
+      </section>
       <section id="screen-buddyprofile" class="screen" data-screen="buddyprofile">
       <div class="app-header">
         <div class="logo">
@@ -16670,9 +16765,9 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <svg id="addBuddyIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
             <span id="addBuddyText">Add Buddy</span>
           </button>
-          <button class="action-btn secondary">
+          <button class="action-btn secondary" onclick="openChatFromBuddyProfile()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Message
+            <span data-i18n="chat_message">Message</span>
           </button>
         </div>
 
@@ -23396,7 +23491,7 @@ function renderBuddyProfile(ROOT){
   ROOT.querySelectorAll('.stats-grid .stat-value').forEach(function(e){ e.textContent='\u2013'; });
   if(b.uid && typeof _loadBuddyStatsInto==='function') _loadBuddyStatsInto(b.uid, ROOT);
   var primary=ROOT.querySelector('.action-btn.primary'); if(primary){ var _bpSvg=primary.querySelector('svg'); primary.innerHTML=(_bpSvg?_bpSvg.outerHTML:'')+' Remove Buddy'; primary.onclick=function(){ if(typeof removeBuddy==='function') removeBuddy(b.uid); if(typeof screenBack==='function') screenBack(); }; }
-  var secondary=ROOT.querySelector('.action-btn.secondary'); if(secondary) secondary.onclick=function(){ if(typeof showToast==='function') showToast('Coming soon'); };
+  var secondary=ROOT.querySelector('.action-btn.secondary'); if(secondary) secondary.onclick=function(){ if(typeof openChatWith==='function' && b.uid){ var _cav=(typeof _avatarFor==='function')?_avatarFor(b):(b.avatarUrl||(b.avatarId&&AV[b.avatarId])||null); openChatWith({ uid:b.uid, name:(b.name||b.displayName||'\u2014'), avatar:_cav }); } else if(typeof showToast==='function'){ showToast('No buddy selected.','error'); } };
 }
 
 // Loads the buddy's Rounds/Matches/Wins/Teams/Buddies/Win-rate + Best Result from their
@@ -24514,8 +24609,20 @@ function renderNotifList(ROOT){
   var og=(window._openGames||[]);
   var reqHtml = reqs.length ? ('<div class="og-section-label">'+_t('bell_requests')+'</div>'+reqs.map(renderBellRequest).join('')) : '';
   var ogHtml = og.length ? ('<div class="og-section-label">'+_t('og_section')+'</div>'+og.map(renderOpenGameCard).join('')) : '';
-  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : ((reqs.length||og.length) ? '' : '<div class="notif-empty">No notifications yet.</div>');
-  list.innerHTML = reqHtml + ogHtml + notifHtml;
+  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : ((reqs.length||og.length||(typeof _msgUnread!=='undefined'&&_msgUnread>0)) ? '' : '<div class="notif-empty">No notifications yet.</div>');
+  var msgHtml='';
+  if(typeof _msgUnread!=='undefined' && _msgUnread>0){
+    msgHtml='<div class="og-section-label">'+_t('inbox_title')+'</div>'+
+      '<div class="bell-req-card" style="cursor:pointer;" onclick="if(typeof openInbox===\'function\')openInbox()">'+
+        '<div style="width:38px;height:38px;border-radius:50%;background:#1a6b3c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 38px;">\uD83D\uDCAC</div>'+
+        '<div style="flex:1 1 auto;min-width:0;">'+
+          '<div style="font-weight:700;color:#1a6b3c;font-size:0.92rem;">'+_msgUnread+' '+_t('bell_new_messages')+'</div>'+
+          '<div style="font-size:0.8rem;color:#444;">'+_t('bell_tap_open')+'</div>'+
+        '</div>'+
+        '<span style="color:#1a6b3c;font-weight:700;font-size:18px;">\u203a</span>'+
+      '</div>';
+  }
+  list.innerHTML = msgHtml + reqHtml + ogHtml + notifHtml;
 }
 async function renderNotifications(ROOT){
   ROOT=ROOT||document.getElementById('screen-notifications'); if(!ROOT) return;
@@ -24541,7 +24648,7 @@ function markNotifsReadSilently(uid){
     .catch(function(e){ console.warn('markNotifsReadSilently',e); });
 }
 function updateNotifBadge(){
-  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0)+((typeof _pendingRequests!=='undefined'&&_pendingRequests)?_pendingRequests.length:0);
+  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0)+((typeof _pendingRequests!=='undefined'&&_pendingRequests)?_pendingRequests.length:0)+((typeof _msgUnread!=='undefined'&&_msgUnread)?_msgUnread:0);
   document.querySelectorAll('.header-icons').forEach(function(hdr){
     var icons=hdr.querySelectorAll('.icon-btn'); var bell=icons[1]; if(!bell) return;
     bell.style.position='relative';
@@ -25026,10 +25133,11 @@ function renderMenu(ov){
     if(target==='legal'){ closeMenu(); if(typeof openLegal==='function') openLegal(); else if(typeof showToast==='function') showToast('Coming soon'); return; }
     if(target==='join'){ closeMenu(); if(typeof openJoinMatch==='function') openJoinMatch(); else if(typeof showToast==='function') showToast('Coming soon'); return; }
     if(target==='buddies'){ closeMenu(); if(typeof openBuddySearch==='function') openBuddySearch(); else if(typeof showToast==='function') showToast('Coming soon'); return; }
+    if(target==='messages'){ closeMenu(); if(typeof openInbox==='function') openInbox(); return; }
     if(document.getElementById('screen-'+target)){ showScreen(target); closeMenu(); }
     else if(typeof showToast==='function'){ showToast('Coming soon'); }
   };
-  var targets=['profile','editprofile','settings','legal','buddies','join','faq'];
+  var targets=['profile','editprofile','settings','legal','buddies','messages','join','faq'];
   ov.querySelectorAll('.menu-item').forEach(function(it,idx){ it.onclick=function(){ go(targets[idx]); }; });
 }
 
@@ -25055,11 +25163,214 @@ function renderMenu(ov){
           <div class="menu-item"><span>Account Settings</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Privacy &amp; Legal statements</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Find Buddies</span><span class="menu-chevron">›</span></div>
+          <div class="menu-item"><span data-i18n="menu_messages">Messages</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Join game</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Support &amp; FAQ</span><span class="menu-chevron">›</span></div>
           <div class="menu-signout" onclick="menuSignOut()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign out</span></div>
         </div>
       </div>
 </div>
+
+<script>
+// ── Buddy messaging: async short DMs (buddies only, 280 chars) ───────────────
+let _chatThreadId = null;
+let _chatPeer     = null;   // { uid, name, avatar }
+let _chatUnsub    = null;
+let _bannedWords  = null;   // cached lowercase list from config/moderation
+
+function _chatMyUid(){ return (window._fbAuth && window._fbAuth.currentUser) ? window._fbAuth.currentUser.uid : null; }
+function _threadIdFor(a, b){ return (a < b) ? (a + '_' + b) : (b + '_' + a); }
+
+async function _loadBannedWords(){
+  if (_bannedWords) return _bannedWords;
+  _bannedWords = [];
+  try {
+    const snap = await window._fbDb.collection('config').doc('moderation').get();
+    if (snap.exists){ const w = snap.data().bannedWords; if (Array.isArray(w)) _bannedWords = w.map(function(x){ return String(x).toLowerCase(); }); }
+  } catch(e){ /* no list yet -> empty */ }
+  return _bannedWords;
+}
+function _findBanned(text){
+  if (!_bannedWords || !_bannedWords.length) return null;
+  const low = ' ' + text.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/gi, ' ') + ' ';
+  for (let i = 0; i < _bannedWords.length; i++){ const w = _bannedWords[i]; if (w && low.indexOf(' ' + w + ' ') !== -1) return w; }
+  return null;
+}
+
+function openChatFromBuddyProfile(){
+  const b = window._activeBuddy;
+  if (!b || !b.uid){ if (typeof showToast === 'function') showToast('No buddy selected.', 'error'); return; }
+  const avatar = (typeof _avatarFor === 'function') ? _avatarFor(b) : (b.avatarUrl || null);
+  openChatWith({ uid: b.uid, name: (b.name || b.displayName || '\u2014'), avatar: avatar });
+}
+
+function openChatWith(peer){
+  const me = _chatMyUid();
+  if (!me){ if (typeof showToast === 'function') showToast('Please sign in.', 'error'); return; }
+  if (!peer || !peer.uid) return;
+  _chatPeer = peer;
+  _chatThreadId = _threadIdFor(me, peer.uid);
+  _loadBannedWords();
+  const av = document.getElementById('chatPeerAvatar'); if (av) av.src = peer.avatar || 'icons/home-crown.png';
+  const nm = document.getElementById('chatPeerName'); if (nm) nm.textContent = peer.name || '\u2014';
+  const inp = document.getElementById('chatInput'); if (inp) inp.value = '';
+  const box = document.getElementById('chatMessages');
+  if (box){ box.innerHTML = ''; const e = document.createElement('div'); e.className = 'chat-empty'; e.textContent = (typeof t === 'function' ? t('chat_empty') : 'No messages yet.'); box.appendChild(e); }
+  showScreen('chat');
+  onChatInput();
+  _attachChatListener();
+}
+
+function _chatTime(ts){
+  try {
+    let d; if (ts && ts.toDate) d = ts.toDate(); else if (typeof ts === 'number') d = new Date(ts); else return '';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch(e){ return ''; }
+}
+
+function _attachChatListener(){
+  if (_chatUnsub){ try { _chatUnsub(); } catch(e){} _chatUnsub = null; }
+  if (!_chatThreadId) return;
+  const box = document.getElementById('chatMessages');
+  _chatUnsub = window._fbDb.collection('threads').doc(_chatThreadId)
+    .collection('messages').orderBy('at', 'asc').limit(300)
+    .onSnapshot(function(snap){
+      if (!box) return;
+      box.innerHTML = '';
+      if (snap.empty){ const e = document.createElement('div'); e.className = 'chat-empty'; e.textContent = (typeof t === 'function' ? t('chat_empty') : 'No messages yet.'); box.appendChild(e); return; }
+      const me = _chatMyUid();
+      snap.forEach(function(doc){
+        const m = doc.data() || {};
+        const wrap = document.createElement('div'); wrap.className = 'cbubble ' + (m.from === me ? 'me' : 'them');
+        const ct = document.createElement('span'); ct.className = 'ct'; ct.textContent = m.text || '';
+        const mt = document.createElement('span'); mt.className = 'cmeta'; mt.textContent = _chatTime(m.at);
+        wrap.appendChild(ct); wrap.appendChild(mt); box.appendChild(wrap);
+      });
+      box.scrollTop = box.scrollHeight;
+      _markThreadRead();
+    }, function(err){ console.warn('chat listener', err); });
+}
+
+async function _markThreadRead(){
+  const me = _chatMyUid(); if (!me || !_chatThreadId) return;
+  const patch = {}; patch[me] = 0;
+  try { await window._fbDb.collection('threads').doc(_chatThreadId).set({ unread: patch }, { merge: true }); } catch(e){ /* thread may not exist yet */ }
+}
+
+function onChatInput(){
+  const inp = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSendBtn');
+  const ctr = document.getElementById('chatCounter');
+  if (!inp) return;
+  inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 96) + 'px';
+  const total = inp.value.length;
+  const len = inp.value.trim().length;
+  if (ctr){ ctr.textContent = total + ' / 280'; ctr.style.display = total > 0 ? 'block' : 'none'; ctr.className = 'chat-counter' + (total > 280 ? ' over' : ''); }
+  if (btn) btn.disabled = !(len > 0 && total <= 280);
+}
+
+function chatKeydown(e){
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); const btn = document.getElementById('chatSendBtn'); if (btn && !btn.disabled) sendChatMessage(); }
+}
+
+async function sendChatMessage(){
+  const inp = document.getElementById('chatInput');
+  const me = _chatMyUid();
+  if (!inp || !me || !_chatThreadId || !_chatPeer) return;
+  const text = inp.value.trim();
+  if (!text || text.length > 280) return;
+  await _loadBannedWords();
+  if (_findBanned(text)){ if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('chat_banned') : 'Please remove inappropriate language.'), 'error'); return; }
+  const btn = document.getElementById('chatSendBtn'); if (btn) btn.disabled = true;
+  const parts = [me, _chatPeer.uid].sort();
+  const ref = window._fbDb.collection('threads').doc(_chatThreadId);
+  const inc = firebase.firestore.FieldValue.increment(1);
+  const unreadPatch = {}; unreadPatch[_chatPeer.uid] = inc;
+  try {
+    await ref.set({ participants: parts, updatedAt: Date.now(), lastMessage: { text: text, from: me, at: Date.now() }, unread: unreadPatch }, { merge: true });
+    await ref.collection('messages').add({ from: me, text: text, at: Date.now() });
+    inp.value = ''; onChatInput();
+  } catch(e){
+    console.warn('send message', e);
+    const code = (e && e.code) || '';
+    if (code === 'permission-denied'){ if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('chat_blocked') : "This user doesn't accept messages"), 'info'); }
+    else { if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('chat_send_failed') : 'Could not send.'), 'error'); }
+    if (btn) btn.disabled = false;
+  }
+}
+
+function closeChat(){
+  if (_chatUnsub){ try { _chatUnsub(); } catch(e){} _chatUnsub = null; }
+  _chatThreadId = null; _chatPeer = null;
+  if (typeof screenBack === 'function') screenBack();
+}
+
+
+// ── Inbox (conversation list) + bell unread ──────────────────────────────────
+var _msgUnread = 0;
+let _inboxUnsub = null;
+let _threadsBellUnsub = null;
+
+function _peerInfo(puid){
+  const list = (typeof _buddies !== 'undefined' && _buddies) ? _buddies : [];
+  const b = list.find(function(x){ return x.uid === puid; });
+  if (b){ const av = (typeof _avatarFor === 'function') ? _avatarFor(b) : (b.avatarUrl || null); return { uid: puid, name: (b.name || b.displayName || 'Buddy'), avatar: av }; }
+  return { uid: puid, name: 'Buddy', avatar: null };
+}
+
+function openInbox(){
+  const me = _chatMyUid(); if (!me) return;
+  showScreen('inbox');
+  const list = document.getElementById('inboxList');
+  if (list) list.innerHTML = '<div class="inbox-empty">' + (typeof t === 'function' ? t('inbox_loading') : 'Loading\u2026') + '</div>';
+  if (_inboxUnsub){ try { _inboxUnsub(); } catch(e){} _inboxUnsub = null; }
+  _inboxUnsub = window._fbDb.collection('threads').where('participants', 'array-contains', me)
+    .onSnapshot(function(snap){ _renderInbox(snap, me); }, function(err){ console.warn('inbox', err); });
+}
+
+function _renderInbox(snap, me){
+  const list = document.getElementById('inboxList'); if (!list) return;
+  const rows = [];
+  snap.forEach(function(d){ const td = d.data() || {}; td._id = d.id; rows.push(td); });
+  rows.sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); });
+  if (!rows.length){ list.innerHTML = '<div class="inbox-empty">' + (typeof t === 'function' ? t('inbox_empty') : 'No conversations yet.') + '</div>'; return; }
+  list.innerHTML = '';
+  rows.forEach(function(th){
+    const peerUid = (th.participants || []).filter(function(u){ return u !== me; })[0];
+    if (!peerUid) return;
+    const info = _peerInfo(peerUid);
+    const unread = (th.unread && th.unread[me]) || 0;
+    const row = document.createElement('div'); row.className = 'ibx-row' + (unread > 0 ? ' unread' : '');
+    const img = document.createElement('img'); img.src = info.avatar || 'icons/home-crown.png'; img.alt = '';
+    const main = document.createElement('div'); main.className = 'ibx-main';
+    const top = document.createElement('div'); top.className = 'ibx-top';
+    const nm = document.createElement('span'); nm.className = 'ibx-name'; nm.textContent = info.name;
+    const tm = document.createElement('span'); tm.className = 'ibx-time'; tm.textContent = _chatTime(th.updatedAt);
+    top.appendChild(nm); top.appendChild(tm);
+    const prev = document.createElement('div'); prev.className = 'ibx-prev'; prev.textContent = (th.lastMessage && th.lastMessage.text) ? th.lastMessage.text : '';
+    main.appendChild(top); main.appendChild(prev);
+    row.appendChild(img); row.appendChild(main);
+    if (unread > 0){ const bdg = document.createElement('span'); bdg.className = 'ibx-badge'; bdg.textContent = unread > 9 ? '9+' : String(unread); row.appendChild(bdg); }
+    row.onclick = function(){ openChatWith({ uid: peerUid, name: info.name, avatar: info.avatar }); };
+    list.appendChild(row);
+  });
+}
+
+function startThreadsBellListener(uid){
+  if (!uid || !window._fbDb) return;
+  stopThreadsBellListener();
+  try {
+    _threadsBellUnsub = window._fbDb.collection('threads').where('participants', 'array-contains', uid)
+      .onSnapshot(function(snap){
+        let tot = 0; snap.forEach(function(d){ const td = d.data() || {}; tot += (td.unread && td.unread[uid]) || 0; });
+        _msgUnread = tot;
+        if (typeof updateNotifBadge === 'function') updateNotifBadge();
+        var _ns = document.getElementById('screen-notifications'); if (_ns && _ns.classList.contains('active') && typeof renderNotifList === 'function') renderNotifList(_ns);
+      }, function(err){ console.warn('threads bell', err); });
+  } catch(e){ console.warn('startThreadsBellListener', e); }
+}
+function stopThreadsBellListener(){ if (_threadsBellUnsub){ try { _threadsBellUnsub(); } catch(e){} _threadsBellUnsub = null; } _msgUnread = 0; if (typeof updateNotifBadge === 'function') updateNotifBadge(); }
+</script>
+
 </body>
 </html>
