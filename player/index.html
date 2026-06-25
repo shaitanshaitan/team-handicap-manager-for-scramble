@@ -6814,6 +6814,16 @@ input { transition:border-color 0.4s, background 0.2s; }
 // ═══════════════════════════════════
 const LANG = {
   en: {
+    tr_search_buddies: 'Search buddies',
+    tr_add_guest:      'Add guest',
+    tr_guest_sub:      'For players without Parmate — added to this round only.',
+    tr_guest_name_ph:  'Guest name',
+    tr_guest_hcp_ph:   'WHS index (e.g. 18.4)',
+    tr_cancel:         'Cancel',
+    tr_add:            'Add guest',
+    tr_guest_need_name:'Please enter a name.',
+    tr_guest_bad_hcp:  'Enter a valid handicap index (-10 to 54).',
+    tr_guest_added:    '{name} added as guest.',
     bell_new_messages: 'new messages',
     bell_tap_open:     'Tap to open your inbox',
     inbox_title:       'Messages',
@@ -7107,6 +7117,16 @@ const LANG = {
     sc_hardest:       'Hardest',
   },
   nl: {
+    tr_search_buddies: 'Buddies zoeken',
+    tr_add_guest:      'Gast toevoegen',
+    tr_guest_sub:      'Voor spelers zonder Parmate — alleen voor deze ronde.',
+    tr_guest_name_ph:  'Naam gast',
+    tr_guest_hcp_ph:   'WHS-index (bijv. 18.4)',
+    tr_cancel:         'Annuleren',
+    tr_add:            'Gast toevoegen',
+    tr_guest_need_name:'Voer een naam in.',
+    tr_guest_bad_hcp:  'Voer een geldige handicapindex in (-10 tot 54).',
+    tr_guest_added:    '{name} toegevoegd als gast.',
     bell_new_messages: 'nieuwe berichten',
     bell_tap_open:     'Tik om je inbox te openen',
     inbox_title:       'Berichten',
@@ -8127,6 +8147,7 @@ function trStart() {
     teeKey: 'medal',
     format: '35_15',
   };
+  _trbGuests = [];
   showScreen('trcourse');
 }
 
@@ -8863,6 +8884,9 @@ function trPlayerPool() {
   if (typeof _buddies !== 'undefined' && Array.isArray(_buddies)) {
     _buddies.forEach(b => pool.push({ name: b.name, hcp: (b.hcp ?? null), avatarId: b.avatarId }));
   }
+  if (Array.isArray(_trbGuests)) {
+    _trbGuests.forEach(g => pool.push({ name: g.name, hcp: (g.hcp ?? null), avatarId: null, isGuest: true }));
+  }
   return pool;
 }
 
@@ -8966,6 +8990,7 @@ function trbInitStep(id, el) {
 
 // ── Screen 07: Team Details (name, size, player carousel) ──
 let _trbCarousel = { offset:0, selected:new Set(), pool:[] };
+let _trbGuests = []; // guest players: name + hcp, this round only
 function trRenderTeam(scr) {
   if (!_trFlow.team) _trFlow.team = { name:'', size:2, players:[] };
   const pool = trPlayerPool();
@@ -9122,7 +9147,7 @@ function trbRenderCarousel() {
     card.className='player-card'+(isSel?' selected':'')+(atMax?' dimmed':'');
     const avatar = (typeof _avatarFor==='function') ? _avatarFor(p) : ((p.avatarId && AV[p.avatarId]) ? AV[p.avatarId] : 'icons/home-crown.png');
     card.innerHTML='<div class="avatar-wrap"><img src="'+avatar+'" alt=""></div>'+
-      '<div class="player-nickname">'+(p.name||'?')+(p.isMe?' (you)':'')+'</div>'+
+      '<div class="player-nickname">'+(p.name||'?')+(p.isMe?' (you)':'')+(p.isGuest?' <span class="guest-tag">guest</span>':'')+'</div>'+
       '<div class="player-hcp">hcp '+(p.hcp!=null?p.hcp:'—')+'</div>';
     if (!atMax && !p.isMe) card.addEventListener('click', ()=>{
       if (_trbCarousel.selected.has(idx)) _trbCarousel.selected.delete(idx);
@@ -9145,6 +9170,34 @@ function trbCommitTeam() {
   if (me) players.push({ name:me.name, hcp:me.hcp, avatarId:me.avatarId, teeKey:'medal' });
   [..._trbCarousel.selected].forEach(idx=>{ const p=pool[idx]; if(p && !p.isMe) players.push({ name:p.name, hcp:p.hcp, avatarId:p.avatarId, teeKey:'medal' }); });
   _trFlow.team.players = players;
+}
+
+function trbToggleGuestForm(show){
+  const f=document.getElementById('trb_guestForm'); if(!f) return;
+  const vis=(show===undefined)?(f.style.display==='none'||!f.style.display):!!show;
+  f.style.display=vis?'block':'none';
+  if(vis){ const n=document.getElementById('trb_guestName'); if(n) setTimeout(function(){ n.focus(); },50); }
+}
+function trbAddGuest(){
+  const nEl=document.getElementById('trb_guestName'), hEl=document.getElementById('trb_guestHcp');
+  const tt=(typeof t==='function')?t:function(k){return k;};
+  const name=((nEl&&nEl.value)||'').trim();
+  const hcpRaw=((hEl&&hEl.value)||'').trim();
+  if(!name){ if(typeof showToast==='function') showToast(tt('tr_guest_need_name'),'error'); return; }
+  let hcp=null;
+  if(hcpRaw!==''){ hcp=parseFloat(hcpRaw); if(isNaN(hcp)||hcp<-10||hcp>54){ if(typeof showToast==='function') showToast(tt('tr_guest_bad_hcp'),'error'); return; } }
+  if(!Array.isArray(_trbGuests)) _trbGuests=[];
+  _trbGuests.push({ name:name, hcp:hcp });
+  if(nEl) nEl.value=''; if(hEl) hEl.value='';
+  trbToggleGuestForm(false);
+  _trbCarousel.pool=trPlayerPool();
+  const gIdx=_trbCarousel.pool.length-1;
+  const maxMates=((_trFlow&&_trFlow.team&&_trFlow.team.size)||2)-1;
+  if(_trbCarousel.selected.size<maxMates) _trbCarousel.selected.add(gIdx);
+  _trbCarousel.offset=gIdx;
+  if(typeof trbCommitTeam==='function') trbCommitTeam();
+  if(typeof trbRenderCarousel==='function') trbRenderCarousel();
+  if(typeof showToast==='function') showToast(tt('tr_guest_added').replace('{name}',name),'success');
 }
 
 // ── Screen 08: Choose Tee (per player) ──
@@ -12961,6 +13014,7 @@ async function removeBuddy(buddyUid) {
   if (!uid || !confirm('Remove this buddy?')) return;
   try {
     await window._fbDb.collection('users').doc(uid).collection('buddies').doc(buddyUid).delete();
+    try { await window._fbDb.collection('users').doc(buddyUid).collection('buddies').doc(uid).delete(); } catch(e) { console.warn('reciprocal remove failed:', e); }
     _buddies = _buddies.filter(b => b.uid !== buddyUid);
     renderBuddiesList();
     showToast('Buddy removed.', 'info');
@@ -12983,6 +13037,18 @@ async function acceptBuddyRequest(reqId) {
       avatarId: req.fromAvatar || null,
       addedAt:  new Date().toISOString(),
     });
+
+    // Reciprocal write: add OURSELVES to the requester's buddies immediately
+    // (rule permits a doc whose id == our uid). Makes the buddy two-sided at once;
+    // the notification below remains as a fallback/heal path.
+    try {
+      await window._fbDb.collection('users').doc(req.fromUid).collection('buddies').doc(uid).set({
+        name:     _profile.displayName || null,
+        hcp:      _profile.hcpIndex ?? null,
+        avatarId: _profile.avatarId || null,
+        addedAt:  new Date().toISOString(),
+      });
+    } catch(e) { console.warn('reciprocal buddy write failed (falls back to notification):', e); }
 
     // Notify the sender so they add us to their buddies on next load
     // Include reqId so they can clean up their sentRequests doc
@@ -13513,10 +13579,10 @@ async function loadProfileData(uid) {
   // re-adding the buddy on every sign-in.
   try {
     const snap = await window._fbDb.collection('users').doc(uid)
-      .collection('notifications').where('read','==',false).get();
+      .collection('notifications').where('type','==','buddy_accepted').get();
     snap.forEach(async doc => {
       const n = doc.data();
-      if (n.type === 'buddy_accepted' && !n.processed) {
+      if (!n.processed) {
         try {
           await window._fbDb.collection('users').doc(uid).collection('buddies').doc(n.byUid).set({
             name:     n.byName,
@@ -18951,6 +19017,19 @@ document.addEventListener('DOMContentLoaded', applyLang);
           </div>
         </div>
 
+        <style>
+        #screen-trteam .trb-addrow{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+        #screen-trteam .trb-addbtn{display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--green);color:var(--green);border-radius:20px;padding:8px 16px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+        #screen-trteam .trb-addbtn:active{background:#eef7f1;}
+        #screen-trteam .trb-guestform{margin:14px auto 0;max-width:340px;background:#f7faf8;border:1px solid var(--green);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+        #screen-trteam .trb-guest-sub{font-family:'Inter',sans-serif;font-size:12px;color:#556;text-align:center;line-height:1.4;}
+        #screen-trteam .trb-guest-input{border:1px solid rgba(0,0,0,0.15);border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;outline:none;}
+        #screen-trteam .trb-guest-input:focus{border-color:var(--green);}
+        #screen-trteam .trb-guest-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;}
+        #screen-trteam .trb-guest-cancel{background:none;border:none;color:#888;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;padding:8px 10px;}
+        #screen-trteam .trb-guest-add{background:var(--green);color:#fff;border:none;border-radius:20px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+        #screen-trteam .player-nickname .guest-tag{display:inline-block;background:var(--gold);color:#1a4a2a;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;padding:1px 5px;border-radius:6px;vertical-align:middle;margin-left:3px;}
+        </style>
         <div class="form-section carousel-section">
           <div class="section-label">Select Team Member(s)</div>
           <div class="player-carousel">
@@ -18959,6 +19038,19 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <button class="carousel-arrow" id="trb_nextCarBtn" type="button">&gt;</button>
           </div>
           <div class="select-counter" id="trb_selectCounter">Select team size first</div>
+          <div class="trb-addrow">
+            <button type="button" class="trb-addbtn" onclick="if(typeof openBuddySearch==='function')openBuddySearch()"><span>🔍</span><span data-i18n="tr_search_buddies">Search buddies</span></button>
+            <button type="button" class="trb-addbtn" onclick="trbToggleGuestForm()"><span>＋</span><span data-i18n="tr_add_guest">Add guest</span></button>
+          </div>
+          <div class="trb-guestform" id="trb_guestForm" style="display:none;">
+            <div class="trb-guest-sub" data-i18n="tr_guest_sub">For players without Parmate — added to this round only.</div>
+            <input type="text" id="trb_guestName" class="trb-guest-input" placeholder="Guest name" data-i18n="tr_guest_name_ph" maxlength="30">
+            <input type="number" id="trb_guestHcp" class="trb-guest-input" placeholder="WHS index (e.g. 18.4)" data-i18n="tr_guest_hcp_ph" step="0.1" inputmode="decimal">
+            <div class="trb-guest-actions">
+              <button type="button" class="trb-guest-cancel" onclick="trbToggleGuestForm(false)" data-i18n="tr_cancel">Cancel</button>
+              <button type="button" class="trb-guest-add" onclick="trbAddGuest()" data-i18n="tr_add">Add guest</button>
+            </div>
+          </div>
         </div>
       </div>
 
