@@ -4352,6 +4352,11 @@ input { transition:border-color 0.4s, background 0.2s; }
 #menuOverlay .menu-account-tier { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
     color: var(--gold); }
 #menuOverlay .menu-items { flex: 1; overflow-y: auto; padding: 6px 0; }
+#menuOverlay .menu-lang { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:1px solid rgba(0,0,0,0.08); }
+#menuOverlay .menu-lang-label { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:#374151; }
+#menuOverlay .menu-lang-seg { display:flex; border:1px solid #1a6b3c; border-radius:18px; overflow:hidden; }
+#menuOverlay .menu-lang-opt { background:#fff; border:none; padding:6px 16px; font-size:13px; font-weight:700; color:#1a6b3c; cursor:pointer; }
+#menuOverlay .menu-lang-opt.active { background:#1a6b3c; color:#fff; }
 #menuOverlay .menu-item { display: flex; align-items: center; justify-content: space-between;
     padding: 15px 20px;
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
@@ -6814,10 +6819,13 @@ input { transition:border-color 0.4s, background 0.2s; }
 // ═══════════════════════════════════
 const LANG = {
   en: {
+    menu_language:     'Language',
     chat_block:         'Block',
     chat_unblock:       'Unblock',
-    chat_you_blocked:   "You've blocked this user.",
-    chat_block_confirm: 'Block {name}? They will no longer be able to message you.',
+    chat_block_user:    'Block user',
+    chat_unblock_user:  'Unblock user',
+    chat_you_blocked:   "You've blocked this user \u2014 they can't message or invite you.",
+    chat_block_confirm: 'Block {name}? They will not be able to message or invite you.',
     chat_blocked_done:  'User blocked.',
     chat_unblocked:     'User unblocked.',
     tr_search_buddies: 'Search buddies',
@@ -7123,10 +7131,13 @@ const LANG = {
     sc_hardest:       'Hardest',
   },
   nl: {
+    menu_language:     'Taal',
     chat_block:         'Blokkeren',
     chat_unblock:       'Deblokkeren',
-    chat_you_blocked:   'Je hebt deze gebruiker geblokkeerd.',
-    chat_block_confirm: '{name} blokkeren? Ze kunnen je dan geen berichten meer sturen.',
+    chat_block_user:    'Gebruiker blokkeren',
+    chat_unblock_user:  'Gebruiker deblokkeren',
+    chat_you_blocked:   'Je hebt deze gebruiker geblokkeerd \u2014 ze kunnen je niet meer berichten of uitnodigen.',
+    chat_block_confirm: '{name} blokkeren? Ze kunnen je dan niet meer berichten of uitnodigen.',
     chat_blocked_done:  'Gebruiker geblokkeerd.',
     chat_unblocked:     'Gebruiker gedeblokkeerd.',
     tr_search_buddies: 'Buddies zoeken',
@@ -16680,7 +16691,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
           <div class="form-group">
             <div class="form-row">
               <div class="form-label">Language</div>
-              <select class="form-input" id="f-lang" style="appearance:none;cursor:pointer;">
+              <select class="form-input" id="f-lang" style="appearance:none;cursor:pointer;" onchange="if(typeof setLang==='function')setLang(this.value);">
                 <option value="en" selected>🇬🇧 English</option>
                 <option value="nl">🇳🇱 Nederlands</option>
                 <option value="fr">🇫🇷 Français</option>
@@ -16758,10 +16769,11 @@ document.addEventListener('DOMContentLoaded', applyLang);
       #screen-chat .chat-send{flex:0 0 40px;width:40px;height:40px;border-radius:50%;border:none;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
       #screen-chat .chat-send:disabled{opacity:0.4;cursor:default;}
       #screen-chat .actions{display:flex;align-items:center;gap:8px;}
-      #screen-chat .chat-block-btn{background:rgba(0,0,0,0.10);border:none;color:var(--green);width:32px;height:32px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;}
-      #screen-chat .chat-block-btn.is-blocked{background:#c85a4a;color:#fff;}
-      #screen-chat .chat-blocked-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px calc(14px + env(safe-area-inset-bottom, 0px));background:#fff;border-top:1px solid rgba(0,0,0,0.08);font-size:0.85rem;color:#555;}
-      #screen-chat .chat-unblock-btn{flex:0 0 auto;background:var(--green);color:#fff;border:none;border-radius:18px;padding:8px 18px;font-weight:700;font-size:13px;cursor:pointer;}
+      #screen-chat .chat-actionbar{flex:0 0 auto;display:flex;justify-content:flex-end;padding:6px 12px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.06);}
+      #screen-chat .chat-blockbtn{display:flex;align-items:center;gap:6px;background:none;border:1px solid #c85a4a;color:#c85a4a;border-radius:16px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+      #screen-chat .chat-blockbtn:active{background:#fcefec;}
+      #screen-chat .chat-blockbtn.is-blocked{border-color:#1a6b3c;color:#1a6b3c;}
+      #screen-chat .chat-blocked-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom, 0px));background:#fff;border-top:1px solid rgba(0,0,0,0.08);font-size:0.85rem;color:#555;line-height:1.4;}
       </style>
       <section id="screen-chat" class="screen" data-screen="chat">
         <div class="sub-header">
@@ -16769,7 +16781,13 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <img id="chatPeerAvatar" src="icons/home-crown.png" alt="">
             <span class="nm" id="chatPeerName">&mdash;</span>
           </div>
-          <div class="actions"><button class="chat-block-btn" id="chatBlockBtn" onclick="chatToggleBlock()" title="Block" aria-label="Block">⊘</button><button class="back-pill" onclick="closeChat()">BACK</button></div>
+          <div class="actions"><button class="back-pill" onclick="closeChat()">BACK</button></div>
+        </div>
+        <div class="chat-actionbar">
+          <button class="chat-blockbtn" id="chatBlockBtn" onclick="chatToggleBlock()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>
+            <span id="chatBlockLabel" data-i18n="chat_block_user">Block user</span>
+          </button>
         </div>
         <div class="chat-msgs" id="chatMessages"></div>
         <div class="chat-counter" id="chatCounter"></div>
@@ -16780,8 +16798,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
           </button>
         </div>
         <div class="chat-blocked-bar" id="chatBlockedBar" style="display:none;">
-          <span data-i18n="chat_you_blocked">You've blocked this user.</span>
-          <button class="chat-unblock-btn" onclick="chatToggleBlock()" data-i18n="chat_unblock">Unblock</button>
+          <span data-i18n="chat_you_blocked">You've blocked this user — they can't message or invite you.</span>
         </div>
       </section>
 
@@ -25222,9 +25239,12 @@ window.rate=function(val){
 <script>
 
 // ── Hamburger Menu: true overlay over the current screen (blurred behind) ──
+function setMenuLang(lang){ if(typeof setLang==='function') setLang(lang); syncMenuLang(); }
+function syncMenuLang(){ var cur='en'; try{ cur=_lang||'en'; }catch(e){} var opts=document.querySelectorAll('#menuOverlay .menu-lang-opt'); opts.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang')===cur); }); }
 function openMenu(){
   var ov=document.getElementById('menuOverlay'); if(!ov) return;
   renderMenu(ov);
+  syncMenuLang();
   // force reflow so the slide/blur transition runs
   ov.style.display='block'; void ov.offsetWidth;
   ov.classList.add('open'); ov.setAttribute('aria-hidden','false');
@@ -25270,6 +25290,13 @@ function renderMenu(ov){
           </div>
         </div>
 
+        <div class="menu-lang">
+          <span class="menu-lang-label" data-i18n="menu_language">Language</span>
+          <div class="menu-lang-seg">
+            <button type="button" class="menu-lang-opt" data-lang="en" onclick="setMenuLang('en')">EN</button>
+            <button type="button" class="menu-lang-opt" data-lang="nl" onclick="setMenuLang('nl')">NL</button>
+          </div>
+        </div>
         <div class="menu-items">
           <div class="menu-item"><span>Public Profile</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span>Personal Information</span><span class="menu-chevron">›</span></div>
@@ -25439,11 +25466,13 @@ function _applyChatBlockUI(){
     if (composer) composer.style.display = 'none';
     if (counter)  counter.style.display = 'none';
     if (bar)      bar.style.display = 'flex';
-    if (btn){ btn.classList.add('is-blocked'); btn.title = tt('chat_unblock'); }
+    if (btn) btn.classList.add('is-blocked');
+    var _lblB = document.getElementById('chatBlockLabel'); if (_lblB) _lblB.textContent = tt('chat_unblock_user');
   } else {
     if (composer) composer.style.display = 'flex';
     if (bar)      bar.style.display = 'none';
-    if (btn){ btn.classList.remove('is-blocked'); btn.title = tt('chat_block'); }
+    if (btn) btn.classList.remove('is-blocked');
+    var _lblU = document.getElementById('chatBlockLabel'); if (_lblU) _lblU.textContent = tt('chat_block_user');
     if (typeof onChatInput === 'function') onChatInput();
   }
 }
