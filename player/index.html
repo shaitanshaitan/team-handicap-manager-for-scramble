@@ -3131,11 +3131,12 @@ input { transition:border-color 0.4s, background 0.2s; }
 #screen-trtee .player-nickname {font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--text-2); margin-right: 8px;}
 #screen-trtee .player-hcp {font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text-3);}
 #screen-trtee .tee-group {display: flex; gap: 8px; margin-bottom: 16px;}
-#screen-trtee .tee-btn {flex: 1; height: 38px;
+#screen-trtee .tee-btn {flex: 1; min-width: 0; height: 38px; padding: 0 6px;
     border-radius: 8px; border: none;
-    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     cursor: pointer; background: var(--green); color: #fff;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    white-space: nowrap;
     opacity: 0.45; transition: opacity 0.15s;}
 #screen-trtee .tee-btn.active {opacity: 1;}
 #screen-trtee .tee-dot {width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;}
@@ -20125,7 +20126,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
       <div class="sub-header">
         <span class="title">Scorecard</span>
         <div class="actions">
-          <button class="back-pill" type="button" id="tmf_shareBtn" onclick="shareScorecard()" style="background:#1a6b3c;display:none;">↗ SHARE</button>
+          <button class="share-pill tmf-share" type="button" id="tmf_shareBtn" onclick="shareScorecard()" style="background:#1a6b3c;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-family:'Roboto',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.06em;cursor:pointer;display:none;">↗ SHARE</button>
           <button class="back-pill" type="button" onclick="showScreen('tmcode')">BACK</button>
         </div>
       </div>
@@ -20303,6 +20304,7 @@ document.addEventListener('DOMContentLoaded', applyLang);
       <div class="sub-header">
         <span class="title">Scorecard</span>
         <div class="actions">
+          <button class="share-pill tmf-share" type="button" onclick="shareScorecard()" style="background:#1a6b3c;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-family:'Roboto',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.06em;cursor:pointer;display:none;">↗ SHARE</button>
           <button class="back-pill" type="button" onclick="showScreen('tmcode')">BACK</button>
         </div>
       </div>
@@ -23269,7 +23271,7 @@ function tmScoreView(ROOT, flip){
   if(_bp) _bp.onclick = function(){ if(window._tmView){ window._tmView=null; showScreen('matches'); } else { showScreen('tmcode'); } };
   const _ti=ROOT.querySelector('.sub-header .title');
   if(_ti) _ti.textContent = window._tmView ? 'Match Detail' : (ROOT.id==='screen-tmfull' ? 'Full Scorecard' : 'Scorecard');
-  var _shb=ROOT.querySelector('.sub-header #tmf_shareBtn'); if(_shb) _shb.style.display = window._tmView ? '' : 'none';
+  var _shb=ROOT.querySelector('.sub-header .tmf-share'); if(_shb) _shb.style.display = window._tmView ? '' : 'none';
   // read-only saved view: offer a Delete button (below the result card)
   var _del=ROOT.querySelector('.tm-delete-btn');
   if(window._tmView){
@@ -24662,7 +24664,7 @@ function renderProfile(ROOT){
   var hero=ROOT.querySelector('.profile-hero');
   if(hero){ if(prof.coverUrl){ hero.style.backgroundImage="linear-gradient(180deg,rgba(14,61,34,0.30),rgba(14,61,34,0.72)), url('"+prof.coverUrl+"')"; hero.style.backgroundSize='cover'; hero.style.backgroundPosition='center'; } else { hero.style.backgroundImage=''; } }
   set('.profile-name', prof.displayName||'Player');
-  set('.profile-username', '@'+(prof.username || (prof.displayName||'player').toLowerCase().replace(/\s+/g,'')));
+  var _un=ROOT.querySelector('.profile-username'); if(_un){ _un.textContent=''; _un.style.display='none'; }
   var metas=ROOT.querySelectorAll('.profile-meta-item');
   var setMeta=function(el,txt){ if(!el) return; var svg=el.querySelector('svg'); el.innerHTML=(svg?svg.outerHTML:'')+' '+txt; };
   if(metas[0]) setMeta(metas[0], prof.homeCourse||'\u2014');
@@ -24689,7 +24691,13 @@ function renderProfile(ROOT){
     } else { bc.style.display='none'; }
   }
   var editBtn=ROOT.querySelector('.action-btn.primary'); if(editBtn) editBtn.onclick=function(){ if(document.getElementById('screen-editprofile')) showScreen('editprofile'); else if(typeof showToast==='function') showToast('Coming soon'); };
-  var shareBtn=ROOT.querySelector('.action-btn.secondary'); if(shareBtn) shareBtn.onclick=function(){ if(typeof showToast==='function') showToast('Coming soon'); };
+  var shareBtn=ROOT.querySelector('.action-btn.secondary'); if(shareBtn) shareBtn.onclick=function(){
+    var nm=prof.displayName||'My'; var hcp=(prof.hcpIndex!=null&&!isNaN(prof.hcpIndex))?Number(prof.hcpIndex).toFixed(1):null;
+    var txt=nm+"'s scramble profile on Parmate"+(hcp?(' \u00b7 WHS '+hcp):''); var url='https://play.parmate.golf';
+    if(navigator.share){ navigator.share({title:'Parmate',text:txt,url:url}).catch(function(){}); }
+    else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt+' '+url).then(function(){ if(typeof showToast==='function') showToast('Link copied','success'); }).catch(function(){ if(typeof showToast==='function') showToast(url); }); }
+    else if(typeof showToast==='function'){ showToast(url); }
+  };
 }
 
 // ── Menu cluster: Game History (screen-matches) — TR rounds + TM matches ──
@@ -25641,36 +25649,26 @@ function _scDerive(r){
   var playedAt=(r.playedAt||r.date);
   if(isMatch){
     var A=r.teamA||{},B=r.teamB||{};
-    var mf=(typeof _ensureMatchFields==='function')?_ensureMatchFields(r):r;
-    var res=(mf&&mf.result)||r.result||{};
-    var win=res.teamAWon!=null?res.teamAWon:0;
-    var loss=res.teamBWon!=null?res.teamBWon:0;
-    var sq=(res.drawn!=null)?res.drawn:Math.max(0,holes-win-loss);
-    // true match-play closeout (e.g. "6&5") via the app's notation helper
+    var aScores=r.scores||A.scores||[], bScores=r.oppScores||B.scores||[];
+    var aName=r.teamName||A.name||'My Team', bName=r.oppName||B.name||'Opponent';
+    var aHcp=(r.teamHcp!=null?r.teamHcp:(A.hcp!=null?A.hcp:0)), bHcp=(r.oppHcp!=null?r.oppHcp:(B.hcp!=null?B.hcp:0));
+    var aPlayers=A.players||r.teamPlayers||r.players||[], bPlayers=B.players||r.oppPlayers||[];
+    var si=r.si||r.index||[];
+    var ranks=(typeof _denseSIRanks==='function')?_denseSIRanks(si,holes):si;
+    var diff=Math.abs((aHcp||0)-(bHcp||0)), aRecv=(aHcp||0)>=(bHcp||0);
+    var win=0,loss=0,sq=0,seq=[];
+    for(var k=0;k<holes;k++){
+      var av=aScores[k], bv=bScores[k];
+      if(av==null||av===0||bv==null||bv===0){ seq.push(null); continue; }
+      var str=(typeof strokeOnHoleWithIndex==='function')?strokeOnHoleWithIndex(k,diff,ranks,holes):0;
+      var na=av-(aRecv?str:0), nb=bv-(aRecv?0:str);
+      if(na<nb){win++;seq.push(1);} else if(na>nb){loss++;seq.push(-1);} else {sq++;seq.push(0);}
+    }
     var resultText=(win+'&'+loss);
-    try{
-      var si=r.si||r.index||[];
-      var ranks=(typeof _denseSIRanks==='function')?_denseSIRanks(si,holes):si;
-      var sa=A.scores||[], sb=B.scores||[];
-      var diff=Math.abs((A.hcp||0)-(B.hcp||0));
-      var aRecv=(A.hcp||0)>=(B.hcp||0);
-      var seq=[];
-      for(var k=0;k<holes;k++){
-        var av=sa[k], bv=sb[k];
-        if(av==null||av===0||bv==null||bv===0){ seq.push(null); continue; }
-        var str=(typeof strokeOnHoleWithIndex==='function')?strokeOnHoleWithIndex(k,diff,ranks,holes):0;
-        var na=av-(aRecv?str:0), nb=bv-(aRecv?0:str);
-        seq.push(na<nb?1:(na>nb?-1:0));
-      }
-      if(typeof tmMatchPlayText==='function'){
-        var mp=tmMatchPlayText(seq,holes);
-        if(mp&&mp.text) resultText=(mp.text==='All square'?'A/S':mp.text).toUpperCase();
-      }
-    }catch(e){}
-    var aC=(A.players&&A.players.length)||2,bC=(B.players&&B.players.length)||2;
+    try{ if(typeof tmMatchPlayText==='function'){ var mp=tmMatchPlayText(seq,holes); if(mp&&mp.text) resultText=(mp.text==='All square'?'A/S':mp.text).toUpperCase(); } }catch(e){}
+    var aC=(aPlayers&&aPlayers.length)||2,bC=(bPlayers&&bPlayers.length)||2;
     return { isMatch:true, courseName:courseName, holes:holes, playedAt:playedAt,
-      teamLine:((A.name||'My Team')+' VS '+(B.name||'Opponent')),
-      result:resultText, win:win, loss:loss, square:sq, playersLabel:(aC+'VS'+bC) };
+      teamLine:(aName+' VS '+bName), result:resultText, win:win, loss:loss, square:sq, playersLabel:(aC+'VS'+bC) };
   }
   var scores=r.scores||[];
   var gross=(r.gross!=null)?r.gross:scores.reduce(function(a,b){return a+(b||0);},0);
