@@ -48,15 +48,21 @@
     if (_qrJoin) { localStorage.setItem('pmPendingJoin', JSON.stringify({ code: _qrJoin, ts: Date.now() })); }
   } catch(e){}
   window._fbAuth.onAuthStateChanged(function(user) {
-    try {
-      if (user) { onSignedIn(user); } else { onSignedOut(); }
-    } catch (e) {
-      console.error('auth handler error:', e);
-      // even if profile/data load fails, get the user into the app
-      if (user && typeof showScreen === 'function') { try { if (typeof renderHomeScreen === 'function') renderHomeScreen(); showScreen('home'); } catch (_) {} }
-      const overlay = document.getElementById('authLoadingOverlay');
-      if (overlay) { overlay.style.display = 'none'; overlay.style.pointerEvents = 'none'; }
-    }
+    (function dispatch(){
+      // onSignedIn/onSignedOut are defined in a later <script>; if the cached
+      // auth state resolves before that block parses, wait for them rather than throw.
+      var ready = user ? (typeof onSignedIn === 'function') : (typeof onSignedOut === 'function');
+      if (!ready) { setTimeout(dispatch, 20); return; }
+      try {
+        if (user) { onSignedIn(user); } else { onSignedOut(); }
+      } catch (e) {
+        console.error('auth handler error:', e);
+        // even if profile/data load fails, get the user into the app
+        if (user && typeof showScreen === 'function') { try { if (typeof renderHomeScreen === 'function') renderHomeScreen(); showScreen('home'); } catch (_) {} }
+        const overlay = document.getElementById('authLoadingOverlay');
+        if (overlay) { overlay.style.display = 'none'; overlay.style.pointerEvents = 'none'; }
+      }
+    })();
   });
 </script>
 <style>
@@ -3888,6 +3894,8 @@ input { transition:border-color 0.4s, background 0.2s; }
 #screen-tmscore .play-btn span { display: block; }
 #screen-tmfull .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 86px; z-index: 15; pointer-events: none; }
 #screen-tmfull .bottom-nav { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: var(--green); display: grid; grid-template-columns: 1fr 1fr 96px 1fr 1fr; align-items: center; pointer-events: auto; padding-bottom: 6px; }
+#screen-tmscore.tmview .bottom-nav, #screen-tmfull.tmview .bottom-nav { grid-template-columns: 1fr 1fr 1fr 1fr; }
+#screen-tmscore.tmview .nav-spacer, #screen-tmfull.tmview .nav-spacer { display: none; }
 #screen-tmfull .nav-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #fff; cursor: pointer; opacity: 0.65; position: relative; background: transparent; border: 0; padding: 0; }
 #screen-tmfull .nav-tab.active { opacity: 1; }
 #screen-tmfull .nav-spacer { position: relative; align-self: stretch; }
@@ -9969,12 +9977,8 @@ function joinShowConfirm(data) {
     const hcp = p.hcpIndex ?? p.hcp ?? '—';
     return '<div class="js2-row"><span class="js2-key">'+t('js2_player')+' '+(i+1)+'</span><span class="js2-val">'+esc(p.name||'—')+' · HCP '+hcp+'</span></div>';
   }).join('');
-  const myPlayers = (data.teamB && data.teamB.players) || [];
-  const teeDot = (label)=>{ const l=(label||'').toLowerCase(); if(l.includes('champ'))return '#3a7bd5'; if(l.includes('senior'))return '#3a7bd5'; if(l.includes('forward'))return '#c85a4a'; return '#e1c245'; };
-  const teeRowsHtml = myPlayers.map((p,i)=>{
-    const lbl = teeLabelFor(p);
-    return '<div class="js2-row"><span class="js2-key">'+t('js2_player')+' '+(i+1)+'</span><span class="js2-val"><span class="js2-teedot" style="background:'+teeDot(lbl)+'"></span>'+esc(lbl)+'</span></div>';
-  }).join('');
+  // Team B (the joiner's own team) is verified & edited below via #joinTeamFields —
+  // no read-only tee list in the summary anymore.
   const loopName = (data.course && (data.course._playedLoopName || data.course.name)) || '—';
   document.getElementById('joinConfirmContent').innerHTML =
     '<div class="js2-section">'+t('js2_opponent')+'</div>'+
@@ -9985,9 +9989,7 @@ function joinShowConfirm(data) {
     '<div class="js2-row"><span class="js2-key">'+t('js2_course')+'</span><span class="js2-val">'+esc(data.course.name)+'</span></div>'+
     '<div class="js2-row"><span class="js2-key">'+t('js2_loop')+'</span><span class="js2-val">'+esc(loopName)+' ('+data.holes+')</span></div>'+
     '<div class="js2-row"><span class="js2-key">'+t('js2_holes')+'</span><span class="js2-val">'+data.holes+' '+t('js2_holes').toLowerCase()+'</span></div>'+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_format')+'</span><span class="js2-val">'+fmtLabel+'</span></div>'+
-    '<div class="js2-section">'+t('js2_teesel')+'</div>'+
-    (teeRowsHtml || '<div class="js2-row"><span class="js2-val">—</span></div>');
+    '<div class="js2-row"><span class="js2-key">'+t('js2_format')+'</span><span class="js2-val">'+fmtLabel+'</span></div>';
   var _cb=document.getElementById('js2_code'); if(_cb) _cb.textContent = data.matchId || (_joinMatchData&&_joinMatchData.matchId) || '—';
 
   // Build dynamic Your Team fields — use teamType to determine player count
@@ -10030,6 +10032,36 @@ function joinShowConfirm(data) {
   document.getElementById('joinLookupBtn').textContent = (typeof t==='function') ? t('join_find_btn') : 'Join Match';
 }
 
+// Recompute a team's handicap for a specific match's course, tees and format.
+// Self-contained (no _trFlow dependency): only WHS indexes are trusted from any
+// looked-up/edited team — course handicap and the team handicap are computed here.
+function joinComputeTeamHcp(players, md) {
+  const tees = (md && md.tees) || [];
+  const courseObj = {
+    name: (md && md.course && md.course.name) || 'Course',
+    par:  (md && md.course && md.course.par) || 72,
+    holes: (md && md.holes) || 18,
+    tees: tees
+  };
+  const list = (players || []).filter(p => p && p.hcp != null && !isNaN(parseFloat(p.hcp)));
+  if (!list.length) return { players: [], teamHcp: 0 };
+  list.forEach(p => {
+    const ti   = (p.teeIndex != null) ? p.teeIndex : 0;
+    const tee  = tees[ti] || tees[0] || null;
+    const rating = tee ? Number(tee.rating) : 0;
+    const slope  = tee ? Number(tee.slope)  : 113;
+    const par    = tee ? Number(tee.par)    : courseObj.par;
+    const idx    = (typeof whsPlayIndex === 'function') ? whsPlayIndex(parseFloat(p.hcp), courseObj) : parseFloat(p.hcp);
+    p.courseHcp  = (typeof getCH === 'function') ? getCH(idx, slope, rating, par) : parseFloat(p.hcp);
+    p.chRounded  = Math.round(p.courseHcp);
+  });
+  const sorted = list.slice().sort((a,b) => a.courseHcp - b.courseHcp);
+  const pcts = (typeof FORMATS !== 'undefined' && FORMATS[md && md.format]) ? FORMATS[md.format] : [0.35, 0.15];
+  let total = 0;
+  sorted.forEach((p,i) => { p.pct = pcts[Math.min(i, pcts.length-1)] || 0; total += p.courseHcp * p.pct; });
+  return { players: sorted, teamHcp: Math.round(total) };
+}
+
 async function joinConfirm() {
   if (!_joinMatchData) return;
 
@@ -10038,16 +10070,50 @@ async function joinConfirm() {
 
   const uid  = window._fbAuth?.currentUser?.uid;
   const code = _joinMatchData.matchId;
-  // The host already set Team B (the opponent roster) when creating the match — use it
-  // as-is. The joiner simply claims the slot and opens the scorecard.
-  const teamName = _joinMatchData.teamB.teamName || 'Opponent';
-  const players  = (_joinMatchData.teamB.players || []).slice();
+
+  // Read the joiner's verified/edited team from the form fields (#joinTeamFields)
+  const courseTees = (_joinMatchData.tees) || [];
+  const rawB     = _joinMatchData.teamB.players || [];
+  const teamType = _joinMatchData.teamB.teamType || _joinMatchData.teamType || '2P';
+  const expected = teamType === '4P' ? 4 : teamType === '3P' ? 3 : 2;
+  const count    = Math.max(expected, rawB.length, 2);
+  const gv = (id)=>{ const e=document.getElementById(id); return e ? e.value.trim() : ''; };
+  const gr = (nm)=>{ const e=document.querySelector('input[name="'+nm+'"]:checked'); return e ? e.value : null; };
+
+  const teamName = gv('join_t2_name') || _joinMatchData.teamB.teamName || 'Opponent';
+  const players  = [];
+  for (let pi = 1; pi <= count; pi++) {
+    const nm     = gv('join_t2p'+pi+'_name');
+    const hcpRaw = gv('join_t2p'+pi+'_hcp');
+    if (!nm && hcpRaw === '') continue;                 // skip empty optional slots
+    const tParsed = parseInt(gr('join_t2p'+pi+'_tee'));
+    const ti      = isNaN(tParsed) ? 0 : tParsed;
+    const g       = gr('join_t2p'+pi+'_g') || 'M';
+    const teeLbl  = (courseTees[ti] && courseTees[ti].label) || 'Medal';
+    players.push({ name:nm, hcp: (hcpRaw==='' ? null : parseFloat(hcpRaw)),
+                   tee:String(ti), teeIndex:ti,
+                   teeKey:String(teeLbl).toLowerCase().split(/\s+/)[0], gender:g });
+  }
+
+  // Validate: at least 2 players with a name and a valid handicap
+  const valid = players.filter(p => p.name && p.hcp != null && !isNaN(p.hcp));
+  if (valid.length < 2) {
+    showToast('Enter a name and handicap for at least 2 players.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Open Scorecard →'; }
+    return;
+  }
+
+  // Recompute the team handicap for THIS match's course / tees / format (WHS-correct).
+  // Only the WHS indexes port from any looked-up team — the handicap is never reused.
+  const recomputed = joinComputeTeamHcp(players, _joinMatchData);
+  const teamHcp    = recomputed.teamHcp;
 
   try {
     await window._fbDb.collection('matches').doc(code).update({
       'teamB.uid':      uid,
       'teamB.teamName': teamName,
       'teamB.players':  players,
+      'teamB.teamHcp':  teamHcp,
       status:           'active',
       startedAt:        Date.now()
     });
@@ -16022,6 +16088,8 @@ document.addEventListener('DOMContentLoaded', applyLang);
     <div id="joinStep2" style="display:none;">
       <div class="js2-code-badge"><span class="js2-code-label" data-i18n="js2_match_code">Match code</span><span class="js2-code-val" id="js2_code">—</span></div>
       <div id="joinConfirmContent"></div>
+      <div class="js2-section" id="joinYourTeamHdr" style="margin-top:8px;">Your team · verify &amp; edit</div>
+      <div id="joinTeamFields"></div>
       <button class="js2-open-btn" id="joinConfirmBtn" onclick="joinConfirm()" data-i18n="js2_open_btn">Open Scorecard →</button>
     </div>
 
@@ -23267,6 +23335,7 @@ function tmScoreView(ROOT, flip){
   if(q('.best-score-label span')) q('.best-score-label span').textContent=bestNm;
   // chrome: read-only saved view vs live/flow scoring
   const _np=ROOT.querySelector('.play-btn'); if(_np) _np.style.display = (window._tmView ? 'none' : '');
+  if(ROOT&&ROOT.classList) ROOT.classList.toggle('tmview', !!window._tmView);
   const _bp=ROOT.querySelector('.sub-header .back-pill');
   if(_bp) _bp.onclick = function(){ if(window._tmView){ window._tmView=null; showScreen('matches'); } else { showScreen('tmcode'); } };
   const _ti=ROOT.querySelector('.sub-header .title');
@@ -23645,7 +23714,7 @@ function renderBuddyProfile(ROOT){
   var set=function(sel,val){ var e=ROOT.querySelector(sel); if(e) e.textContent=val; };
   var av=ROOT.querySelector('.avatar-wrap img'); if(av) av.src = b.avatarUrl || (b.avatarId&&AV[b.avatarId]) || 'icons/home-crown.png';
   set('.profile-name', b.name||'Buddy');
-  set('.profile-username', '@'+(b.username||(b.name||'buddy').toLowerCase().replace(/\s+/g,'')));
+  var _bun=ROOT.querySelector('.profile-username'); if(_bun){ _bun.textContent=''; _bun.style.display='none'; }
   var metas=ROOT.querySelectorAll('.profile-meta-item');
   var setMeta=function(el,txt){ if(!el) return; var svg=el.querySelector('svg'); el.innerHTML=(svg?svg.outerHTML:'')+' '+txt; };
   if(metas[0]) setMeta(metas[0], b.homeCourse||'\u2014');
