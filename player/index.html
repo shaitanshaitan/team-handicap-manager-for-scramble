@@ -19937,21 +19937,8 @@ document.addEventListener('DOMContentLoaded', applyLang);
               <input type="text" id="tmopp_oppNameInput" placeholder="e.g. Team Birdie">
               <button class="chev-btn" id="tmopp_oppChev" type="button">⌄</button>
             </div>
-            <!-- Saved opponent teams dropdown -->
-            <div class="saved-dd" id="tmopp_savedDD">
-              <div class="saved-dd-item" data-name="Team Eagles" data-size="2" data-players='[{"name":"Jan de Vries","hcp":"12.4"},{"name":"Piet Bakker","hcp":"18.2"}]'>
-                <div class="team-name-dd">Team Eagles</div>
-                <div class="team-meta-dd">2 players · Jan de Vries, Piet Bakker</div>
-              </div>
-              <div class="saved-dd-item" data-name="Team Birdies" data-size="2" data-players='[{"name":"Klaas Smit","hcp":"8.6"},{"name":"Hans Loon","hcp":"22.0"}]'>
-                <div class="team-name-dd">Team Birdies</div>
-                <div class="team-meta-dd">2 players · Klaas Smit, Hans Loon</div>
-              </div>
-              <div class="saved-dd-item" data-name="Team Bogeys" data-size="3" data-players='[{"name":"Erik Mulder","hcp":"15.0"},{"name":"Tom Visser","hcp":"19.8"},{"name":"Sven Berg","hcp":"24.4"}]'>
-                <div class="team-name-dd">Team Bogeys</div>
-                <div class="team-meta-dd">3 players · Erik Mulder, Tom Visser, Sven Berg</div>
-              </div>
-            </div>
+            <!-- Saved + buddies' teams dropdown (populated dynamically) -->
+            <div class="saved-dd" id="tmopp_savedDD"></div>
           </div>
           <div class="helper">Type a name or pick a saved opponent team</div>
         </div>
@@ -19973,6 +19960,8 @@ document.addEventListener('DOMContentLoaded', applyLang);
         <!-- Player entry rows -->
         <div class="players-section">
           <div class="section-label">Enter Team Member(s)</div>
+          <button type="button" id="tmopp_addPlayerBtn" style="display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:8px 12px;border:1.5px solid var(--green);border-radius:8px;background:#f5fdf8;color:var(--green);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">＋ Add buddy or guest</button>
+          <div id="tmopp_playerDD" style="display:none;border:1.5px solid var(--green);border-radius:10px;overflow:hidden;margin:0 0 12px;box-shadow:0 4px 16px rgba(0,0,0,0.10);"></div>
           <div class="player-row hidden" id="tmopp_row1">
             <span class="player-num">1</span>
             <input class="player-name-in" id="tmopp_name1" type="text" placeholder="name">
@@ -20614,20 +20603,43 @@ function tmInit_tmopp(ROOT) {
   const oppChev  = q('#tmopp_oppChev');
   const savedDD  = q('#tmopp_savedDD');
   oppChev.addEventListener('click', e => { e.stopPropagation();
-    savedDD.style.display = savedDD.style.display === 'block' ? 'none' : 'block'; });
+    if (savedDD.style.display === 'block') { savedDD.style.display = 'none'; return; }
+    savedDD.style.display = 'block';
+    tmoppRenderDD(ROOT, savedDD);
+  });
   oppInput.addEventListener('input', clearAutofill);
   oppInput.addEventListener('click', e => e.stopPropagation());
-  ROOT.querySelectorAll('.saved-dd-item').forEach(item => {
-    item.addEventListener('click', e => {
-      e.stopPropagation();
-      oppInput.value = item.dataset.name;
-      savedDD.style.display = 'none';
-      setTeamSize(parseInt(item.dataset.size));
-      clearAutofill();
-      autofillPlayers(JSON.parse(item.dataset.players));
-    });
+  // Dynamic items — use delegation so freshly-rendered teams are clickable
+  savedDD.addEventListener('click', e => {
+    const item = e.target.closest('.saved-dd-item');
+    if (!item || !item.dataset.players) return;   // skip group headers / placeholders
+    e.stopPropagation();
+    oppInput.value = item.dataset.name;
+    savedDD.style.display = 'none';
+    setTeamSize(parseInt(item.dataset.size));
+    clearAutofill();
+    try { autofillPlayers(JSON.parse(item.dataset.players)); } catch(_){}
   });
   const sizeField = q('#tmopp_sizeField'), sizeDD = q('#tmopp_sizeDD');
+  const addBtn = q('#tmopp_addPlayerBtn'), playerDD = q('#tmopp_playerDD');
+  if (addBtn && playerDD) {
+    addBtn.addEventListener('click', e => { e.stopPropagation();
+      if (teamSize === 0) { if (typeof showToast === 'function') showToast('Choose team size first', 'error'); return; }
+      if (playerDD.style.display === 'block') { playerDD.style.display = 'none'; return; }
+      tmoppRenderPlayerDD(); playerDD.style.display = 'block';
+    });
+    playerDD.addEventListener('click', e => {
+      const it = e.target.closest('.tmopp-pd-item'); if (!it) return;
+      e.stopPropagation();
+      playerDD.style.display = 'none';
+      if (it.dataset.guest) {
+        for (let i = 1; i <= 4; i++) { const row = q('#tmopp_row'+i); if (row && !row.classList.contains('hidden')) { const ni = q('#tmopp_name'+i); if (ni && !ni.value.trim()) { ni.focus(); break; } } }
+        return;
+      }
+      const ok = tmoppFillNextRow(it.dataset.name, it.dataset.hcp);
+      if (!ok && typeof showToast === 'function') showToast('All player slots are full', 'info');
+    });
+  }
   sizeField.addEventListener('click', e => { e.stopPropagation();
     sizeDD.style.display = sizeDD.style.display === 'block' ? 'none' : 'block'; });
   ROOT.querySelectorAll('.size-opt').forEach(opt => {
@@ -20639,6 +20651,7 @@ function tmInit_tmopp(ROOT) {
   document.addEventListener('click', () => {
     if (savedDD) savedDD.style.display = 'none';
     if (sizeDD)  sizeDD.style.display  = 'none';
+    if (playerDD) playerDD.style.display = 'none';
   });
   q('#tmopp_resetBtn').addEventListener('click', () => {
     oppInput.value = '';
@@ -20665,6 +20678,98 @@ function tmInit_tmopp(ROOT) {
     const toast = q('#tmopp_toast');
     if (toast){ toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
   });
+}
+
+// Load opponent-team options: the host's own saved teams + each buddy's teams.
+// Privacy scope: only the user's own teams and their buddies' teams (no global directory).
+async function tmoppLoadTeams() {
+  const out = [];
+  const db  = window._fbDb;
+  const sizeOf = (tt, members) => (tt === '4P' ? 4 : tt === '3P' ? 3 : ((members && members.length) || 2));
+  const mapMembers = (d) => (d.members || []).map(m => ({ name: m.name || '', hcp: (m.hcp != null ? String(m.hcp) : '') })).filter(m => m.name);
+  try {
+    const uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
+    if (db && uid) {
+      const snap = await db.collection('users').doc(uid).collection('teams').get().catch(() => null);
+      if (snap) snap.forEach(doc => {
+        const d = doc.data() || {}; const players = mapMembers(d);
+        if (players.length) out.push({ group: 'Your teams', teamName: d.teamName || 'Team', size: sizeOf(d.teamType, players), players });
+      });
+    }
+  } catch (e) { console.warn('tmoppLoadTeams own', e); }
+  try {
+    if (db && Array.isArray(_buddies)) {
+      for (const b of _buddies) {
+        if (!b || !b.uid) continue;
+        const snap = await db.collection('users').doc(b.uid).collection('teams').get().catch(() => null);
+        if (snap) snap.forEach(doc => {
+          const d = doc.data() || {}; const players = mapMembers(d);
+          if (players.length) out.push({ group: (b.name || 'Buddy') + "\u2019s teams", teamName: d.teamName || 'Team', size: sizeOf(d.teamType, players), players });
+        });
+      }
+    }
+  } catch (e) { console.warn('tmoppLoadTeams buddies', e); }
+  return out;
+}
+
+// Render the opponent dropdown from real teams (grouped by source).
+async function tmoppRenderDD(ROOT, dd) {
+  dd = dd || (ROOT && ROOT.querySelector('#tmopp_savedDD')) || document.getElementById('tmopp_savedDD');
+  if (!dd) return;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  dd.innerHTML = '<div class="saved-dd-item" style="cursor:default;color:#777;">Loading teams\u2026</div>';
+  let teams = [];
+  try { teams = await tmoppLoadTeams(); } catch (_) {}
+  if (dd.style.display === 'none') return;   // closed while loading
+  if (!teams.length) {
+    dd.innerHTML = '<div class="saved-dd-item" style="cursor:default;color:#777;">No saved or buddy teams yet \u2014 enter players below.</div>';
+    return;
+  }
+  let html = '', lastGroup = null;
+  teams.forEach(tm => {
+    if (tm.group !== lastGroup) {
+      html += '<div class="saved-dd-item" style="cursor:default;background:#f0f9f4;color:#1a6b3c;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">' + esc(tm.group) + '</div>';
+      lastGroup = tm.group;
+    }
+    const meta = tm.size + ' players \u00b7 ' + tm.players.map(p => p.name).filter(Boolean).join(', ');
+    html += '<div class="saved-dd-item" data-name="' + esc(tm.teamName) + '" data-size="' + tm.size + '" data-players=\'' + esc(JSON.stringify(tm.players)) + '\'>' +
+            '<div class="team-name-dd">' + esc(tm.teamName) + '</div><div class="team-meta-dd">' + esc(meta) + '</div></div>';
+  });
+  dd.innerHTML = html;
+}
+
+// Fill the next empty (visible) opponent row with a looked-up player / guest.
+function tmoppFillNextRow(name, hcp) {
+  for (let i = 1; i <= 4; i++) {
+    const row = document.getElementById('tmopp_row' + i);
+    if (!row || row.classList.contains('hidden')) continue;
+    const ni = document.getElementById('tmopp_name' + i);
+    if (ni && !ni.value.trim()) {
+      ni.value = name; ni.classList.add('autofilled');
+      const hi = document.getElementById('tmopp_hcp' + i);
+      if (hi && hcp != null && hcp !== '') { hi.value = hcp; hi.classList.add('autofilled'); }
+      return true;
+    }
+  }
+  return false;
+}
+
+// Render the opponent player picker: your buddies (player lookup) + a guest option.
+function tmoppRenderPlayerDD() {
+  const dd = document.getElementById('tmopp_playerDD'); if (!dd) return;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  let html = '';
+  const buds = Array.isArray(_buddies) ? _buddies : [];
+  if (buds.length) {
+    html += '<div style="padding:10px 14px;background:#f0f9f4;color:#1a6b3c;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Your buddies</div>';
+    buds.forEach(b => {
+      html += '<div class="tmopp-pd-item" data-name="' + esc(b.name || '') + '" data-hcp="' + (b.hcp != null ? esc(b.hcp) : '') + '" style="padding:11px 14px;border-bottom:1px solid #eee;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;"><b>' + esc(b.name || 'Buddy') + '</b>' + (b.hcp != null ? ' \u00b7 HCP ' + esc(b.hcp) : '') + '</div>';
+    });
+  } else {
+    html += '<div style="padding:11px 14px;color:#777;font-size:12px;">No buddies yet \u2014 add a guest below.</div>';
+  }
+  html += '<div class="tmopp-pd-item" data-guest="1" style="padding:11px 14px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;color:#1a6b3c;font-weight:600;">\uFF0B Guest \u2014 enter manually</div>';
+  dd.innerHTML = html;
 }
 
 // Advance from Opponent Team Details to Team Handicap
