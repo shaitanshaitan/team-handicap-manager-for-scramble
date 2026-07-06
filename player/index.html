@@ -9386,7 +9386,14 @@ function trRenderTees(scr) {
   var _ttl = scr.querySelector('.sub-header .title');
   if (_ttl) _ttl.textContent = (_teeTarget === 'opp') ? 'Opponent Tees' : 'Choose Tee';
   const courseTees = (_trFlow.course && _trFlow.course.tees) || [];
-  const hasTee = (key) => courseTees.some(t => (t.label||'').toLowerCase().includes(key));
+  const courseWomenTees = (_trFlow.course && _trFlow.course.women) || [];
+  // Which array determines button visibility depends on EACH player's own gender —
+  // previously this always used the men's array regardless of who was picking a tee,
+  // silently hiding a tee that only exists in the women's data.
+  const hasTee = (key, gender) => {
+    const arr = (gender === 'F' && courseWomenTees.length) ? courseWomenTees : courseTees;
+    return arr.some(t => (t.label||'').toLowerCase().includes(key));
+  };
   for (let i=1;i<=4;i++){
     const block=document.getElementById('trb_playerBlock'+i);
     if (!block) continue;
