@@ -4656,6 +4656,13 @@ input { transition:border-color 0.4s, background 0.2s; }
     border: 2.5px solid transparent; cursor: pointer; transition: border-color 0.15s; }
 #screen-editprofile .av-opt.selected { border-color: var(--green); box-shadow: 0 0 0 2px rgba(26,107,60,0.25); }
 #screen-editprofile .av-opt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#screen-editprofile .cover-grid { grid-template-columns: repeat(2, 1fr); }
+#screen-editprofile .cover-grid .av-opt { aspect-ratio: 2.67 / 1; border-radius: 10px; }
+#screen-editprofile .picker-pager { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; }
+#screen-editprofile .pager-nav { width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(0,0,0,0.06); color: var(--text); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#screen-editprofile .pager-nav:disabled { opacity: 0.3; cursor: default; }
+#screen-editprofile .pager-dot { width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(0,0,0,0.06); color: var(--text-3); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; }
+#screen-editprofile .pager-dot.active { background: var(--green); color: #fff; }
 #screen-editprofile .picker-close-row { display: flex; justify-content: flex-end; margin-top: 10px; }
 #screen-editprofile .picker-close-btn { background: var(--green); color: #fff; border: none; border-radius: 16px; padding: 6px 16px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
 #screen-editprofile .section { padding: 14px 16px 0; }
@@ -7532,8 +7539,15 @@ function applyLang() {
 const FORMATS = { '35_15':[0.35,0.15], '25_20':[0.25,0.20], '20_15':[0.20,0.15], '50_50':[0.50,0.50],
                   '20_15_10':[0.20,0.15,0.10], '15_12_10':[0.15,0.12,0.10],
                   '20_15_10_5':[0.20,0.15,0.10,0.05], '15_12_10_7':[0.15,0.12,0.10,0.07] };
-const MAX_COURSES = 20;
-const MAX_TEAMS   = Infinity; // unlimited teams
+const MAX_COURSES = 20; // personal saved-courses cap — same for Free and Pro
+const MAX_TEAMS_FREE         = 2;
+const MAX_BUDDIES_FREE       = 5;
+const MAX_MATCH_HISTORY_FREE = 8;
+
+function isProUser() { return !!(_profile && _profile.tier === 'pro'); }
+function maxTeamsForUser()        { return isProUser() ? Infinity : MAX_TEAMS_FREE; }
+function maxBuddiesForUser()      { return isProUser() ? Infinity : MAX_BUDDIES_FREE; }
+function maxMatchHistoryForUser() { return isProUser() ? Infinity : MAX_MATCH_HISTORY_FREE; }
 
 let _holes       = 18;
 let _gameMode    = 'single'; // 'single' | 'match'
@@ -7569,7 +7583,45 @@ const AVATARS = {
   7: "icons/avatars/7.jpg",
   8: "icons/avatars/8.jpg",
   9: "icons/avatars/9.jpg",
+  10: "icons/avatars/10.jpg",
+  11: "icons/avatars/11.jpg",
+  12: "icons/avatars/12.jpg",
+  13: "icons/avatars/13.jpg",
+  14: "icons/avatars/14.jpg",
+  15: "icons/avatars/15.jpg",
+  16: "icons/avatars/16.jpg",
+  17: "icons/avatars/17.jpg",
+  18: "icons/avatars/18.jpg",
+  19: "icons/avatars/19.jpg",
+  20: "icons/avatars/20.jpg",
+  21: "icons/avatars/21.jpg",
+  22: "icons/avatars/22.jpg",
+  23: "icons/avatars/23.jpg",
+  24: "icons/avatars/24.jpg",
+  25: "icons/avatars/25.jpg",
+  26: "icons/avatars/26.jpg",
+  27: "icons/avatars/27.jpg",
+  28: "icons/avatars/28.jpg",
+  29: "icons/avatars/29.jpg",
+  30: "icons/avatars/30.jpg",
+  31: "icons/avatars/31.jpg",
+  32: "icons/avatars/32.jpg",
+  33: "icons/avatars/33.jpg",
+  34: "icons/avatars/34.jpg",
+  35: "icons/avatars/35.jpg",
 };
+
+const COVERS = {
+  1: "icons/covers/1.jpg",
+  2: "icons/covers/2.jpg",
+  3: "icons/covers/3.jpg",
+  4: "icons/covers/4.jpg",
+  5: "icons/covers/5.jpg",
+  6: "icons/covers/6.jpg",
+  7: "icons/covers/7.jpg",
+};
+
+const PICKER_PAGE_SIZE = 10; // both avatar and cover pickers paginate at this size
 
 let _activeTab   = 'calc';
 
@@ -9132,16 +9184,33 @@ async function trbSaveTeam() {
   const uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
   if (!uid) { if (typeof showToast==='function') showToast('Sign in to save your team','error'); return; }
   const players = src.map(p => ({ name: p.name || '', hcp: (p.hcp != null ? p.hcp : null), gender: 'M', tee: 'main', avatarId: p.avatarId || null }));
+  const nameKey = name.trim().toLowerCase();
+  const existing = (typeof _savedTeams !== 'undefined')
+    ? _savedTeams.find(x => (x.teamName || '').trim().toLowerCase() === nameKey)
+    : null;
   const data = {
-    id: Date.now().toString(), teamName: name, players,
+    id: existing ? existing.id : Date.now().toString(), teamName: name, players,
     p1Name: players[0]?.name || null, p1Hcp: players[0]?.hcp ?? null,
     p2Name: players[1]?.name || null, p2Hcp: players[1]?.hcp ?? null,
     savedAt: new Date().toISOString()
   };
+  const isUpdate = !!existing;
   try {
-    if (typeof _savedTeams !== 'undefined') _savedTeams.push(data);
+    if (typeof _savedTeams !== 'undefined') {
+      if (existing) {
+        Object.assign(existing, data);   // update in place (keep same id)
+        // enforce unique team name — drop any other entries sharing this name
+        _savedTeams = _savedTeams.filter(x => x === existing || (x.teamName || '').trim().toLowerCase() !== nameKey);
+      } else {
+        if (_savedTeams.length >= maxTeamsForUser()) {
+          if (typeof showToast === 'function') showToast(`Free plan allows ${maxTeamsForUser()} saved teams — delete one, or go Pro for unlimited.`, 'error');
+          return;
+        }
+        _savedTeams.push(data);
+      }
+    }
     if (typeof persistTeams === 'function') await persistTeams(uid);
-    if (typeof showToast === 'function') showToast('Team saved!','success');
+    if (typeof showToast === 'function') showToast(isUpdate ? 'Team updated!' : 'Team saved!','success');
     if (typeof renderMyData === 'function') renderMyData();
     trbPopulateTeamDropdown();
   } catch(e) { console.warn('trbSaveTeam', e); if (typeof showToast==='function') showToast('Could not save team','error'); }
@@ -9662,7 +9731,11 @@ function cgTeamMatch() {
   // TM-specific screens (tmopp → tmhcp → tmcode → tmscore/tmfull → tmsummary).
   _gameMode = 'match';
   if (typeof _tmFlow !== 'undefined') { _tmFlow.opponent = null; _tmFlow.matchData = null; }
-  if (typeof _tmInited !== 'undefined') { _tmInited = {}; }
+  // Do NOT reset _tmInited here — re-running the screen inits would stack duplicate
+  // event listeners on the persistent DOM. Instead, reset the opponent screen's state.
+  var _tmoppEl = document.getElementById('screen-tmopp');
+  if (_tmoppEl && typeof _tmoppEl._tmoppReset === 'function') _tmoppEl._tmoppReset();
+  window._trbEditingId = null;   // fresh match → not editing a saved team
   if (typeof trStart === 'function') { trStart(); _gameMode = 'match'; return; }
   // legacy fallback only if the redesigned flow is unavailable
   if (typeof openMatchSetup === 'function') openMatchSetup(true);
@@ -9972,24 +10045,26 @@ function joinShowConfirm(data) {
   };
   const fmtLabel = data.format ? (fmtMap[data.format] || data.format) : '—';
 
-  // Match Summary (M07b) — read-only; the host set both teams when creating the match
-  const oppRowsHtml = oppPlayers.map((p,i)=>{
+  // Match Summary — design-aligned cards (host set both teams when creating the match)
+  const oppPlayerCards = oppPlayers.map((p,i)=>{
     const hcp = p.hcpIndex ?? p.hcp ?? '—';
-    return '<div class="js2-row"><span class="js2-key">'+t('js2_player')+' '+(i+1)+'</span><span class="js2-val">'+esc(p.name||'—')+' · HCP '+hcp+'</span></div>';
+    return '<div class="js2-player"><span class="js2-pchip">'+(i+1)+'</span><span class="js2-pname">'+esc(p.name||'—')+'</span><span class="js2-phcp">HCP '+hcp+'</span></div>';
   }).join('');
-  // Team B (the joiner's own team) is verified & edited below via #joinTeamFields —
-  // no read-only tee list in the summary anymore.
   const loopName = (data.course && (data.course._playedLoopName || data.course.name)) || '—';
   document.getElementById('joinConfirmContent').innerHTML =
-    '<div class="js2-section">'+t('js2_opponent')+'</div>'+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_teamname')+'</span><span class="js2-val">'+esc(data.teamA.teamName||'—')+'</span></div>'+
-    oppRowsHtml+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_teamhcp')+'</span><span class="js2-val js2-thcp">'+(data.teamA.teamHcp ?? '—')+'</span></div>'+
-    '<div class="js2-section">'+t('js2_courseformat')+'</div>'+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_course')+'</span><span class="js2-val">'+esc(data.course.name)+'</span></div>'+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_loop')+'</span><span class="js2-val">'+esc(loopName)+' ('+data.holes+')</span></div>'+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_holes')+'</span><span class="js2-val">'+data.holes+' '+t('js2_holes').toLowerCase()+'</span></div>'+
-    '<div class="js2-row"><span class="js2-key">'+t('js2_format')+'</span><span class="js2-val">'+fmtLabel+'</span></div>';
+    '<div class="js2-card">'+
+      '<div class="js2-card-hdr">'+t('js2_opponent')+'</div>'+
+      '<div class="js2-teamname">'+esc(data.teamA.teamName||'—')+'</div>'+
+      oppPlayerCards+
+      '<div class="js2-thcp-row"><span class="js2-thcp-lbl">'+t('js2_teamhcp')+'</span><span class="js2-thcp-badge">'+(data.teamA.teamHcp ?? '—')+'</span></div>'+
+    '</div>'+
+    '<div class="js2-card">'+
+      '<div class="js2-card-hdr">'+t('js2_courseformat')+'</div>'+
+      '<div class="js2-kv"><span class="k">'+t('js2_course')+'</span><span class="v">'+esc(data.course.name)+'</span></div>'+
+      '<div class="js2-kv"><span class="k">'+t('js2_loop')+'</span><span class="v">'+esc(loopName)+' ('+data.holes+')</span></div>'+
+      '<div class="js2-kv"><span class="k">'+t('js2_holes')+'</span><span class="v">'+data.holes+' '+t('js2_holes').toLowerCase()+'</span></div>'+
+      '<div class="js2-kv"><span class="k">'+t('js2_format')+'</span><span class="v">'+fmtLabel+'</span></div>'+
+    '</div>';
   var _cb=document.getElementById('js2_code'); if(_cb) _cb.textContent = data.matchId || (_joinMatchData&&_joinMatchData.matchId) || '—';
 
   // Build dynamic Your Team fields — use teamType to determine player count
@@ -10012,7 +10087,8 @@ function joinShowConfirm(data) {
     const gM = (!p.gender || p.gender === 'M') ? 'checked' : '';
     const gF = p.gender === 'F' ? 'checked' : '';
     teamFieldsHtml += `
-      <div class="match-step-sublabel" style="margin-top:12px;">Player ${pi}</div>
+      <div class="js2-player-sub">
+      <div class="match-step-sublabel">Player ${pi}</div>
       <div class="field"><label>Name ${req}</label><input type="text" id="join_t2p${pi}_name" placeholder="${pi <= 2 ? 'Required' : 'Optional'}" value="${esc(p.name || '')}"></div>
       <div class="grid-2">
         <div class="field"><label>HCP Index</label><input type="number" id="join_t2p${pi}_hcp" placeholder="0–54" step="0.1" inputmode="decimal" value="${hcpVal}"></div>
@@ -10021,7 +10097,8 @@ function joinShowConfirm(data) {
           <div class="gender-pill"><input type="radio" name="join_t2p${pi}_g" id="join_t2p${pi}_gF" value="F" ${gF}><label for="join_t2p${pi}_gF">♀ F</label></div>
         </div></div>
       </div>
-      <div class="field"><label>Tee</label><div class="tee-pills">${teePills}</div></div>`;
+      <div class="field"><label>Tee</label><div class="tee-pills">${teePills}</div></div>
+      </div>`;
   }
 
   var _jtf=document.getElementById('joinTeamFields'); if(_jtf) _jtf.innerHTML = teamFieldsHtml;
@@ -12155,6 +12232,10 @@ async function saveTeam() {
     savedAt:   new Date().toISOString(),
   };
   const btn = document.getElementById('saveTeamBtn');
+  if (_savedTeams.length >= maxTeamsForUser()) {
+    showToast(`Free plan allows ${maxTeamsForUser()} saved teams — delete one, or go Pro for unlimited.`, 'error');
+    return;
+  }
   btn.textContent = '⏳';
   try {
     _savedTeams.push(data);
@@ -12308,9 +12389,12 @@ function renderMyData() {
     }).join('');
   }
 
+  // --- Rounds: cap visible history for Free tier (non-destructive — all
+  // rounds remain in Firestore; Pro simply reveals the rest, no migration) ---
+  const _visibleRounds = _savedRounds.slice(0, maxMatchHistoryForUser());
   // --- Rounds: split solo vs match ---
-  const soloRounds  = _savedRounds.filter(r => !r.isMatch);
-  const matchRounds = _savedRounds.filter(r =>  r.isMatch);
+  const soloRounds  = _visibleRounds.filter(r => !r.isMatch);
+  const matchRounds = _visibleRounds.filter(r =>  r.isMatch);
 
   document.getElementById('soloRoundCount').textContent  = soloRounds.length;
   document.getElementById('matchRoundCount').textContent = matchRounds.length;
@@ -12945,9 +13029,12 @@ async function openPublicProfile(buddyUid) {
     if (!snap.exists) { showToast('Profile not found.', 'error'); return; }
     const d = snap.data();
 
-    // Cover band (uploaded cover, else default green gradient)
+    // Cover band (uploaded cover, else pre-made coverId, else default green gradient)
     const covEl = document.getElementById('pubProfileCover');
-    if (covEl) covEl.style.backgroundImage = d.coverUrl ? `url('${d.coverUrl}')` : '';
+    if (covEl) {
+      const _covSrc = d.coverUrl || (d.coverId && typeof COVERS!=='undefined' && COVERS[d.coverId]) || null;
+      covEl.style.backgroundImage = _covSrc ? `url('${_covSrc}')` : '';
+    }
 
     // Avatar (uploaded URL preferred, else built-in avatarId, else emoji)
     const avEl = document.getElementById('pubProfileAvatar');
@@ -13150,6 +13237,11 @@ async function acceptBuddyRequest(reqId) {
   const req = _pendingRequests.find(r => r.id === reqId);
   if (!req) return;
 
+  if (_buddies.length >= maxBuddiesForUser()) {
+    showToast(`Free plan allows ${maxBuddiesForUser()} buddies — remove one, or go Pro for unlimited.`, 'error');
+    return;
+  }
+
   try {
     // Write buddy to OWN buddies collection only (can't write to other user's subcollection)
     await window._fbDb.collection('users').doc(uid).collection('buddies').doc(req.fromUid).set({
@@ -13215,6 +13307,7 @@ async function loadBuddiesData(uid) {
             if (d.avatarUrl) b.avatarUrl = d.avatarUrl;
             if (d.coverUrl)  b.coverUrl  = d.coverUrl;
             if (d.avatarId != null && b.avatarId == null) b.avatarId = d.avatarId;
+            if (d.coverId  != null && b.coverId  == null) b.coverId  = d.coverId;
           }
         } catch(e) {}
       }));
@@ -13371,6 +13464,10 @@ async function saveTeamToMyScramble(teamId) {
     .filter(m => m.uid !== uid && m.name)
     .map(m => ({ name: m.name, hcp: m.hcp ?? null, gender: 'M', tee: 'main' }));
   if (players.length === 0) { showToast('No buddy data to save.', 'error'); return; }
+  if (_savedTeams.length >= maxTeamsForUser()) {
+    showToast(`Free plan allows ${maxTeamsForUser()} saved teams — delete one, or go Pro for unlimited.`, 'error');
+    return;
+  }
 
   const data = {
     id:            Date.now().toString(),
@@ -13747,7 +13844,10 @@ function renderHomeScreen() {
   const avImg = document.getElementById('homeAvatarImg');
   if (avImg) avImg.src = prof.avatarUrl || (prof.avatarId && AV[prof.avatarId]) || 'icons/home-crown.png';
   const cover = document.getElementById('homeCover');
-  if (cover) cover.style.backgroundImage = prof.coverUrl ? ("url('" + prof.coverUrl + "')") : '';
+  if (cover) {
+    const _covSrc = prof.coverUrl || (prof.coverId && typeof COVERS!=='undefined' && COVERS[prof.coverId]) || null;
+    cover.style.backgroundImage = _covSrc ? ("url('" + _covSrc + "')") : '';
+  }
 
   const bc = document.getElementById('homeBuddyCount'); if (bc) bc.textContent = (_buddies ? _buddies.length : 0);
 
@@ -13875,6 +13975,10 @@ function _imageLoads(url){
 async function _homeUpload(kind, file){
   var uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
   if(!uid){ if(typeof showToast==='function') showToast('Sign in to change photos'); return; }
+  if(typeof isProUser==='function' && !isProUser()){
+    if(typeof showToast==='function') showToast('Custom photos are a Pro feature — pick from the free gallery, or upgrade for your own.', 'error');
+    return;
+  }
   try {
     if(typeof showToast==='function') showToast('Uploading\u2026');
     var url = null;
@@ -16081,6 +16185,26 @@ document.addEventListener('DOMContentLoaded', applyLang);
       #joinStep2 .js2-key { color:#777; flex:0 0 auto; }
       #joinStep2 .js2-val { color:#111; font-weight:500; text-align:right; }
       #joinStep2 .js2-thcp { font-family:'Inter',sans-serif; font-size:18px; font-weight:800; color:#1a6b3c; }
+      #joinStep2 .js2-card { background:#fff; border:1px solid rgba(26,107,60,0.12); border-radius:14px; padding:16px 16px 8px; margin:0 0 14px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
+      #joinStep2 .js2-card-hdr { font-family:'Inter',sans-serif; font-size:11px; font-weight:800; color:#1a6b3c; letter-spacing:0.09em; text-transform:uppercase; margin:0 0 12px; display:flex; align-items:center; gap:8px; }
+      #joinStep2 .js2-card-hdr::before { content:''; width:16px; height:3px; background:#F5A623; border-radius:2px; flex:0 0 auto; }
+      #joinStep2 .js2-teamname { font-family:'Inter',sans-serif; font-size:18px; font-weight:800; color:#111; margin:0 0 10px; }
+      #joinStep2 .js2-player { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.05); }
+      #joinStep2 .js2-player:last-of-type { border-bottom:none; }
+      #joinStep2 .js2-pchip { flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#1a6b3c; color:#fff; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+      #joinStep2 .js2-pname { flex:1 1 auto; font-family:'Roboto',sans-serif; font-size:14px; font-weight:600; color:#111; }
+      #joinStep2 .js2-phcp { flex:0 0 auto; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; color:#1a6b3c; background:#f0f9f4; border-radius:20px; padding:3px 10px; }
+      #joinStep2 .js2-thcp-row { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:12px; border-top:1.5px solid rgba(26,107,60,0.10); }
+      #joinStep2 .js2-thcp-lbl { font-family:'Inter',sans-serif; font-size:11px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:0.06em; }
+      #joinStep2 .js2-thcp-badge { font-family:'Inter',sans-serif; font-size:22px; font-weight:800; color:#fff; background:#1a6b3c; border-radius:10px; padding:4px 16px; min-width:44px; text-align:center; }
+      #joinStep2 .js2-kv { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(0,0,0,0.05); font-family:'Roboto',sans-serif; font-size:13px; gap:12px; }
+      #joinStep2 .js2-kv:last-child { border-bottom:none; }
+      #joinStep2 .js2-kv .k { color:#777; flex:0 0 auto; }
+      #joinStep2 .js2-kv .v { color:#111; font-weight:600; text-align:right; }
+      #joinStep2 .js2-yourteam-card { background:#f9fdfb; border:1px solid rgba(26,107,60,0.14); border-radius:14px; padding:16px; margin:0 0 14px; }
+      #joinStep2 .js2-yourteam-card .js2-card-hdr { margin-bottom:6px; }
+      #joinStep2 .js2-player-sub { background:#fff; border:1px solid rgba(0,0,0,0.07); border-radius:12px; padding:12px 12px 6px; margin:12px 0 0; }
+      #joinStep2 .js2-player-sub .match-step-sublabel { margin-top:0 !important; color:#1a6b3c; font-weight:700; }
       #joinStep2 .js2-teedot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
       #joinStep2 .js2-open-btn { width:100%; height:52px; background:#1a6b3c; color:#fff; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:15px; font-weight:700; letter-spacing:0.04em; cursor:pointer; margin-top:22px; }
       #joinStep2 .js2-open-btn:disabled { opacity:0.5; cursor:default; }
@@ -16088,8 +16212,10 @@ document.addEventListener('DOMContentLoaded', applyLang);
     <div id="joinStep2" style="display:none;">
       <div class="js2-code-badge"><span class="js2-code-label" data-i18n="js2_match_code">Match code</span><span class="js2-code-val" id="js2_code">—</span></div>
       <div id="joinConfirmContent"></div>
-      <div class="js2-section" id="joinYourTeamHdr" style="margin-top:8px;">Your team · verify &amp; edit</div>
-      <div id="joinTeamFields"></div>
+      <div class="js2-yourteam-card">
+        <div class="js2-card-hdr" id="joinYourTeamHdr">Your team · verify &amp; edit</div>
+        <div id="joinTeamFields"></div>
+      </div>
       <button class="js2-open-btn" id="joinConfirmBtn" onclick="joinConfirm()" data-i18n="js2_open_btn">Open Scorecard →</button>
     </div>
 
@@ -16692,22 +16818,22 @@ document.addEventListener('DOMContentLoaded', applyLang);
 
         <!-- Banner -->
         <div class="banner-wrap" id="bannerWrap">
-          <img id="bannerImg" class="banner-img" alt="">
-          <label class="banner-edit-btn" for="bannerUpload" title="Change banner">
+          <img id="bannerImg" class="banner-img" alt="" onclick="toggleCoverPicker()">
+          <div class="banner-edit-btn" onclick="toggleCoverPicker()" title="Change banner">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-          </label>
+          </div>
           <input type="file" id="bannerUpload" accept="image/*" style="display:none;" onchange="handleBannerUpload(event)">
         </div>
 
         <!-- Avatar hero (overlaps banner) -->
         <div class="avatar-hero">
           <div class="avatar-main-wrap">
-            <div class="avatar-main">
+            <div class="avatar-main" onclick="togglePicker()">
               <img id="main-avatar" src="" alt="avatar">
             </div>
-            <label class="avatar-change-btn" for="avatarUpload" title="Change avatar">
+            <div class="avatar-change-btn" onclick="togglePicker()" title="Change avatar">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-            </label>
+            </div>
             <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleUpload(event)">
             <div class="upload-badge" id="uploadBadge">
               <svg width="9" height="9" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -16726,19 +16852,27 @@ document.addEventListener('DOMContentLoaded', applyLang);
           </div>
           <div class="picker-divider"><span>or choose an avatar</span></div>
           <div class="picker-title">Avatars</div>
-          <div class="avatar-grid" id="ep-avatarGrid">
-            <div class="av-opt selected" onclick="selectAvatar(0)"><img src="" alt="avatar 1"></div>
-            <div class="av-opt" onclick="selectAvatar(1)"><img src="" alt="avatar 2"></div>
-            <div class="av-opt" onclick="selectAvatar(2)"><img src="" alt="avatar 3"></div>
-            <div class="av-opt" onclick="selectAvatar(3)"><img src="" alt="avatar 4"></div>
-            <div class="av-opt" onclick="selectAvatar(4)"><img src="" alt="avatar 5"></div>
-            <div class="av-opt" onclick="selectAvatar(5)"><img src="" alt="avatar 6"></div>
-            <div class="av-opt" onclick="selectAvatar(6)"><img src="" alt="avatar 7"></div>
-            <div class="av-opt" onclick="selectAvatar(7)"><img src="" alt="avatar 8"></div>
-            <div class="av-opt" onclick="selectAvatar(8)"><img src="" alt="avatar 9"></div>
-          </div>
+          <div class="avatar-grid" id="ep-avatarGrid"></div>
+          <div class="picker-pager" id="ep-avatarPager"></div>
           <div class="picker-close-row">
             <button class="picker-close-btn" onclick="togglePicker()">Done</button>
+          </div>
+        </div>
+
+        <!-- Cover picker panel -->
+        <div class="avatar-picker" id="coverPicker">
+          <div class="upload-row">
+            <label for="bannerUpload" class="upload-photo-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              Upload from phone
+            </label>
+          </div>
+          <div class="picker-divider"><span>or choose a cover</span></div>
+          <div class="picker-title">Covers</div>
+          <div class="avatar-grid cover-grid" id="ep-coverGrid"></div>
+          <div class="picker-pager" id="ep-coverPager"></div>
+          <div class="picker-close-row">
+            <button class="picker-close-btn" onclick="toggleCoverPicker()">Done</button>
           </div>
         </div>
 
@@ -20653,14 +20787,19 @@ function tmInit_tmopp(ROOT) {
     if (sizeDD)  sizeDD.style.display  = 'none';
     if (playerDD) playerDD.style.display = 'none';
   });
-  q('#tmopp_resetBtn').addEventListener('click', () => {
+  const doReset = () => {
     oppInput.value = '';
     q('#tmopp_sizeVal').textContent = 'choose # of players 2/3/4';
     q('#tmopp_sizeField').classList.remove('selected');
     q('#tmopp_sizeField').classList.add('placeholder');
     teamSize = 0; clearAutofill();
     for (let i = 1; i <= 4; i++) q('#tmopp_row'+i).classList.add('hidden');
-  });
+    const dd = q('#tmopp_savedDD'), pdd = q('#tmopp_playerDD');
+    if (dd)  dd.style.display  = 'none';
+    if (pdd) pdd.style.display = 'none';
+  };
+  q('#tmopp_resetBtn').addEventListener('click', doReset);
+  ROOT._tmoppReset = doReset;
   // expose collector for SAVE / NEXT
   ROOT._tmoppCollect = () => {
     const name = oppInput.value.trim();
@@ -20672,11 +20811,32 @@ function tmInit_tmopp(ROOT) {
     }
     return { teamName: name, size: teamSize, players };
   };
-  q('#tmopp_saveBtn').addEventListener('click', () => {
-    const t = ROOT._tmoppCollect(); if (!t) return;
+  q('#tmopp_saveBtn').addEventListener('click', async () => {
+    const t = ROOT._tmoppCollect();
+    if (!t) { if (typeof showToast === 'function') showToast('Enter opponent team name, size and players', 'error'); return; }
     _tmFlow.opponent = t;
+    const uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
+    if (uid && window._fbDb) {
+      try {
+        const col = window._fbDb.collection('users').doc(uid).collection('saved_opponents');
+        const nameKey = (t.teamName || '').trim().toLowerCase();
+        const snap = await col.get();
+        let targetId = null;
+        snap.forEach(d => { const dd = d.data() || {}; if ((dd.teamName || '').trim().toLowerCase() === nameKey && targetId === null) targetId = d.id; });
+        const doc = {
+          teamName: t.teamName,
+          teamType: (t.size === 4 ? '4P' : t.size === 3 ? '3P' : '2P'),
+          members: (t.players || []).map(p => ({ name: p.name || '', hcp: (p.hcp != null && !isNaN(p.hcp) ? p.hcp : null) })).filter(m => m.name),
+          savedAt: new Date().toISOString()
+        };
+        if (targetId) await col.doc(targetId).set(doc, { merge: true });
+        else await col.doc(Date.now().toString()).set(doc);
+        if (typeof showToast === 'function') showToast(targetId ? 'Opponent team updated' : 'Opponent team saved', 'success');
+        return;
+      } catch (e) { console.warn('tmopp save persist', e); }
+    }
     const toast = q('#tmopp_toast');
-    if (toast){ toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
+    if (toast) { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500); }
   });
 }
 
@@ -20697,6 +20857,16 @@ async function tmoppLoadTeams() {
       });
     }
   } catch (e) { console.warn('tmoppLoadTeams own', e); }
+  try {
+    const uid = window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid;
+    if (db && uid) {
+      const snap = await db.collection('users').doc(uid).collection('saved_opponents').get().catch(() => null);
+      if (snap) snap.forEach(doc => {
+        const d = doc.data() || {}; const players = mapMembers(d);
+        if (players.length) out.push({ group: 'Saved opponents', teamName: d.teamName || 'Team', size: sizeOf(d.teamType, players), players });
+      });
+    }
+  } catch (e) { console.warn('tmoppLoadTeams saved_opponents', e); }
   try {
     if (db && Array.isArray(_buddies)) {
       for (const b of _buddies) {
@@ -23727,31 +23897,104 @@ function _tmOpenTeam(team){
 
 // ── Profile cluster: Edit Profile (screen-editprofile) ──
 (function(){
-  var avIds = function(){ return (typeof AVATARS!=='undefined')?Object.keys(AVATARS):[]; };
-  window.togglePicker = function(){ var p=document.getElementById('avatarPicker'); if(p) p.classList.toggle('visible'); };
-  window.selectAvatar = function(idx){
-    var ids=avIds(); var id=ids[idx]; if(id==null) return;
+  var avIds  = function(){ return (typeof AVATARS!=='undefined')?Object.keys(AVATARS):[]; };
+  var covIds = function(){ return (typeof COVERS!=='undefined')?Object.keys(COVERS):[]; };
+  var pageSize = (typeof PICKER_PAGE_SIZE!=='undefined') ? PICKER_PAGE_SIZE : 10;
+
+  function pageForId(ids, id){
+    if(id==null) return 0;
+    var idx=-1; for(var i=0;i<ids.length;i++){ if(String(ids[i])===String(id)){ idx=i; break; } }
+    return idx<0 ? 0 : Math.floor(idx/pageSize);
+  }
+
+  function renderPaginatedGrid(gridId, pagerId, ids, map, selectedId, page, selectFn, pageFn, altPrefix){
+    var totalPages = Math.max(1, Math.ceil(ids.length / pageSize));
+    if(page>=totalPages) page=totalPages-1; if(page<0) page=0;
+    var start = page*pageSize;
+    var pageIds = ids.slice(start, start+pageSize);
+    var grid = document.getElementById(gridId);
+    if(grid){
+      grid.innerHTML = pageIds.map(function(id,i){
+        var g=start+i; var isSel=(String(id)===String(selectedId));
+        return '<div class="av-opt'+(isSel?' selected':'')+'" onclick="'+selectFn+'('+g+')"><img src="'+map[id]+'" alt="'+altPrefix+' '+(g+1)+'"></div>';
+      }).join('');
+    }
+    var pager = document.getElementById(pagerId);
+    if(pager){
+      if(totalPages<=1){ pager.innerHTML=''; }
+      else {
+        var dots=''; for(var p=0;p<totalPages;p++){ dots+='<button class="pager-dot'+(p===page?' active':'')+'" onclick="'+pageFn+'('+p+')">'+(p+1)+'</button>'; }
+        pager.innerHTML = '<button class="pager-nav" onclick="'+pageFn+'('+(page-1)+')" '+(page===0?'disabled':'')+'>\u2039</button>'+dots+
+                           '<button class="pager-nav" onclick="'+pageFn+'('+(page+1)+')" '+(page===totalPages-1?'disabled':'')+'>\u203a</button>';
+      }
+    }
+    return page;
+  }
+
+  window.renderEpAvatarGrid = function(){
+    window._avatarPage = renderPaginatedGrid('ep-avatarGrid','ep-avatarPager', avIds(), AVATARS, window._editAvatarId, window._avatarPage||0, 'selectAvatar', 'gotoAvatarPage', 'avatar');
+  };
+  window.renderEpCoverGrid = function(){
+    window._coverPage = renderPaginatedGrid('ep-coverGrid','ep-coverPager', covIds(), (typeof COVERS!=='undefined'?COVERS:{}), window._editCoverId, window._coverPage||0, 'selectCover', 'gotoCoverPage', 'cover');
+  };
+  window.gotoAvatarPage = function(p){ window._avatarPage=p; window.renderEpAvatarGrid(); };
+  window.gotoCoverPage  = function(p){ window._coverPage=p; window.renderEpCoverGrid(); };
+
+  window.togglePicker = function(){
+    var p=document.getElementById('avatarPicker'); if(!p) return;
+    var opening = !p.classList.contains('visible');
+    p.classList.toggle('visible');
+    if(opening){ window._avatarPage = pageForId(avIds(), window._editAvatarId); window.renderEpAvatarGrid(); }
+  };
+  window.toggleCoverPicker = function(){
+    var p=document.getElementById('coverPicker'); if(!p) return;
+    var opening = !p.classList.contains('visible');
+    p.classList.toggle('visible');
+    if(opening){ window._coverPage = pageForId(covIds(), window._editCoverId); window.renderEpCoverGrid(); }
+  };
+  window.selectAvatar = function(globalIdx){
+    var ids=avIds(); var id=ids[globalIdx]; if(id==null) return;
     window._editAvatarId=id;
     var im=document.getElementById('main-avatar'); if(im) im.src=AVATARS[id];
-    document.querySelectorAll('#screen-editprofile .av-opt').forEach(function(el,i){ el.classList.toggle('selected', i===idx); });
+    window.renderEpAvatarGrid();
     var ub=document.getElementById('uploadBadge'); if(ub) ub.classList.remove('visible');
+    var am=document.querySelector('#screen-editprofile .avatar-main'); if(am) am.classList.remove('has-upload');
+  };
+  window.selectCover = function(globalIdx){
+    var ids=covIds(); var id=ids[globalIdx]; if(id==null) return;
+    window._editCoverId=id;
+    var bn=document.getElementById('bannerImg'); if(bn){ bn.src=COVERS[id]; bn.style.display='block'; }
+    window.renderEpCoverGrid();
   };
   window.handleUpload = function(e){
     var f=e.target.files&&e.target.files[0]; if(!f) return; if(f.type.indexOf('image/')!==0) return;
+    if(typeof isProUser==='function' && !isProUser()){
+      if(typeof showToast==='function') showToast('Custom photos are a Pro feature — pick from the free gallery, or upgrade for your own.', 'error');
+      e.target.value=''; return;
+    }
     var rd=new FileReader(); rd.onload=function(ev){
       var im=document.getElementById('main-avatar'); if(im) im.src=ev.target.result;
       var am=document.querySelector('#screen-editprofile .avatar-main'); if(am) am.classList.add('has-upload');
       var ub=document.getElementById('uploadBadge'); if(ub) ub.classList.add('visible');
-      document.querySelectorAll('#screen-editprofile .av-opt').forEach(function(el){ el.classList.remove('selected'); });
+      window._editAvatarId=null;
+      if(typeof window.renderEpAvatarGrid==='function') window.renderEpAvatarGrid();
       var ap=document.getElementById('avatarPicker'); if(ap) ap.classList.remove('visible');
     }; rd.readAsDataURL(f);
-    window._editAvatarId=null;
     if(typeof _homeUpload==='function') _homeUpload('avatar', f);
     e.target.value='';
   };
   window.handleBannerUpload = function(e){
     var f=e.target.files&&e.target.files[0]; if(!f) return; if(f.type.indexOf('image/')!==0) return;
-    var rd=new FileReader(); rd.onload=function(ev){ var im=document.getElementById('bannerImg'); if(im){ im.src=ev.target.result; im.style.display='block'; } }; rd.readAsDataURL(f);
+    if(typeof isProUser==='function' && !isProUser()){
+      if(typeof showToast==='function') showToast('Custom photos are a Pro feature — pick from the free gallery, or upgrade for your own.', 'error');
+      e.target.value=''; return;
+    }
+    var rd=new FileReader(); rd.onload=function(ev){
+      var im=document.getElementById('bannerImg'); if(im){ im.src=ev.target.result; im.style.display='block'; }
+      window._editCoverId=null;
+      if(typeof window.renderEpCoverGrid==='function') window.renderEpCoverGrid();
+      var cp=document.getElementById('coverPicker'); if(cp) cp.classList.remove('visible');
+    }; rd.readAsDataURL(f);
     if(typeof _homeUpload==='function') _homeUpload('cover', f);
     e.target.value='';
   };
@@ -23771,6 +24014,7 @@ function _tmOpenTeam(team){
     if(v('f-country')) _profile.country=v('f-country');
     if(window._editGender) _profile.gender=window._editGender;
     if(window._editAvatarId!=null){ _profile.avatarId=window._editAvatarId; _profile.avatarUrl=null; }
+    if(window._editCoverId!=null){ _profile.coverId=window._editCoverId; _profile.coverUrl=null; }
     var toast=document.getElementById('saveToast'); if(toast){ toast.style.display='block'; setTimeout(function(){toast.style.display='none';},2000); }
     try{
       var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid;
@@ -23778,12 +24022,13 @@ function _tmOpenTeam(team){
         var patch={displayName:_profile.displayName, username:_profile.username, hcpIndex:_profile.hcpIndex, homeCourse:_profile.homeCourse};
         if(_profile.lang) patch.lang=_profile.lang; if(_profile.country) patch.country=_profile.country;
         if(_profile.gender) patch.gender=_profile.gender; if(_profile.avatarId!=null) patch.avatarId=_profile.avatarId;
+        if(_profile.coverId!=null) patch.coverId=_profile.coverId;
         if(window._editAvatarId!=null) patch.avatarUrl=null; else if(_profile.avatarUrl) patch.avatarUrl=_profile.avatarUrl;
-        if(_profile.coverUrl) patch.coverUrl=_profile.coverUrl;
+        if(window._editCoverId!=null) patch.coverUrl=null; else if(_profile.coverUrl) patch.coverUrl=_profile.coverUrl;
         await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch,{merge:true});
         // Mirror public-facing fields (incl. cover/avatar) so others' Public Profile stays current
         try{
-          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, country:_profile.country||null, avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverUrl:_profile.coverUrl||null };
+          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, country:_profile.country||null, avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverId:(_profile.coverId!=null?_profile.coverId:null), coverUrl:_profile.coverUrl||null };
           await window._fbDb.collection('public_profiles').doc(uid).set(_pub,{merge:true});
         }catch(_pe){ console.warn('public_profiles sync', _pe); }
       }
@@ -23805,11 +24050,19 @@ function renderEditProfile(ROOT){
   if(prof.country) setv('f-country', prof.country);
   if(prof.gender && typeof setGender==='function') setGender(prof.gender);
   var im=document.getElementById('main-avatar'); if(im) im.src = prof.avatarUrl || (prof.avatarId&&AV[prof.avatarId]) || 'icons/home-crown.png';
-  var bn=document.getElementById('bannerImg'); if(bn && prof.coverUrl){ bn.src=prof.coverUrl; bn.style.display='block'; }
-  var ids=Object.keys(AV); var opts=ROOT.querySelectorAll('.av-opt');
-  opts.forEach(function(el,i){ var img=el.querySelector('img'); if(img&&ids[i]) img.src=AV[ids[i]]; el.classList.toggle('selected', ids[i]===prof.avatarId); });
+  var bn=document.getElementById('bannerImg');
+  if(bn){
+    var coverSrc = prof.coverUrl || (prof.coverId && typeof COVERS!=='undefined' && COVERS[prof.coverId]) || null;
+    if(coverSrc){ bn.src=coverSrc; bn.style.display='block'; }
+  }
   window._editAvatarId = prof.avatarUrl ? null : ((prof.avatarId!=null)?prof.avatarId:null);
   window._editGender = prof.gender||null;
+  window._avatarPage = 0;
+  if(typeof window.renderEpAvatarGrid==='function') window.renderEpAvatarGrid();
+
+  window._editCoverId = prof.coverUrl ? null : ((prof.coverId!=null)?prof.coverId:null);
+  window._coverPage = 0;
+  if(typeof window.renderEpCoverGrid==='function') window.renderEpCoverGrid();
 }
 
 // ── Profile cluster: Buddy Profile (screen-buddyprofile) ──
@@ -23973,7 +24226,7 @@ function renderAccountSettings(ROOT){
   if(q('.acct-tier')) q('.acct-tier').textContent=prof.tier||'Free';
   if(q('.acct-avatar img')) q('.acct-avatar img').src=prof.avatarUrl||(prof.avatarId&&AV[prof.avatarId])||'icons/home-crown.png';
   var _ah=q('.account-header');
-  if(_ah){ if(prof.coverUrl){ _ah.style.backgroundImage="linear-gradient(160deg,rgba(26,107,60,0.82),rgba(14,61,34,0.92)), url('"+prof.coverUrl+"')"; _ah.style.backgroundSize='cover'; _ah.style.backgroundPosition='center'; } else { _ah.style.backgroundImage=''; } }
+  if(_ah){ var _covSrc=prof.coverUrl || (prof.coverId && typeof COVERS!=='undefined' && COVERS[prof.coverId]) || null; if(_covSrc){ _ah.style.backgroundImage="linear-gradient(160deg,rgba(26,107,60,0.82),rgba(14,61,34,0.92)), url('"+_covSrc+"')"; _ah.style.backgroundSize='cover'; _ah.style.backgroundPosition='center'; } else { _ah.style.backgroundImage=''; } }
   if(q('#name-display')) q('#name-display').textContent=prof.displayName||'Player';
   if(q('#email-display')) q('#email-display').textContent=(cu&&cu.email)||prof.email||'';
   var parts=(prof.displayName||'').split(' ');
@@ -24836,7 +25089,7 @@ function renderProfile(ROOT){
   var set=function(sel,val){ var e=ROOT.querySelector(sel); if(e) e.textContent=val; };
   var av=ROOT.querySelector('.avatar-wrap img'); if(av) av.src = prof.avatarUrl || (prof.avatarId&&AV[prof.avatarId]) || 'icons/home-crown.png';
   var hero=ROOT.querySelector('.profile-hero');
-  if(hero){ if(prof.coverUrl){ hero.style.backgroundImage="linear-gradient(180deg,rgba(14,61,34,0.30),rgba(14,61,34,0.72)), url('"+prof.coverUrl+"')"; hero.style.backgroundSize='cover'; hero.style.backgroundPosition='center'; } else { hero.style.backgroundImage=''; } }
+  if(hero){ var _covSrc=prof.coverUrl || (prof.coverId && typeof COVERS!=='undefined' && COVERS[prof.coverId]) || null; if(_covSrc){ hero.style.backgroundImage="linear-gradient(180deg,rgba(14,61,34,0.30),rgba(14,61,34,0.72)), url('"+_covSrc+"')"; hero.style.backgroundSize='cover'; hero.style.backgroundPosition='center'; } else { hero.style.backgroundImage=''; } }
   set('.profile-name', prof.displayName||'Player');
   var _un=ROOT.querySelector('.profile-username'); if(_un){ _un.textContent=''; _un.style.display='none'; }
   var metas=ROOT.querySelectorAll('.profile-meta-item');
@@ -25635,6 +25888,10 @@ async function sendChatMessage(){
   if (!inp || !me || !_chatThreadId || !_chatPeer) return;
   const text = inp.value.trim();
   if (!text || text.length > 280) return;
+  if (!isProUser()) {
+    if (typeof showToast === 'function') showToast('Messaging is a Pro feature — upgrade to chat with your buddies.', 'error');
+    return;
+  }
   await _loadBannedWords();
   if (_findBanned(text)){ if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('chat_banned') : 'Please remove inappropriate language.'), 'error'); return; }
   const btn = document.getElementById('chatSendBtn'); if (btn) btn.disabled = true;
