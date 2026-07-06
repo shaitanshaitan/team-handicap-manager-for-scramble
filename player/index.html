@@ -24301,7 +24301,38 @@ function pmToggleNotif(kind,row){
   }catch(e){}
 }
 function pmOpenPlan(){
-  if(typeof showToast==='function') showToast('Pro plans are coming soon');
+  if(typeof isProUser==='function' && isProUser()){
+    if(typeof showToast==='function') showToast("You're already on Pro — thanks for supporting Parmate!");
+    return;
+  }
+  if(typeof startProCheckout==='function') startProCheckout();
+  else if(typeof showToast==='function') showToast('Pro plans are coming soon');
+}
+
+async function startProCheckout() {
+  var user = window._fbAuth && window._fbAuth.currentUser;
+  if (!user) {
+    if (typeof showToast === 'function') showToast('Sign in first to upgrade.', 'error');
+    return;
+  }
+  try {
+    if (typeof showToast === 'function') showToast('Opening checkout…');
+    var idToken = await user.getIdToken();
+    var res = await fetch('/.netlify/functions/create-mollie-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: idToken }),
+    });
+    var data = await res.json();
+    if (data.url) {
+      window.location.href = data.url; // redirect to Mollie's hosted checkout
+    } else {
+      if (typeof showToast === 'function') showToast('Could not start checkout — please try again.', 'error');
+    }
+  } catch (err) {
+    console.error('startProCheckout error:', err);
+    if (typeof showToast === 'function') showToast('Something went wrong — please try again.', 'error');
+  }
 }
 
 // ── Admin FAQ Manager (screen-faqadmin) ──
