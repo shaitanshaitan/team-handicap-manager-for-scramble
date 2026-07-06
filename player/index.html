@@ -8682,6 +8682,7 @@ function trComposeCourse(base, holes, loopSel, twice) {
       parByHole: (l.parPerHole && l.parPerHole.length) ? l.parPerHole.slice() : (base.parPerHole || []).slice(0,9),
       siByHole:  (l.indexPerHole && l.indexPerHole.length) ? l.indexPerHole.slice() : (base.indexPerHole || []).slice(0,9),
       tees: (l.tees && l.tees.length) ? l.tees : (base.tees || []),
+      women: (l.women && l.women.length) ? l.women : (base.women || []),
     };
   }
   const teeVal = (tees, key, field) => {
@@ -8690,7 +8691,7 @@ function trComposeCourse(base, holes, loopSel, twice) {
 
   if (holes === 9 || (holes === 18 && false)) {
     const d = nineData(loopSel[0] != null ? loopSel[0] : 0);
-    return { ...base, name: base.name, holes: 9, par: d.par, parPerHole: d.parByHole, indexPerHole: d.siByHole, tees: d.tees, _playedLoopName: d.name };
+    return { ...base, name: base.name, holes: 9, par: d.par, parPerHole: d.parByHole, indexPerHole: d.siByHole, tees: d.tees, women: d.women, _playedLoopName: d.name };
   }
 
   // ── 18 holes ──
@@ -8713,6 +8714,7 @@ function trComposeCourse(base, holes, loopSel, twice) {
       parPerHole: ((firstLoop.parPerHole && firstLoop.parPerHole.length) ? firstLoop.parPerHole : (base.parPerHole||[])).slice(0, 18),
       indexPerHole: ((firstLoop.indexPerHole && firstLoop.indexPerHole.length) ? firstLoop.indexPerHole : (base.indexPerHole||[])).slice(0, 18),
       tees: lTees,
+      women: (firstLoop.women && firstLoop.women.length) ? firstLoop.women : (base.women || []),
       _playedLoopName: firstLoop.name || base.name,
     };
   }
@@ -8725,6 +8727,7 @@ function trComposeCourse(base, holes, loopSel, twice) {
   const keys = ['champ','medal','senior','forward'];
   const TLABEL = { champ:'Champion', medal:'Medal', senior:'Senior', forward:'Forward' };
   const tees18 = [];
+  const women18 = [];
   let si18, par18, topRating, topSlope;
 
   if (sameLoopTwice) {
@@ -8737,6 +8740,16 @@ function trComposeCourse(base, holes, loopSel, twice) {
         label: TLABEL[k] || k,
         rating: Math.round((Number(r)||0) * 10) / 10,
         slope:  Number(teeVal(front.tees, k, 'slope')) || 0,
+        par:    (front.par||0) + (back.par||0),
+      });
+    });
+    keys.forEach(k => {
+      const wr = teeVal(front.women, k, 'rating');
+      if (wr == null) return;
+      women18.push({
+        label: TLABEL[k] || k,
+        rating: Math.round((Number(wr)||0) * 10) / 10,
+        slope:  Number(teeVal(front.women, k, 'slope')) || 0,
         par:    (front.par||0) + (back.par||0),
       });
     });
@@ -8754,6 +8767,17 @@ function trComposeCourse(base, holes, loopSel, twice) {
         label: TLABEL[k] || k,
         rating: Math.round(((Number(fr)||0) + (Number(br)||0)) * 10) / 10,
         slope:  (sf && sb) ? Math.round((sf + sb) / 2) : (sf || sb),
+        par:    (front.par||0) + (back.par||0),
+      });
+    });
+    keys.forEach(k => {
+      const fwr = teeVal(front.women, k, 'rating'), bwr = teeVal(back.women, k, 'rating');
+      if (fwr == null && bwr == null) return;
+      const wsf = Number(teeVal(front.women,k,'slope'))||0, wsb = Number(teeVal(back.women,k,'slope'))||0;
+      women18.push({
+        label: TLABEL[k] || k,
+        rating: Math.round(((Number(fwr)||0) + (Number(bwr)||0)) * 10) / 10,
+        slope:  (wsf && wsb) ? Math.round((wsf + wsb) / 2) : (wsf || wsb),
         par:    (front.par||0) + (back.par||0),
       });
     });
@@ -8777,6 +8801,7 @@ function trComposeCourse(base, holes, loopSel, twice) {
     parPerHole: par18,
     indexPerHole: si18,
     tees: tees18.length ? tees18 : base.tees,
+    women: women18.length ? women18 : (base.women || []),
     _playedLoopName: sameLoopTwice ? front.name + ' (\u00d72)' : front.name + ' + ' + back.name,
   };
 }
@@ -8813,6 +8838,16 @@ function trRenderLoop(scr) {
   // hide tee blocks with no data
   const hideIf = (blkId, t) => { const e = document.getElementById(blkId); if (e) e.style.display = t ? '' : 'none'; };
   hideIf('tr_teeChampion', champ); hideIf('tr_teeMedal', medal); hideIf('tr_teeSenior', sen); hideIf('tr_teeForward', fwd);
+
+  // Women's tees — same layout, only shown if this course actually has women's data,
+  // so a course with no women's tees entered doesn't show an empty/confusing section.
+  const womenTees = c.women || [];
+  function find2(arr, key) { return (arr||[]).find(t => (t.label||'').toLowerCase().includes(key)); }
+  const wChamp = find2(womenTees,'champ'), wMedal = find2(womenTees,'medal') || womenTees[0], wFwd = find2(womenTees,'forward') || find2(womenTees,'fwd');
+  block('wchamp', wChamp); block('wmedal', wMedal); block('wfwd', wFwd);
+  hideIf('tr_teeWomenChampion', wChamp); hideIf('tr_teeWomenMedal', wMedal); hideIf('tr_teeWomenForward', wFwd);
+  const wSection = document.getElementById('tr_womenTeesSection');
+  if (wSection) wSection.style.display = womenTees.length ? '' : 'none';
 }
 
 // ── Screen 06: pre-fill par buttons + SI grid from course ──
@@ -19137,6 +19172,47 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <div class="rsp-cell">
               <span class="rsp-label">Par</span>
               <div class="rsp-input" id="tr_fwd-par">31</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Women's tees — only shown when this course has women's tee data -->
+        <div id="tr_womenTeesSection" style="display:none;">
+          <div class="divider"></div>
+          <div style="padding:4px 0 8px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:0.04em;">Women's Tees</div>
+
+          <div class="tee-block" id="tr_teeWomenMedal">
+            <div class="tee-header">
+              <span class="tee-dot medal"></span>
+              <span class="tee-name">Medal</span>
+            </div>
+            <div class="rsp-grid">
+              <div class="rsp-cell"><span class="rsp-label">Rating</span><div class="rsp-input" id="tr_wmedal-rating">—</div></div>
+              <div class="rsp-cell"><span class="rsp-label">Slope</span><div class="rsp-input" id="tr_wmedal-slope">—</div></div>
+              <div class="rsp-cell"><span class="rsp-label">Par</span><div class="rsp-input" id="tr_wmedal-par">—</div></div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="tee-block" id="tr_teeWomenForward">
+            <div class="tee-header">
+              <span class="tee-dot forward"></span>
+              <span class="tee-name">Forward</span>
+            </div>
+            <div class="rsp-grid">
+              <div class="rsp-cell"><span class="rsp-label">Rating</span><div class="rsp-input" id="tr_wfwd-rating">—</div></div>
+              <div class="rsp-cell"><span class="rsp-label">Slope</span><div class="rsp-input" id="tr_wfwd-slope">—</div></div>
+              <div class="rsp-cell"><span class="rsp-label">Par</span><div class="rsp-input" id="tr_wfwd-par">—</div></div>
+            </div>
+          </div>
+          <div class="tee-block" id="tr_teeWomenChampion" style="display:none;">
+            <div class="tee-header">
+              <span class="tee-dot champion"></span>
+              <span class="tee-name">Champion</span>
+            </div>
+            <div class="rsp-grid">
+              <div class="rsp-cell"><span class="rsp-label">Rating</span><div class="rsp-input" id="tr_wchamp-rating">—</div></div>
+              <div class="rsp-cell"><span class="rsp-label">Slope</span><div class="rsp-input" id="tr_wchamp-slope">—</div></div>
+              <div class="rsp-cell"><span class="rsp-label">Par</span><div class="rsp-input" id="tr_wchamp-par">—</div></div>
             </div>
           </div>
         </div>
