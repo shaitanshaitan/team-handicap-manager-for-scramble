@@ -8992,25 +8992,45 @@ function trInit_trparsi(ROOT){
 function trPlayerPool() {
   const pool = [];
   if (typeof _profile !== 'undefined' && _profile && _profile.displayName) {
-    pool.push({ name: _profile.displayName, hcp: (_profile.hcpIndex ?? null), avatarId: _profile.avatarId, isMe: true });
+    pool.push({ name: _profile.displayName, hcp: (_profile.hcpIndex ?? null), avatarId: _profile.avatarId, gender: _profile.gender || 'M', isMe: true });
   }
   if (typeof _buddies !== 'undefined' && Array.isArray(_buddies)) {
-    _buddies.forEach(b => pool.push({ name: b.name, hcp: (b.hcp ?? null), avatarId: b.avatarId }));
+    _buddies.forEach(b => pool.push({ name: b.name, hcp: (b.hcp ?? null), avatarId: b.avatarId, gender: b.gender || 'M' }));
   }
   if (Array.isArray(_trbGuests)) {
-    _trbGuests.forEach(g => pool.push({ name: g.name, hcp: (g.hcp ?? null), avatarId: null, isGuest: true }));
+    _trbGuests.forEach(g => pool.push({ name: g.name, hcp: (g.hcp ?? null), avatarId: null, gender: g.gender || 'M', isGuest: true }));
   }
   return pool;
 }
 
-// Tee label → engine tee object from the composed course
-function trTeeByKey(key) {
-  const tees = (_trFlow.course && _trFlow.course.tees) || [];
-  const k = (key||'').toLowerCase();
-  const match = tees.find(t => (t.label||'').toLowerCase().includes(k))
-             || tees.find(t => (t.label||'').toLowerCase().includes('medal'))
-             || tees[0];
-  return match || null;
+// Shared tee resolver — the ONE place gender affects which rating/slope/par
+// gets used. 'F' with matching women's data on the course uses it; 'M',
+// 'O' (Other), or a missing/incomplete women's entry all fall back to the
+// standard tee — 'Other' is intentionally treated the same as 'Male' since
+// course rating data only ever has two variants (standard + women's).
+// Both `tees` and `women` are arrays shaped identically: {label, rating, slope, par}.
+function resolveTeeForGender(course, teeKeyOrLabel, gender) {
+  if (!course) return null;
+  const k = (teeKeyOrLabel || '').toLowerCase();
+  const searchArray = (arr) => {
+    if (!arr || !arr.length) return null;
+    return arr.find(t => (t.label||'').toLowerCase().includes(k))
+        || arr.find(t => (t.label||'').toLowerCase().includes('medal'))
+        || arr[0];
+  };
+  if (gender === 'F' && course.women && course.women.length) {
+    const w = searchArray(course.women);
+    if (w && w.rating != null && w.slope != null) {
+      return { rating:Number(w.rating), slope:Number(w.slope), par:Number(w.par)||72, label:w.label, key:teeKeyOrLabel, source:'women' };
+    }
+  }
+  const m = searchArray(course.tees);
+  return m ? { rating:Number(m.rating), slope:Number(m.slope), par:Number(m.par)||72, label:m.label, key:teeKeyOrLabel, source:'standard' } : null;
+}
+
+// Tee label → engine tee object from the composed course (gender-aware)
+function trTeeByKey(key, gender) {
+  return resolveTeeForGender(_trFlow.course, key, gender);
 }
 
 // Format label "35%/15%" → FORMATS key "35_15"
@@ -9027,7 +9047,7 @@ function trCalcTeam() {
 
   // Course Handicap for each player at their chosen tee
   players.forEach(p => {
-    const tee = trTeeByKey(p.teeKey || 'medal');
+    const tee = trTeeByKey(p.teeKey || 'medal', p.gender || 'M');
     const rating = tee ? Number(tee.rating) : 0;
     const slope  = tee ? Number(tee.slope)  : 113;
     const par    = tee ? Number(tee.par)    : (f.course.par || 72);
@@ -9253,11 +9273,27 @@ function trbLoadSavedTeam(team) {
   // pre-select matching pool members (skip captain — always player 1)
   const pool = _trbCarousel.pool || [];
   _trbCarousel.selected = new Set();
+  // Guests are intentionally NEVER auto-loaded from a saved team — they don't
+  // have a Parmate account, so their info isn't meant to persist across
+  // sessions. This is a deliberate product decision (not a bug): it creates
+  // a natural, visible moment to either re-add them manually or invite them
+  // to get the app so they're remembered automatically next time.
+  const missingGuests = [];
   sp.forEach(p => {
+    if (p.guest) { missingGuests.push(p.name || 'Guest'); return; }
     const idx = pool.findIndex(x => !x.isMe && (x.name || '').toLowerCase() === (p.name || '').toLowerCase());
     if (idx >= 0 && _trbCarousel.selected.size < _trFlow.team.size - 1) _trbCarousel.selected.add(idx);
   });
   if (typeof trbRenderCarousel === 'function') trbRenderCarousel();
+  if (missingGuests.length && typeof showToast === 'function') {
+    const names = missingGuests.join(', ');
+    const plural = missingGuests.length > 1;
+    showToast(
+      (plural ? 'Guests ' : 'Guest ') + names + (plural ? " don't" : " doesn't") +
+      ' have Parmate yet — tap "Add guest" to re-add them, or invite them to join so they\'re saved automatically next time.',
+      'info'
+    );
+  }
 }
 
 function trbRenderCarousel() {
@@ -9297,16 +9333,27 @@ function trbCommitTeam() {
   const pool=_trbCarousel.pool;
   const players=[];
   const me = pool.find(p=>p.isMe);
-  if (me) players.push({ name:me.name, hcp:me.hcp, avatarId:me.avatarId, teeKey:'medal' });
-  [..._trbCarousel.selected].forEach(idx=>{ const p=pool[idx]; if(p && !p.isMe) players.push({ name:p.name, hcp:p.hcp, avatarId:p.avatarId, teeKey:'medal' }); });
+  if (me) players.push({ name:me.name, hcp:me.hcp, avatarId:me.avatarId, gender:me.gender||'M', teeKey:'medal' });
+  [..._trbCarousel.selected].forEach(idx=>{ const p=pool[idx]; if(p && !p.isMe) players.push({ name:p.name, hcp:p.hcp, avatarId:p.avatarId, gender:p.gender||'M', teeKey:'medal' }); });
   _trFlow.team.players = players;
 }
 
+let _trbGuestGender = 'M';
+function trbSetGuestGender(g){
+  _trbGuestGender = g;
+  document.querySelectorAll('.trb-guest-gender-opt').forEach(function(btn){
+    const sel = btn.getAttribute('data-gender') === g;
+    btn.classList.toggle('selected', sel);
+    btn.style.background = sel ? 'var(--green)' : '#fff';
+    btn.style.color = sel ? '#fff' : 'var(--text)';
+    btn.style.borderColor = sel ? 'var(--green)' : 'rgba(0,0,0,0.15)';
+  });
+}
 function trbToggleGuestForm(show){
   const f=document.getElementById('trb_guestForm'); if(!f) return;
   const vis=(show===undefined)?(f.style.display==='none'||!f.style.display):!!show;
   f.style.display=vis?'block':'none';
-  if(vis){ const n=document.getElementById('trb_guestName'); if(n) setTimeout(function(){ n.focus(); },50); }
+  if(vis){ const n=document.getElementById('trb_guestName'); if(n) setTimeout(function(){ n.focus(); },50); trbSetGuestGender('M'); }
 }
 function trbAddGuest(){
   const nEl=document.getElementById('trb_guestName'), hEl=document.getElementById('trb_guestHcp');
@@ -9317,7 +9364,7 @@ function trbAddGuest(){
   let hcp=null;
   if(hcpRaw!==''){ hcp=parseFloat(hcpRaw); if(isNaN(hcp)||hcp<-10||hcp>54){ if(typeof showToast==='function') showToast(tt('tr_guest_bad_hcp'),'error'); return; } }
   if(!Array.isArray(_trbGuests)) _trbGuests=[];
-  _trbGuests.push({ name:name, hcp:hcp });
+  _trbGuests.push({ name:name, hcp:hcp, gender:_trbGuestGender||'M' });
   if(nEl) nEl.value=''; if(hEl) hEl.value='';
   trbToggleGuestForm(false);
   _trbCarousel.pool=trPlayerPool();
@@ -9719,6 +9766,11 @@ function screenBack() {
 // NEW-UI: Choose Game card actions -> existing engine entry points
 function cgTeamRound() {
   // NEW-UI: launch the redesigned Team Round flow (Screen 04+)
+  // Explicit reset — without this, a _gameMode left over from a prior
+  // Team Match in the same session causes TR to incorrectly branch into
+  // TM's opponent-team screen at the trtee step (see the fromId==='trtee'
+  // branch below).
+  _gameMode = 'single';
   if (typeof trStart === 'function') { trStart(); return; }
   // fallback to legacy match setup if flow not present
   if (typeof setGameMode === 'function') setGameMode('single');
@@ -13307,6 +13359,7 @@ async function loadBuddiesData(uid) {
             if (d.avatarUrl) b.avatarUrl = d.avatarUrl;
             if (d.coverUrl)  b.coverUrl  = d.coverUrl;
             if (d.avatarId != null && b.avatarId == null) b.avatarId = d.avatarId;
+            if (d.gender && !b.gender) b.gender = d.gender;
             if (d.coverId  != null && b.coverId  == null) b.coverId  = d.coverId;
           }
         } catch(e) {}
@@ -17529,6 +17582,12 @@ document.addEventListener('DOMContentLoaded', applyLang);
           <input class="guest-input" id="guestName" type="text" placeholder="e.g. Mark Visser" maxlength="30">
           <div class="guest-field-label">WHS Handicap Index</div>
           <input class="guest-input" id="guestHcp" type="number" step="0.1" min="0" max="54" placeholder="e.g. 21.5">
+          <div class="guest-field-label" style="margin-top:12px;">Gender</div>
+          <div class="ct-guest-gender-row" style="display:flex; gap:6px; margin-bottom:4px;">
+            <button type="button" class="ct-guest-gender-opt selected" data-gender="M" onclick="ctSetGuestGender('M')" style="flex:1; height:38px; border-radius:8px; border:1.5px solid var(--green); background:var(--green); color:#fff; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer;">Male</button>
+            <button type="button" class="ct-guest-gender-opt" data-gender="F" onclick="ctSetGuestGender('F')" style="flex:1; height:38px; border-radius:8px; border:1.5px solid rgba(0,0,0,0.15); background:#fff; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer;">Female</button>
+            <button type="button" class="ct-guest-gender-opt" data-gender="O" onclick="ctSetGuestGender('O')" style="flex:1; height:38px; border-radius:8px; border:1.5px solid rgba(0,0,0,0.15); background:#fff; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer;">Other</button>
+          </div>
           <div class="guest-actions">
             <button class="guest-cancel" onclick="closeGuestModal()">Cancel</button>
             <button class="guest-add" onclick="addGuest()">Add Guest</button>
@@ -19318,6 +19377,11 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <div class="trb-guest-sub" data-i18n="tr_guest_sub">For players without Parmate — added to this round only.</div>
             <input type="text" id="trb_guestName" class="trb-guest-input" placeholder="Guest name" data-i18n="tr_guest_name_ph" maxlength="30">
             <input type="number" id="trb_guestHcp" class="trb-guest-input" placeholder="WHS index (e.g. 18.4)" data-i18n="tr_guest_hcp_ph" step="0.1" inputmode="decimal">
+            <div class="trb-guest-gender-row" style="display:flex; gap:6px; margin:8px 0;">
+              <button type="button" class="trb-guest-gender-opt selected" data-gender="M" onclick="trbSetGuestGender('M')" style="flex:1; height:38px; border-radius:8px; border:1.5px solid var(--green); background:var(--green); color:#fff; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer;">Male</button>
+              <button type="button" class="trb-guest-gender-opt" data-gender="F" onclick="trbSetGuestGender('F')" style="flex:1; height:38px; border-radius:8px; border:1.5px solid rgba(0,0,0,0.15); background:#fff; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer;">Female</button>
+              <button type="button" class="trb-guest-gender-opt" data-gender="O" onclick="trbSetGuestGender('O')" style="flex:1; height:38px; border-radius:8px; border:1.5px solid rgba(0,0,0,0.15); background:#fff; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; font-weight:700; cursor:pointer;">Other</button>
+            </div>
             <div class="trb-guest-actions">
               <button type="button" class="trb-guest-cancel" onclick="trbToggleGuestForm(false)" data-i18n="tr_cancel">Cancel</button>
               <button type="button" class="trb-guest-add" onclick="trbAddGuest()" data-i18n="tr_add">Add guest</button>
@@ -20100,21 +20164,33 @@ document.addEventListener('DOMContentLoaded', applyLang);
             <span class="player-num">1</span>
             <input class="player-name-in" id="tmopp_name1" type="text" placeholder="name">
             <input class="player-hcp-in" id="tmopp_hcp1" type="number" min="0" max="54" step="0.1" placeholder="hcp">
+            <select id="tmopp_g1" style="width:44px; height:34px; border-radius:6px; border:1.5px solid rgba(0,0,0,0.15); font-family:'Inter',sans-serif; font-size:12px; flex-shrink:0;">
+              <option value="M" selected>M</option><option value="F">F</option><option value="O">O</option>
+            </select>
           </div>
           <div class="player-row hidden" id="tmopp_row2">
             <span class="player-num">2</span>
             <input class="player-name-in" id="tmopp_name2" type="text" placeholder="name">
             <input class="player-hcp-in" id="tmopp_hcp2" type="number" min="0" max="54" step="0.1" placeholder="hcp">
+            <select id="tmopp_g2" style="width:44px; height:34px; border-radius:6px; border:1.5px solid rgba(0,0,0,0.15); font-family:'Inter',sans-serif; font-size:12px; flex-shrink:0;">
+              <option value="M" selected>M</option><option value="F">F</option><option value="O">O</option>
+            </select>
           </div>
           <div class="player-row hidden" id="tmopp_row3">
             <span class="player-num">3</span>
             <input class="player-name-in" id="tmopp_name3" type="text" placeholder="name">
             <input class="player-hcp-in" id="tmopp_hcp3" type="number" min="0" max="54" step="0.1" placeholder="hcp">
+            <select id="tmopp_g3" style="width:44px; height:34px; border-radius:6px; border:1.5px solid rgba(0,0,0,0.15); font-family:'Inter',sans-serif; font-size:12px; flex-shrink:0;">
+              <option value="M" selected>M</option><option value="F">F</option><option value="O">O</option>
+            </select>
           </div>
           <div class="player-row hidden" id="tmopp_row4">
             <span class="player-num">4</span>
             <input class="player-name-in" id="tmopp_name4" type="text" placeholder="name">
             <input class="player-hcp-in" id="tmopp_hcp4" type="number" min="0" max="54" step="0.1" placeholder="hcp">
+            <select id="tmopp_g4" style="width:44px; height:34px; border-radius:6px; border:1.5px solid rgba(0,0,0,0.15); font-family:'Inter',sans-serif; font-size:12px; flex-shrink:0;">
+              <option value="M" selected>M</option><option value="F">F</option><option value="O">O</option>
+            </select>
           </div>
         </div>
 
@@ -20723,15 +20799,17 @@ function tmInit_tmopp(ROOT) {
   };
   const autofillPlayers = (players) => {
     players.forEach((p, i) => {
-      const n = q('#tmopp_name'+(i+1)), hc = q('#tmopp_hcp'+(i+1));
+      const n = q('#tmopp_name'+(i+1)), hc = q('#tmopp_hcp'+(i+1)), g = q('#tmopp_g'+(i+1));
       if (n)  { n.value  = p.name; n.classList.add('autofilled'); }
       if (hc) { hc.value = p.hcp;  hc.classList.add('autofilled'); }
+      if (g)  { g.value  = p.gender || 'M'; }
     });
   };
   const clearAutofill = () => {
     for (let i = 1; i <= 4; i++) ['name','hcp'].forEach(t => {
       const e = q('#tmopp_'+t+i); if (e){ e.value=''; e.classList.remove('autofilled'); }
     });
+    for (let i = 1; i <= 4; i++) { const g = q('#tmopp_g'+i); if (g) g.value = 'M'; }
   };
   const oppInput = q('#tmopp_oppNameInput');
   const oppChev  = q('#tmopp_oppChev');
@@ -20770,7 +20848,7 @@ function tmInit_tmopp(ROOT) {
         for (let i = 1; i <= 4; i++) { const row = q('#tmopp_row'+i); if (row && !row.classList.contains('hidden')) { const ni = q('#tmopp_name'+i); if (ni && !ni.value.trim()) { ni.focus(); break; } } }
         return;
       }
-      const ok = tmoppFillNextRow(it.dataset.name, it.dataset.hcp);
+      const ok = tmoppFillNextRow(it.dataset.name, it.dataset.hcp, it.dataset.gender);
       if (!ok && typeof showToast === 'function') showToast('All player slots are full', 'info');
     });
   }
@@ -20806,8 +20884,10 @@ function tmInit_tmopp(ROOT) {
     if (!name || teamSize === 0) return null;
     const players = [];
     for (let i = 1; i <= teamSize; i++) {
+      const gEl = q('#tmopp_g'+i);
       players.push({ name: q('#tmopp_name'+i).value.trim(),
-                     hcp:  parseFloat(q('#tmopp_hcp'+i).value) });
+                     hcp:  parseFloat(q('#tmopp_hcp'+i).value),
+                     gender: (gEl && gEl.value) || 'M' });
     }
     return { teamName: name, size: teamSize, players };
   };
@@ -20909,7 +20989,7 @@ async function tmoppRenderDD(ROOT, dd) {
 }
 
 // Fill the next empty (visible) opponent row with a looked-up player / guest.
-function tmoppFillNextRow(name, hcp) {
+function tmoppFillNextRow(name, hcp, gender) {
   for (let i = 1; i <= 4; i++) {
     const row = document.getElementById('tmopp_row' + i);
     if (!row || row.classList.contains('hidden')) continue;
@@ -20918,6 +20998,8 @@ function tmoppFillNextRow(name, hcp) {
       ni.value = name; ni.classList.add('autofilled');
       const hi = document.getElementById('tmopp_hcp' + i);
       if (hi && hcp != null && hcp !== '') { hi.value = hcp; hi.classList.add('autofilled'); }
+      const gi = document.getElementById('tmopp_g' + i);
+      if (gi && gender) gi.value = gender;
       return true;
     }
   }
@@ -20933,7 +21015,7 @@ function tmoppRenderPlayerDD() {
   if (buds.length) {
     html += '<div style="padding:10px 14px;background:#f0f9f4;color:#1a6b3c;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Your buddies</div>';
     buds.forEach(b => {
-      html += '<div class="tmopp-pd-item" data-name="' + esc(b.name || '') + '" data-hcp="' + (b.hcp != null ? esc(b.hcp) : '') + '" style="padding:11px 14px;border-bottom:1px solid #eee;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;"><b>' + esc(b.name || 'Buddy') + '</b>' + (b.hcp != null ? ' \u00b7 HCP ' + esc(b.hcp) : '') + '</div>';
+      html += '<div class="tmopp-pd-item" data-name="' + esc(b.name || '') + '" data-hcp="' + (b.hcp != null ? esc(b.hcp) : '') + '" data-gender="' + esc(b.gender || 'M') + '" style="padding:11px 14px;border-bottom:1px solid #eee;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;"><b>' + esc(b.name || 'Buddy') + '</b>' + (b.hcp != null ? ' \u00b7 HCP ' + esc(b.hcp) : '') + '</div>';
     });
   } else {
     html += '<div style="padding:11px 14px;color:#777;font-size:12px;">No buddies yet \u2014 add a guest below.</div>';
@@ -20963,7 +21045,7 @@ function tmCalcSide(players) {
   const list = (players || []).filter(p => p && p.hcp != null && !isNaN(parseFloat(p.hcp)));
   if (!list.length) return null;
   list.forEach(p => {
-    const tee = (typeof trTeeByKey === 'function') ? trTeeByKey(p.teeKey || 'medal') : null;
+    const tee = (typeof trTeeByKey === 'function') ? trTeeByKey(p.teeKey || 'medal', p.gender || 'M') : null;
     const rating = tee ? Number(tee.rating) : 0;
     const slope  = tee ? Number(tee.slope)  : 113;
     const par    = tee ? Number(tee.par)    : ((f.course && f.course.par) || 72);
@@ -24028,7 +24110,7 @@ function _tmOpenTeam(team){
         await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(patch,{merge:true});
         // Mirror public-facing fields (incl. cover/avatar) so others' Public Profile stays current
         try{
-          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, country:_profile.country||null, avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverId:(_profile.coverId!=null?_profile.coverId:null), coverUrl:_profile.coverUrl||null };
+          var _pub={ displayName:_profile.displayName||null, hcpIndex:(_profile.hcpIndex!=null?_profile.hcpIndex:null), homeCourse:_profile.homeCourse||null, country:_profile.country||null, gender:_profile.gender||'M', avatarId:(_profile.avatarId!=null?_profile.avatarId:null), avatarUrl:_profile.avatarUrl||null, coverId:(_profile.coverId!=null?_profile.coverId:null), coverUrl:_profile.coverUrl||null };
           await window._fbDb.collection('public_profiles').doc(uid).set(_pub,{merge:true});
         }catch(_pe){ console.warn('public_profiles sync', _pe); }
       }
@@ -24921,12 +25003,24 @@ function renderTeamCreated(ROOT){
   };
 
   // ── Guest modal ──
+  let _ctGuestGender = 'M';
+  window.ctSetGuestGender = function(g) {
+    _ctGuestGender = g;
+    document.querySelectorAll('.ct-guest-gender-opt').forEach(function(btn){
+      const sel = btn.getAttribute('data-gender') === g;
+      btn.classList.toggle('selected', sel);
+      btn.style.background = sel ? 'var(--green)' : '#fff';
+      btn.style.color = sel ? '#fff' : 'var(--text)';
+      btn.style.borderColor = sel ? 'var(--green)' : 'rgba(0,0,0,0.15)';
+    });
+  };
   window.openGuestModal = function() {
     if (isFull()) return;  // no room
     document.getElementById('guestName').value = '';
     document.getElementById('guestHcp').value = '';
     document.getElementById('guestName').classList.remove('error');
     document.getElementById('guestHcp').classList.remove('error');
+    ctSetGuestGender('M');
     document.getElementById('guestOverlay').classList.add('visible');
   };
   window.closeGuestModal = function() {
@@ -24941,15 +25035,15 @@ function renderTeamCreated(ROOT){
     if (!name) { nameEl.classList.add('error'); ok = false; } else nameEl.classList.remove('error');
     if (hcp === '' || isNaN(parseFloat(hcp))) { hcpEl.classList.add('error'); ok = false; } else hcpEl.classList.remove('error');
     if (!ok) return;
-    addGuestChip(name, parseFloat(hcp).toFixed(1));
+    addGuestChip(name, parseFloat(hcp).toFixed(1), _ctGuestGender || 'M');
     closeGuestModal();
     refresh();
   };
   // Build a guest object + carousel chip (shared by addGuest and edit-mode loading)
-  function addGuestChip(name, hcp) {
+  function addGuestChip(name, hcp, gender) {
     const id = ++guestSeq;
     const hcpF = parseFloat(hcp);
-    guests.push({ id, name, hcp: (isNaN(hcpF) ? '0.0' : hcpF.toFixed(1)) });
+    guests.push({ id, name, hcp: (isNaN(hcpF) ? '0.0' : hcpF.toFixed(1)), gender: gender || 'M' });
     const carousel = document.getElementById('carousel');
     const addChip = carousel.querySelector('.add-guest-chip');
     const initial = name.charAt(0).toUpperCase();
@@ -25006,7 +25100,7 @@ function renderTeamCreated(ROOT){
         }
       }
       // guest, or a buddy no longer in the list → preserve the roster as a guest chip
-      addGuestChip(p.name || 'Guest', (p.hcp != null ? p.hcp : 0));
+      addGuestChip(p.name || 'Guest', (p.hcp != null ? p.hcp : 0), p.gender || 'M');
     });
     var titleEl = document.querySelector('#screen-createteam .sub-header .title'); if (titleEl) titleEl.textContent = 'Edit Team';
     var cb = document.getElementById('createBtn'); if (cb) cb.textContent = 'Save Changes';
@@ -25050,9 +25144,9 @@ function renderTeamCreated(ROOT){
     if (!name) { document.getElementById('teamName').classList.add('error'); document.getElementById('nameError').classList.add('visible'); return; }
     if (filled() !== needed()) return;
     var prof=(typeof _profile!=='undefined'&&_profile)||{};
-    var players=[{ name:(prof.displayName||'You'), hcp:(prof.hcpIndex!=null?prof.hcpIndex:null), avatarId:prof.avatarId, you:true }];
-    selected.forEach(function(idx){ var b=(typeof _buddies!=='undefined'?_buddies:[])[idx]; if(b) players.push({name:b.name, hcp:b.hcp, avatarId:b.avatarId, uid:b.uid}); });
-    guests.forEach(function(g){ players.push({name:g.name, hcp:parseFloat(g.hcp), guest:true}); });
+    var players=[{ name:(prof.displayName||'You'), hcp:(prof.hcpIndex!=null?prof.hcpIndex:null), avatarId:prof.avatarId, gender:prof.gender||'M', you:true }];
+    selected.forEach(function(idx){ var b=(typeof _buddies!=='undefined'?_buddies:[])[idx]; if(b) players.push({name:b.name, hcp:b.hcp, avatarId:b.avatarId, gender:b.gender||'M', uid:b.uid}); });
+    guests.forEach(function(g){ players.push({name:g.name, hcp:parseFloat(g.hcp), gender:g.gender||'M', guest:true}); });
     var uid=window._fbAuth&&window._fbAuth.currentUser&&window._fbAuth.currentUser.uid;
 
     if (editId != null && typeof _savedTeams!=='undefined') {
