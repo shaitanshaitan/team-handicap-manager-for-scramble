@@ -4377,6 +4377,32 @@ input { transition:border-color 0.4s, background 0.2s; }
     border-bottom: 1px solid rgba(0,0,0,0.06);
     transition: background 0.1s; }
 #menuOverlay .menu-item:last-child { border-bottom: none; }
+.menu-badge-pro { background: var(--green); color:#fff; font-size:0.6rem; font-weight:800; letter-spacing:0.05em; padding:2px 7px; border-radius:10px; margin-left:auto; margin-right:8px; }
+#screen-editcourses { flex-direction: column; background: var(--bg, #f4f6f4); }
+#screen-editcourses.active { display: flex; }
+#screen-editcourses .app-header { height: 56px; flex: 0 0 56px; background: var(--green); display: flex; align-items: center; padding: 0 16px; position: relative; }
+#screen-editcourses .logo { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; }
+#screen-editcourses .logo .crown { display: block; width: 24px; height: 24px; object-fit: contain; }
+#screen-editcourses .logo .wordmark { font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 20px; color: #fff; letter-spacing: -0.2px; line-height: 1; }
+#screen-editcourses .header-icons { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 12px; }
+#screen-editcourses .icon-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; color: #fff; background: transparent; padding: 0; cursor: pointer; }
+#screen-editcourses .sub-header { flex: 0 0 44px; background: var(--gold); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+#screen-editcourses .sub-header .title { font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 16px; color: var(--green); }
+#screen-editcourses .sub-header .actions { display: flex; align-items: center; gap: 8px; }
+#screen-editcourses .back-pill { background: var(--green); color: #fff; border: none; border-radius: 20px; padding: 6px 14px; font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.06em; cursor: pointer; }
+#screen-editcourses .body-area { flex: 1 1 auto; background: var(--bg, #f4f6f4); padding: 20px 16px 40px; overflow-y: auto; min-height: 0; }
+#screen-editcourses .ec-intro { font-size:0.85rem; color:var(--text-2, #666); line-height:1.45; margin:4px 4px 14px; }
+#screen-editcourses .ec-search { width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid var(--border, #ddd); border-radius:12px; font-size:0.95rem; margin-bottom:14px; outline:none; }
+#screen-editcourses .ec-search:focus { border-color:var(--green); }
+#screen-editcourses .ec-list { display:flex; flex-direction:column; gap:8px; }
+#screen-editcourses .ec-course-row { display:flex; align-items:center; gap:10px; background:#fff; border:1.5px solid var(--border, #e5e5e5); border-radius:12px; padding:14px 14px; cursor:pointer; transition:border-color 0.15s, background 0.15s; }
+#screen-editcourses .ec-course-row:hover { border-color:var(--green); background:#f5fdf8; }
+#screen-editcourses .ec-course-row:active { background:#e8f5e9; }
+#screen-editcourses .ec-course-main { flex:1; min-width:0; }
+#screen-editcourses .ec-course-name { font-size:0.98rem; font-weight:700; color:var(--text, #1a1a1a); }
+#screen-editcourses .ec-course-meta { font-size:0.78rem; color:var(--text-3, #888); margin-top:2px; }
+#screen-editcourses .ec-course-chevron { color:var(--green); font-size:1.3rem; flex-shrink:0; }
+#screen-editcourses .ec-empty { text-align:center; color:var(--text-3, #999); padding:32px 16px; font-size:0.9rem; }
 #menuOverlay .menu-item:hover { background: #f5fdf8; }
 #menuOverlay .menu-item:active { background: #e8f5e9; }
 #menuOverlay .menu-chevron { font-size: 18px; font-weight: 700; color: var(--green); }
@@ -6854,6 +6880,7 @@ const LANG = {
     menu_find_buddies:    'Find Buddies',
     menu_join_game:       'Join game',
     menu_support_faq:     'Support & FAQ',
+    menu_edit_courses:    'Edit Courses',
     menu_language:     'Language',
     chat_block:         'Block',
     chat_unblock:       'Unblock',
@@ -7180,6 +7207,7 @@ const LANG = {
     menu_find_buddies:    'Buddies zoeken',
     menu_join_game:       'Deelnemen aan game',
     menu_support_faq:     'Support & FAQ',
+    menu_edit_courses:    'Banen bewerken',
     menu_language:     'Taal',
     chat_block:         'Blokkeren',
     chat_unblock:       'Deblokkeren',
@@ -7711,7 +7739,7 @@ function acNewLoop(name) {
   return {
     name: name || '', holes: 9,
     tees: { champion:{r:'',s:'',p:''}, medal:{r:'',s:'',p:''}, senior:{r:'',s:'',p:''}, forward:{r:'',s:'',p:''} },
-    women: { champion:{r:'',s:'',p:''}, medal:{r:'',s:'',p:''}, forward:{r:'',s:'',p:''} },
+    women: { blue:{r:'',s:'',p:''}, medal:{r:'',s:'',p:''}, forward:{r:'',s:'',p:''} },
     par: [], si: []
   };
 }
@@ -7724,8 +7752,53 @@ function acStart() {
   showScreen('accourse');
 }
 
+// ── EDIT MODE (Pro): start the same wizard, pre-filled from an existing shared course ──
+// This is the reverse of acBuildCourse(): Firestore course shape -> _acWizard shape,
+// so every existing tee / par / SI is shown and editable rather than starting blank.
+function acLoopToWizard(loop) {
+  const wl = acNewLoop(loop.name || '');
+  wl.holes = loop.holes || 9;
+  const teeArr = Array.isArray(loop.tees) ? loop.tees : [];
+  const findTee = (key) => teeArr.find(t => (t.label||'').toLowerCase().includes(key));
+  const fill = (t) => t ? { r: (t.rating!=null?String(t.rating):''), s: (t.slope!=null?String(t.slope):''), p: (t.par!=null?String(t.par):'') } : { r:'', s:'', p:'' };
+  wl.tees.champion = fill(findTee('champ'));
+  wl.tees.medal    = fill(findTee('medal') || findTee('standard'));
+  wl.tees.senior   = fill(findTee('senior'));
+  wl.tees.forward  = fill(findTee('forward') || findTee('fwd'));
+  const wArr = Array.isArray(loop.women) ? loop.women : [];
+  const findW = (key) => wArr.find(t => (t.label||'').toLowerCase().includes(key));
+  wl.women.blue    = fill(findW('blue') || findW('champ'));  // legacy 'Champion' women -> Blue
+  wl.women.medal   = fill(findW('medal') || findW('standard'));
+  wl.women.forward = fill(findW('forward') || findW('fwd'));
+  const holes = wl.holes;
+  wl.par = (Array.isArray(loop.parPerHole) && loop.parPerHole.length) ? loop.parPerHole.slice(0, holes) : [];
+  wl.si  = (Array.isArray(loop.indexPerHole) && loop.indexPerHole.length) ? loop.indexPerHole.slice(0, holes) : [];
+  return wl;
+}
+
+function acStartEdit(course) {
+  if (!course) return;
+  const loops = (Array.isArray(course.loops) && course.loops.length)
+    ? course.loops.map(acLoopToWizard)
+    : [ acLoopToWizard(course) ];   // legacy single-loop courses stored flat
+  _acWizard = {
+    name: course.name || '',
+    country: course.country || '',
+    city: course.city || '',
+    loops,
+    activeLoop: 0,
+    _editDocId: course._docId || null,   // marks this as an edit of an existing doc
+  };
+  _acInited = {};   // force each step to re-prefill from the new wizard state
+  showScreen('accourse');
+}
+
 function acGoStep(idx) {
-  if (idx < 0) { showScreen('home'); return; }
+  if (idx < 0) {
+    // In edit mode, backing out of step 1 returns to the course list, not home
+    if (_acWizard && _acWizard._editDocId) { showScreen('editcourses'); return; }
+    showScreen('home'); return;
+  }
   if (idx >= AC_STEPS.length) return;
   showScreen(AC_STEPS[idx]);
 }
@@ -7749,7 +7822,7 @@ function acCollect(stepId) {
     t.senior   = { r:g('ac_sr'), s:g('ac_ss'), p:g('ac_sp') };
     t.forward  = { r:g('ac_fr'), s:g('ac_fs'), p:g('ac_fp') };
     const w = acActiveLoop().women || (acActiveLoop().women = {});
-    w.champion = { r:g('wcr'), s:g('wcs'), p:g('wcp') };
+    w.blue     = { r:g('wcr'), s:g('wcs'), p:g('wcp') };
     w.medal    = { r:g('wmr'), s:g('wms'), p:g('wmp') };
     w.forward  = { r:g('wfr'), s:g('wfs'), p:g('wfp') };
   } else if (stepId === 'acparsi') {
@@ -7814,8 +7887,8 @@ function acBuildCourse() {
     // women's tees (optional) — only include filled ones
     const W = L.women || {};
     const womenTees = [];
-    [['champion','Champion'],['medal','Medal'],['forward','Forward']].forEach(([k,lab]) => {
-      const wt = W[k] || {};
+    [['medal','Medal'],['blue','Blue'],['forward','Forward']].forEach(([k,lab]) => {
+      const wt = W[k] || (k==='blue' ? (W.champion||{}) : {});  // legacy 'champion' -> Blue
       if (num(wt.r) != null) womenTees.push({ label:lab, rating:num(wt.r), slope:num(wt.s), par:num(wt.p)||par });
     });
     const loopObj = {
@@ -7866,8 +7939,32 @@ async function acSave() {
   const orig = saveBtn ? saveBtn.textContent : 'SAVE';
   if (saveBtn) saveBtn.textContent = '…';
   try {
-    const existing = (typeof _sharedCourses !== 'undefined')
-      ? _sharedCourses.find(c => c.name.toLowerCase() === cleanData.name.toLowerCase()) : null;
+    // In edit mode we target the exact document being edited (by _docId), so the
+    // right course is updated even if the name was changed. Otherwise fall back to
+    // the name-match merge behaviour used by the add-course flow.
+    const editDocId = _acWizard && _acWizard._editDocId;
+    let existing = null;
+    if (editDocId && typeof _sharedCourses !== 'undefined') {
+      existing = _sharedCourses.find(c => c._docId === editDocId) || null;
+    }
+    if (!existing) {
+      existing = (typeof _sharedCourses !== 'undefined')
+        ? _sharedCourses.find(c => c.name.toLowerCase() === cleanData.name.toLowerCase()) : null;
+    }
+    if (existing && editDocId) {
+      // FULL REPLACE of this course's loops with the edited set — edit mode shows
+      // every existing loop pre-filled, so the wizard state IS the intended full course.
+      const merged = { ...cleanData };
+      await window._fbDb.collection('courses_shared').doc(existing._docId).update({
+        ...merged, lastEditedBy: uid, lastEditedAt: new Date().toISOString()
+      });
+      const idx = _sharedCourses.findIndex(c => c._docId === existing._docId);
+      if (idx >= 0) _sharedCourses[idx] = { ..._sharedCourses[idx], ...merged, lastEditedBy: uid };
+      if (typeof showToast==='function') showToast('Course "'+cleanData.name+'" updated.', 'success');
+      _acWizard = null;
+      showScreen('editcourses');
+      return;
+    }
     if (existing) {
       // MERGE loops: keep the existing course's loops, add/replace by loop name
       const existingLoops = Array.isArray(existing.loops) ? existing.loops.slice() : [];
@@ -7918,6 +8015,13 @@ function acInitStep(id, el) {
   };
   if (!map.hasOwnProperty(id)) return;
   if (!_acInited[id] && map[id]) { try { map[id](el); } catch(e){ console.warn('acInit '+id, e); } _acInited[id] = true; }
+  // Prefill the course-details fields from wizard state on every show (so edit
+  // mode shows the existing name/country/city, and returning to this step keeps them).
+  if (id === 'accourse' && _acWizard) {
+    var nEl = document.getElementById('ac_courseName'); if (nEl) nEl.value = _acWizard.name || '';
+    var cEl = document.getElementById('ac_countrySelect'); if (cEl && _acWizard.country) { cEl.value = _acWizard.country; cEl.classList.remove('placeholder'); }
+    var cityEl = document.getElementById('ac_courseCity'); if (cityEl) cityEl.value = _acWizard.city || '';
+  }
   if (id === 'acloops'  && typeof acRenderLoopList === 'function') acRenderLoopList();
   if (id === 'aclayout' && typeof acRenderLoopTabs === 'function') { acRenderLoopTabs('aclayout'); acFillTees(); }
   if (id === 'acparsi'  && typeof acRenderLoopTabs === 'function') { acRenderLoopTabs('acparsi'); acFillParSi(); }
@@ -8013,10 +8117,12 @@ function acFillTees() {
   set('ac_sr', (L.tees.senior||{}).r); set('ac_ss', (L.tees.senior||{}).s); set('ac_sp', (L.tees.senior||{}).p);
   set('ac_fr', L.tees.forward.r);  set('ac_fs', L.tees.forward.s);  set('ac_fp', L.tees.forward.p);
   // women's tees (per loop)
-  const w = L.women || (L.women = { champion:{r:'',s:'',p:''}, medal:{r:'',s:'',p:''}, forward:{r:'',s:'',p:''} });
-  set('wcr', w.champion.r); set('wcs', w.champion.s); set('wcp', w.champion.p);
+  const w = L.women || (L.women = { blue:{r:'',s:'',p:''}, medal:{r:'',s:'',p:''}, forward:{r:'',s:'',p:''} });
+  const wBlue = w.blue || w.champion || {r:'',s:'',p:''};  // fall back to legacy 'champion' key
+  set('wcr', wBlue.r); set('wcs', wBlue.s); set('wcp', wBlue.p);
   set('wmr', w.medal.r);    set('wms', w.medal.s);    set('wmp', w.medal.p);
   set('wfr', w.forward.r);  set('wfs', w.forward.s);  set('wfp', w.forward.p);
+  if (typeof acSyncWomenToggle === 'function') acSyncWomenToggle();
 }
 
 // Prefill AC04 par/SI grid from the active loop
@@ -8076,6 +8182,21 @@ function acRenderConfirm(scr) {
       return '<tr><td>'+lab+'</td><td>'+(t.r||'—')+'</td><td>'+(t.s||'—')+'</td><td>'+(t.p||'—')+'</td></tr>';
     }).join('') || '<tr><td colspan="4" style="color:#999;">No tees entered</td></tr>';
 
+    // Women's tees for this loop — only rendered if at least one is entered.
+    const wOrder = [['medal','Medal'],['blue','Blue'],['forward','Forward']];
+    const wFilled = wOrder.filter(([k]) => L.women && L.women[k] && String(L.women[k].r||'').trim()!=='');
+    let womenBlock = '';
+    if (wFilled.length) {
+      const wRows = wFilled.map(([k,lab]) => {
+        const t = L.women[k];
+        return '<tr><td>'+lab+'</td><td>'+(t.r||'—')+'</td><td>'+(t.s||'—')+'</td><td>'+(t.p||'—')+'</td></tr>';
+      }).join('');
+      womenBlock = '<div class="confirm-section">' +
+          '<div class="confirm-section-title">Women\u2019s Tees — ' + (L.name||'?') + '</div>' +
+          '<table class="tee-table"><thead><tr><th>Tee</th><th>Rating</th><th>Slope</th><th>Par</th></tr></thead><tbody>' + wRows + '</tbody></table>' +
+        '</div>';
+    }
+
     let mini = '';
     for (let i=0;i<holes;i++){
       const par = (L.par && L.par[i]!=null) ? L.par[i] : '–';
@@ -8089,6 +8210,7 @@ function acRenderConfirm(scr) {
         '<div class="confirm-section-title">Loop — ' + (L.name||'?') + ' (' + holes + ')</div>' +
         '<table class="tee-table"><thead><tr><th>Tee</th><th>Rating</th><th>Slope</th><th>Par</th></tr></thead><tbody>' + teeRows + '</tbody></table>' +
       '</div>' +
+      womenBlock +
       '<div class="confirm-section">' +
         '<div class="confirm-section-title">Par & Stroke Index — ' + (L.name||'?') + '</div>' +
         '<div class="si-mini-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;">' + mini + '</div>' +
@@ -8132,19 +8254,38 @@ function acInit_aclayout(ROOT){
     el.addEventListener('focus', () => { el.style.borderColor = 'var(--gold)'; });
   });
 
-  // Women's toggle
-  let womenOn = false;
+  // Women's toggle — wired once here, but its ON/OFF state is driven by
+  // acSyncWomenToggle() on every screen show (see acFillTees), so it correctly
+  // reflects whether the current loop already has women's data.
+  const wBtn  = document.getElementById('womenToggleBtn');
+  if (wBtn && !wBtn._wired) {
+    wBtn._wired = true;
+    wBtn.addEventListener('click', () => {
+      const on = !(wBtn.dataset.on === '1');
+      acSetWomenToggle(on);
+    });
+  }
+
+
+}
+
+// Set the women's-tees toggle ON/OFF and show/hide its section.
+function acSetWomenToggle(on) {
   const wBtn  = document.getElementById('womenToggleBtn');
   const wKnob = document.getElementById('womenToggleKnob');
   const wSec  = document.getElementById('womenSection');
-  wBtn.addEventListener('click', () => {
-    womenOn = !womenOn;
-    wBtn.style.background  = womenOn ? 'var(--green)' : '#ddd';
-    wKnob.style.transform  = womenOn ? 'translateX(18px)' : 'translateX(0)';
-    wSec.style.display     = womenOn ? 'block' : 'none';
-  });
+  if (wBtn)  { wBtn.dataset.on = on ? '1' : '0'; wBtn.style.background = on ? 'var(--green)' : '#ddd'; }
+  if (wKnob) wKnob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+  if (wSec)  wSec.style.display = on ? 'block' : 'none';
+}
 
-
+// Decide whether the toggle should start ON: true if the active loop already
+// has any women's rating entered (so editing an existing course reveals it).
+function acSyncWomenToggle() {
+  const L = (typeof acActiveLoop === 'function') ? acActiveLoop() : null;
+  const w = L && L.women;
+  const hasWomen = w && ['blue','champion','medal','forward'].some(k => w[k] && String(w[k].r||'').trim() !== '');
+  acSetWomenToggle(!!hasWomen);
 }
 
 function acInit_acparsi(ROOT){
@@ -9050,20 +9191,24 @@ function trPlayerPool() {
 // Both `tees` and `women` are arrays shaped identically: {label, rating, slope, par}.
 function resolveTeeForGender(course, teeKeyOrLabel, gender) {
   if (!course) return null;
-  const k = (teeKeyOrLabel || '').toLowerCase();
-  const searchArray = (arr) => {
+  let k = (teeKeyOrLabel || '').toLowerCase();
+  // Women's tee set is Medal / Blue / Forward (no Champion). The tee-picker's
+  // middle option uses the key 'senior' (men's naming); for women that slot is
+  // the Blue tee, so map senior->blue when looking up women's data.
+  const kW = (k === 'senior') ? 'blue' : k;
+  const searchArray = (arr, key) => {
     if (!arr || !arr.length) return null;
-    return arr.find(t => (t.label||'').toLowerCase().includes(k))
+    return arr.find(t => (t.label||'').toLowerCase().includes(key))
         || arr.find(t => (t.label||'').toLowerCase().includes('medal'))
         || arr[0];
   };
   if (gender === 'F' && course.women && course.women.length) {
-    const w = searchArray(course.women);
+    const w = searchArray(course.women, kW);
     if (w && w.rating != null && w.slope != null) {
       return { rating:Number(w.rating), slope:Number(w.slope), par:Number(w.par)||72, label:w.label, key:teeKeyOrLabel, source:'women' };
     }
   }
-  const m = searchArray(course.tees);
+  const m = searchArray(course.tees, k);
   return m ? { rating:Number(m.rating), slope:Number(m.slope), par:Number(m.par)||72, label:m.label, key:teeKeyOrLabel, source:'standard' } : null;
 }
 
@@ -9453,10 +9598,21 @@ function trRenderTees(scr) {
     }
     const hcpEl=block.querySelector('.player-hcp');
     if (hcpEl) hcpEl.textContent = 'hcp ' + (p.hcp!=null ? p.hcp : '—');
-    // show only tees the course actually offers
+    const pGender = p.gender || 'M';
+    // For women, the middle "senior" slot is the Blue tee — remap the key used
+    // to check the women's data array, and relabel the button.
+    const teeKeyForGender = (lbl) => (pGender === 'F' && lbl === 'senior') ? 'blue' : lbl;
+    // show only tees the course actually offers (per this player's gender)
     block.querySelectorAll('.tee-btn').forEach(btn=>{
       const lbl=(btn.dataset.tee||'').toLowerCase();
-      btn.style.display = hasTee(lbl) ? '' : 'none';
+      btn.style.display = hasTee(teeKeyForGender(lbl), pGender) ? '' : 'none';
+      // Relabel the Senior button to "Blue" for female players (women's tee set
+      // is Medal / Blue / Forward, no Senior/Champion).
+      if (lbl === 'senior') {
+        const nameNode = [...btn.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+        const newText = (pGender === 'F') ? 'Blue' : 'Senior';
+        if (nameNode) nameNode.textContent = newText; else btn.lastChild && (btn.lastChild.textContent = newText);
+      }
     });
     // ensure the active tee is one that exists; default to first available.
     // Always persist the resolved tee to p.teeKey so it carries into the match doc even
@@ -9465,7 +9621,7 @@ function trRenderTees(scr) {
     let activeBtn=null;
     block.querySelectorAll('.tee-btn').forEach(btn=>{
       const lbl=(btn.dataset.tee||'').toLowerCase();
-      const on = hasTee(lbl) && (lbl===key || lbl.slice(0,4)===key.slice(0,4));
+      const on = hasTee(teeKeyForGender(lbl), pGender) && (lbl===key || lbl.slice(0,4)===key.slice(0,4));
       btn.classList.toggle('active', on);
       if (on && !activeBtn) activeBtn=btn;
     });
@@ -16900,6 +17056,24 @@ document.addEventListener('DOMContentLoaded', applyLang);
       </div>
 </section>
 
+      <section id="screen-editcourses" class="screen" data-screen="editcourses">
+      <div class="app-header">
+        <div class="logo">
+          <img class="crown" alt="" src="icons/home-crown.png">
+          <span class="wordmark">Parmate</span>
+        </div>
+        <div class="header-icons">
+          <button class="icon-btn" type="button" onclick="openMenu()" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
+        </div>
+      </div>
+      <div class="sub-header"><span class="title">Edit Courses</span><div class="actions"><button class="back-pill" onclick="showScreen('home')">BACK</button></div></div>
+      <div class="body-area">
+        <div class="ec-intro">Select a course to edit its tees, par and stroke index. Changes update the shared course database for all players.</div>
+        <input type="text" class="ec-search" id="ec_search" placeholder="Search courses…" oninput="renderEditCoursesList(this.value)">
+        <div class="ec-list" id="ec_courseList"></div>
+      </div>
+      </section>
+
       <section id="screen-editprofile" class="screen" data-screen="editprofile">
       <div class="app-header">
         <div class="logo">
@@ -18661,20 +18835,6 @@ document.addEventListener('DOMContentLoaded', applyLang);
           <div id="womenSection" style="display:none; margin-top:16px;">
             <div style="font-family:Inter,sans-serif; font-size:12px; font-weight:700; color:var(--text-3); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:12px;">Women — Rating &amp; Slope</div>
 
-            <!-- Champion women -->
-            <div class="tee-block">
-              <div class="tee-header">
-                <span class="tee-dot champion"></span>
-                <span class="tee-name">Champion</span>
-              </div>
-              <div class="rsp-grid">
-                <div class="rsp-cell"><span class="rsp-label">Rating</span><input class="rsp-input" type="number" step="0.1" min="27.5" max="80.0" placeholder="e.g. 29.4" id="wcr"></div>
-                <div class="rsp-cell"><span class="rsp-label">Slope</span><input class="rsp-input" type="number" min="55" max="155" placeholder="55–155" id="wcs"></div>
-                <div class="rsp-cell"><span class="rsp-label">Par</span><input class="rsp-input" type="number" min="27" max="36" placeholder="27–36" id="wcp" title="Par is shared with men"></div>
-              </div>
-            </div>
-            <div class="divider"></div>
-
             <!-- Medal women -->
             <div class="tee-block">
               <div class="tee-header">
@@ -18685,6 +18845,20 @@ document.addEventListener('DOMContentLoaded', applyLang);
                 <div class="rsp-cell"><span class="rsp-label">Rating</span><input class="rsp-input" type="number" step="0.1" min="27.5" max="80.0" placeholder="e.g. 28.3" id="wmr"></div>
                 <div class="rsp-cell"><span class="rsp-label">Slope</span><input class="rsp-input" type="number" min="55" max="155" placeholder="55–155" id="wms"></div>
                 <div class="rsp-cell"><span class="rsp-label">Par</span><input class="rsp-input" type="number" min="27" max="36" placeholder="27–36" id="wmp"></div>
+              </div>
+            </div>
+            <div class="divider"></div>
+
+            <!-- Blue women -->
+            <div class="tee-block">
+              <div class="tee-header">
+                <span class="tee-dot senior"></span>
+                <span class="tee-name">Blue</span>
+              </div>
+              <div class="rsp-grid">
+                <div class="rsp-cell"><span class="rsp-label">Rating</span><input class="rsp-input" type="number" step="0.1" min="27.5" max="80.0" placeholder="e.g. 28.8" id="wcr"></div>
+                <div class="rsp-cell"><span class="rsp-label">Slope</span><input class="rsp-input" type="number" min="55" max="155" placeholder="55–155" id="wcs"></div>
+                <div class="rsp-cell"><span class="rsp-label">Par</span><input class="rsp-input" type="number" min="27" max="36" placeholder="27–36" id="wcp"></div>
               </div>
             </div>
             <div class="divider"></div>
@@ -25935,6 +26109,53 @@ function closeMenu(){
   setTimeout(function(){ if(!ov.classList.contains('open')) ov.style.display='none'; }, 320);
 }
 function menuSignOut(){ closeMenu(); if(typeof doSignOut==="function") doSignOut(); else if(window._fbAuth) window._fbAuth.signOut(); }
+
+// ── Edit Courses (Pro only) ──────────────────────────────────────────────
+function openEditCourses(){
+  closeMenu();
+  if (typeof isProUser === 'function' && !isProUser()) {
+    if (typeof showToast === 'function') showToast('Editing courses is a Pro feature — upgrade to edit the shared course database.', 'error');
+    return;
+  }
+  showScreen('editcourses');
+  renderEditCoursesList();
+}
+
+function renderEditCoursesList(filter){
+  var listEl = document.getElementById('ec_courseList');
+  if (!listEl) return;
+  var courses = (typeof _sharedCourses !== 'undefined' && Array.isArray(_sharedCourses)) ? _sharedCourses.slice() : [];
+  var f = (filter || '').trim().toLowerCase();
+  if (f) courses = courses.filter(function(c){ return (c.name||'').toLowerCase().indexOf(f) >= 0 || (c.city||'').toLowerCase().indexOf(f) >= 0; });
+  courses.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+  if (!courses.length) {
+    listEl.innerHTML = '<div class="ec-empty">' + (f ? 'No courses match \u201c' + f + '\u201d.' : 'No courses in the database yet.') + '</div>';
+    return;
+  }
+  listEl.innerHTML = courses.map(function(c){
+    var loopCount = Array.isArray(c.loops) ? c.loops.length : 1;
+    var hasWomen = Array.isArray(c.loops) ? c.loops.some(function(l){ return Array.isArray(l.women) && l.women.length; }) : (Array.isArray(c.women) && c.women.length);
+    var meta = [];
+    if (c.city) meta.push(c.city);
+    meta.push(loopCount + (loopCount === 1 ? ' loop' : ' loops'));
+    if (hasWomen) meta.push('women\u2019s tees');
+    var safeId = (c._docId || '').replace(/"/g, '');
+    return '<div class="ec-course-row" data-docid="' + safeId + '" onclick="ecPickCourse(\'' + safeId + '\')">' +
+             '<div class="ec-course-main">' +
+               '<div class="ec-course-name">' + (c.name || 'Unnamed course') + '</div>' +
+               '<div class="ec-course-meta">' + meta.join(' \u00b7 ') + '</div>' +
+             '</div>' +
+             '<span class="ec-course-chevron">\u203a</span>' +
+           '</div>';
+  }).join('');
+}
+
+function ecPickCourse(docId){
+  var course = (typeof _sharedCourses !== 'undefined')
+    ? _sharedCourses.find(function(c){ return c._docId === docId; }) : null;
+  if (!course) { if (typeof showToast === 'function') showToast('Course not found.', 'error'); return; }
+  if (typeof acStartEdit === 'function') acStartEdit(course);
+}
 function renderMenu(ov){
   var nm=ov.querySelector('.menu-user-name');
   if(nm) nm.textContent=(typeof _profile!=='undefined' && _profile && _profile.displayName) ? _profile.displayName : 'Your profile';
@@ -25950,8 +26171,16 @@ function renderMenu(ov){
     if(document.getElementById('screen-'+target)){ showScreen(target); closeMenu(); }
     else if(typeof showToast==='function'){ showToast('Coming soon'); }
   };
+  // Show + wire the Pro-only "Edit Courses" item by ID (kept out of the
+  // index-based `targets` mapping so inserting it doesn't shift the others).
+  var editCoursesItem = ov.querySelector('#menuItemEditCourses');
+  var isPro = (typeof isProUser === 'function') && isProUser();
+  if (editCoursesItem) {
+    editCoursesItem.style.display = isPro ? 'flex' : 'none';
+    editCoursesItem.onclick = function(){ openEditCourses(); };
+  }
   var targets=['profile','editprofile','settings','legal','buddies','messages','join','faq'];
-  ov.querySelectorAll('.menu-item').forEach(function(it,idx){ it.onclick=function(){ go(targets[idx]); }; });
+  ov.querySelectorAll('.menu-item:not(#menuItemEditCourses)').forEach(function(it,idx){ it.onclick=function(){ go(targets[idx]); }; });
 }
 
 
@@ -25985,6 +26214,7 @@ function renderMenu(ov){
           <div class="menu-item"><span data-i18n="menu_find_buddies">Find Buddies</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span data-i18n="menu_messages">Messages</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span data-i18n="menu_join_game">Join game</span><span class="menu-chevron">›</span></div>
+          <div class="menu-item" id="menuItemEditCourses" style="display:none;"><span data-i18n="menu_edit_courses">Edit Courses</span><span class="menu-badge-pro">PRO</span><span class="menu-chevron">›</span></div>
           <div class="menu-item"><span data-i18n="menu_support_faq">Support &amp; FAQ</span><span class="menu-chevron">›</span></div>
           <div class="menu-signout" onclick="menuSignOut()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign out</span></div>
         </div>
