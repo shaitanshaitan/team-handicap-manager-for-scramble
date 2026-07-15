@@ -4378,8 +4378,7 @@ input { transition:border-color 0.4s, background 0.2s; }
     transition: background 0.1s; }
 #menuOverlay .menu-item:last-child { border-bottom: none; }
 .menu-badge-pro { background: var(--green); color:#fff; font-size:0.6rem; font-weight:800; letter-spacing:0.05em; padding:2px 7px; border-radius:10px; margin-left:auto; margin-right:8px; }
-#screen-editcourses { flex-direction: column; background: var(--bg, #f4f6f4); }
-#screen-editcourses.active { display: flex; }
+#screen-editcourses { flex-direction: column; background: var(--bg, #f4f6f4); }#screen-editcourses.active { display: flex; }
 #screen-editcourses .app-header { height: 56px; flex: 0 0 56px; background: var(--green); display: flex; align-items: center; padding: 0 16px; position: relative; }
 #screen-editcourses .logo { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; }
 #screen-editcourses .logo .crown { display: block; width: 24px; height: 24px; object-fit: contain; }
@@ -4403,6 +4402,52 @@ input { transition:border-color 0.4s, background 0.2s; }
 #screen-editcourses .ec-course-meta { font-size:0.78rem; color:var(--text-3, #888); margin-top:2px; }
 #screen-editcourses .ec-course-chevron { color:var(--green); font-size:1.3rem; flex-shrink:0; }
 #screen-editcourses .ec-empty { text-align:center; color:var(--text-3, #999); padding:32px 16px; font-size:0.9rem; }
+
+/* ===== subscription screen ===== */
+#screen-subscription { flex-direction: column; background: var(--bg, #f4f6f4); }
+#screen-subscription.active { display: flex; }
+#screen-subscription .app-header { height: 56px; flex: 0 0 56px; background: var(--green); display: flex; align-items: center; padding: 0 16px; position: relative; }
+#screen-subscription .logo { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; }
+#screen-subscription .logo .crown { display: block; width: 24px; height: 24px; object-fit: contain; }
+#screen-subscription .logo .wordmark { font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 20px; color: #fff; letter-spacing: -0.2px; line-height: 1; }
+#screen-subscription .header-icons { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 12px; }
+#screen-subscription .icon-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; color: #fff; background: transparent; padding: 0; cursor: pointer; }
+#screen-subscription .sub-header { flex: 0 0 44px; background: var(--gold); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+#screen-subscription .sub-header .title { font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 16px; color: var(--green); }
+#screen-subscription .sub-header .actions { display: flex; align-items: center; gap: 8px; }
+#screen-subscription .back-pill { background: var(--green); color: #fff; border: none; border-radius: 20px; padding: 6px 14px; font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.06em; cursor: pointer; }
+#screen-subscription .body-area { flex: 1 1 auto; background: var(--bg, #f4f6f4); padding: 20px 16px 40px; overflow-y: auto; min-height: 0; }
+#screen-subscription .sub-card { background:#fff; border:1.5px solid var(--border,#e5e5e5); border-radius:16px; padding:22px 20px; }
+#screen-subscription .sub-status-badge { display:inline-block; font-size:0.68rem; font-weight:800; letter-spacing:0.06em; padding:4px 12px; border-radius:12px; margin-bottom:12px; }
+#screen-subscription .sub-status-badge.pro { background:var(--green); color:#fff; }
+#screen-subscription .sub-status-badge.free { background:#eee; color:#666; }
+#screen-subscription .sub-title { font-size:1.25rem; font-weight:800; color:var(--text,#1a1a1a); margin-bottom:6px; }
+#screen-subscription .sub-desc { font-size:0.9rem; color:var(--text-2,#666); line-height:1.5; margin-bottom:18px; }
+#screen-subscription .sub-rows { margin-top:8px; }
+#screen-subscription .sub-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--border,#eee); }
+#screen-subscription .sub-row:last-child { border-bottom:none; }
+#screen-subscription .sub-row-label { font-size:0.85rem; color:var(--text-3,#888); }
+#screen-subscription .sub-row-val { font-size:0.9rem; font-weight:700; color:var(--text,#1a1a1a); text-align:right; }
+#screen-subscription .sub-row-val.ok { color:var(--green); }
+#screen-subscription .sub-row-val.warn { color:#c0392b; }
+#screen-subscription .sub-cta { width:100%; padding:14px; background:var(--green); color:#fff; border:none; border-radius:12px; font-size:0.98rem; font-weight:800; cursor:pointer; }
+#screen-subscription .sub-action-wrap { margin-top:20px; }
+#screen-subscription .sub-cancel-btn { width:100%; padding:14px; background:#fff; color:#c0392b; border:1.5px solid #e0b4ae; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+#screen-subscription .sub-cancel-btn:active { background:#fdf0ee; }
+#screen-subscription .sub-cancelled-note { background:#fdf6ec; border:1.5px solid var(--gold,#e1c245); border-radius:12px; padding:16px 18px; font-size:0.88rem; color:#6b5518; line-height:1.55; }
+#screen-subscription .sub-cancelled-note b { color:var(--green); }
+/* dialogs (shared look) */
+#screen-subscription .sub-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:60; padding:24px; }
+#screen-subscription .sub-overlay.visible { display:flex; }
+#screen-subscription .sub-dialog { background:#fff; border-radius:18px; padding:24px 22px; max-width:340px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+#screen-subscription .sub-dialog-title { font-size:1.15rem; font-weight:800; color:var(--text,#1a1a1a); margin-bottom:10px; }
+#screen-subscription .sub-dialog-text { font-size:0.9rem; color:var(--text-2,#555); line-height:1.55; margin-bottom:20px; }
+#screen-subscription .sub-dialog-text b { color:var(--green); }
+#screen-subscription .sub-dialog-actions { display:flex; gap:10px; }
+#screen-subscription .sub-dialog-btn { flex:1; padding:12px; border-radius:10px; font-size:0.92rem; font-weight:700; cursor:pointer; border:1.5px solid transparent; }
+#screen-subscription .sub-dialog-btn.no { background:#f2f2f2; color:var(--text,#333); }
+#screen-subscription .sub-dialog-btn.yes { background:#c0392b; color:#fff; }
+#screen-subscription .sub-dialog-btn.ok { background:var(--green); color:#fff; }
 #menuOverlay .menu-item:hover { background: #f5fdf8; }
 #menuOverlay .menu-item:active { background: #e8f5e9; }
 #menuOverlay .menu-chevron { font-size: 18px; font-weight: 700; color: var(--green); }
@@ -7576,7 +7621,15 @@ const MAX_TEAMS_FREE         = 2;
 const MAX_BUDDIES_FREE       = 5;
 const MAX_MATCH_HISTORY_FREE = 8;
 
-function isProUser() { return !!(_profile && _profile.tier === 'pro'); }
+function isProUser() {
+  if (!(_profile && _profile.tier === 'pro')) return false;
+  // A cancelled plan stays Pro only until its end date; after that it's Free.
+  if (_profile.proCancelled && _profile.proEndsAt) {
+    var ends = new Date(_profile.proEndsAt);
+    if (!isNaN(ends.getTime()) && Date.now() >= ends.getTime()) return false;
+  }
+  return true;
+}
 function maxTeamsForUser()        { return isProUser() ? Infinity : MAX_TEAMS_FREE; }
 function maxBuddiesForUser()      { return isProUser() ? Infinity : MAX_BUDDIES_FREE; }
 function maxMatchHistoryForUser() { return isProUser() ? Infinity : MAX_MATCH_HISTORY_FREE; }
@@ -17056,6 +17109,43 @@ document.addEventListener('DOMContentLoaded', applyLang);
       </div>
 </section>
 
+      <section id="screen-subscription" class="screen" data-screen="subscription">
+      <div class="app-header">
+        <div class="logo">
+          <img class="crown" alt="" src="icons/home-crown.png">
+          <span class="wordmark">Parmate</span>
+        </div>
+        <div class="header-icons">
+          <button class="icon-btn" type="button" onclick="openMenu()" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="5" y1="16" x2="19" y2="16"></line></svg></button>
+        </div>
+      </div>
+      <div class="sub-header"><span class="title">Subscription</span><div class="actions"><button class="back-pill" onclick="showScreen('settings')">BACK</button></div></div>
+      <div class="body-area"></div>
+
+      <!-- Cancel confirmation popup (2nd confirmation) -->
+      <div class="sub-overlay" id="subCancelConfirm">
+        <div class="sub-dialog">
+          <div class="sub-dialog-title">Cancel your Pro account?</div>
+          <div class="sub-dialog-text">Do you really want to cancel your Pro account? Your plan will not renew, but you\u2019ll keep Pro until your current period ends.</div>
+          <div class="sub-dialog-actions">
+            <button class="sub-dialog-btn no" onclick="subCloseConfirm()">No</button>
+            <button class="sub-dialog-btn yes" onclick="subDoCancel()">Yes, cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- End / confirmation message -->
+      <div class="sub-overlay" id="subEndMessage">
+        <div class="sub-dialog">
+          <div class="sub-dialog-title">Pro plan cancelled</div>
+          <div class="sub-dialog-text" id="subEndMessageText"></div>
+          <div class="sub-dialog-actions">
+            <button class="sub-dialog-btn ok" onclick="subCloseEndMessage()">Got it</button>
+          </div>
+        </div>
+      </div>
+      </section>
+
       <section id="screen-editcourses" class="screen" data-screen="editcourses">
       <div class="app-header">
         <div class="logo">
@@ -24644,12 +24734,122 @@ function pmToggleNotif(kind,row){
   }catch(e){}
 }
 function pmOpenPlan(){
-  if(typeof isProUser==='function' && isProUser()){
-    if(typeof showToast==='function') showToast("You're already on Pro — thanks for supporting Parmate!");
+  showScreen('subscription');
+  renderSubscription();
+}
+
+function _fmtDate(v){
+  if(!v) return null;
+  var d = (v && v.toDate) ? v.toDate() : new Date(v);
+  if(isNaN(d.getTime())) return null;
+  try { return d.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }); }
+  catch(e){ return d.toISOString().slice(0,10); }
+}
+
+function renderSubscription(){
+  var root = document.getElementById('screen-subscription');
+  if(!root) return;
+  var prof = (typeof _profile!=='undefined' && _profile) ? _profile : {};
+  var isPro = (typeof isProUser==='function') && isProUser();
+  var body = root.querySelector('.body-area');
+  if(!body) return;
+
+  if(!isPro){
+    // Free user — show upgrade CTA
+    body.innerHTML =
+      '<div class="sub-card">' +
+        '<div class="sub-status-badge free">FREE PLAN</div>' +
+        '<div class="sub-title">You\u2019re on the Free plan</div>' +
+        '<div class="sub-desc">Upgrade to Pro for unlimited teams, buddies, full match history, course editing, custom photos and in-app messaging.</div>' +
+        '<button class="sub-cta" onclick="startProCheckout()">Upgrade to Pro</button>' +
+      '</div>';
     return;
   }
-  if(typeof startProCheckout==='function') startProCheckout();
-  else if(typeof showToast==='function') showToast('Pro plans are coming soon');
+
+  var since = _fmtDate(prof.proSince);
+  var cancelled = !!prof.proCancelled;
+  var endsAt = _fmtDate(prof.proEndsAt);
+  var source = prof.proSource || '';
+  var sourceLabel = source === 'launch' ? 'Launch price' : (source === 'launch-first-50' ? 'Founder (free Pro)' : (source === 'standard' ? 'Standard' : ''));
+
+  var rows = '';
+  rows += '<div class="sub-row"><span class="sub-row-label">Status</span><span class="sub-row-val ' + (cancelled?'warn':'ok') + '">' + (cancelled ? 'Cancelled — active until end date' : 'Active') + '</span></div>';
+  if(since)  rows += '<div class="sub-row"><span class="sub-row-label">Activated</span><span class="sub-row-val">' + since + '</span></div>';
+  if(sourceLabel) rows += '<div class="sub-row"><span class="sub-row-label">Plan</span><span class="sub-row-val">' + sourceLabel + '</span></div>';
+  rows += '<div class="sub-row"><span class="sub-row-label">Auto-renew</span><span class="sub-row-val ' + (cancelled?'warn':'ok') + '">' + (cancelled ? 'Off' : 'On') + '</span></div>';
+  if(cancelled && endsAt) rows += '<div class="sub-row"><span class="sub-row-label">Pro access until</span><span class="sub-row-val">' + endsAt + '</span></div>';
+
+  var actionArea;
+  if(cancelled){
+    actionArea =
+      '<div class="sub-cancelled-note">' +
+        'Your Pro plan is cancelled and will not renew.' + (endsAt ? ' You can keep using all Pro features until <b>' + endsAt + '</b>, after which your account returns to the Free plan.' : '') +
+      '</div>';
+  } else {
+    actionArea = '<button class="sub-cancel-btn" onclick="subConfirmCancel()">Cancel Pro plan</button>';
+  }
+
+  body.innerHTML =
+    '<div class="sub-card">' +
+      '<div class="sub-status-badge pro">PRO PLAN</div>' +
+      '<div class="sub-title">Parmate Pro</div>' +
+      '<div class="sub-rows">' + rows + '</div>' +
+    '</div>' +
+    '<div class="sub-action-wrap">' + actionArea + '</div>';
+}
+
+// ── Cancel flow: button -> confirm popup (Yes/No) -> call function -> end message ──
+function subConfirmCancel(){
+  var ov = document.getElementById('subCancelConfirm');
+  if(ov) ov.classList.add('visible');
+}
+function subCloseConfirm(){
+  var ov = document.getElementById('subCancelConfirm');
+  if(ov) ov.classList.remove('visible');
+}
+async function subDoCancel(){
+  subCloseConfirm();
+  var user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user){ if(typeof showToast==='function') showToast('Sign in first.', 'error'); return; }
+  try{
+    if(typeof showToast==='function') showToast('Cancelling…');
+    var idToken = await user.getIdToken();
+    var res = await fetch('/.netlify/functions/cancel-mollie-subscription', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ idToken: idToken }),
+    });
+    var data = await res.json();
+    if(res.ok && (data.cancelled || data.alreadyCancelled)){
+      // reflect locally so the screen updates without a reload
+      if(typeof _profile!=='undefined' && _profile){
+        _profile.proCancelled = true;
+        _profile.proAutoRenew = false;
+        if(data.proEndsAt) _profile.proEndsAt = data.proEndsAt;
+      }
+      var endsStr = _fmtDate(data.proEndsAt);
+      subShowEndMessage(endsStr);
+      renderSubscription();
+    } else {
+      if(typeof showToast==='function') showToast((data && data.message) || 'Could not cancel — please try again.', 'error');
+    }
+  }catch(err){
+    console.error('subDoCancel error:', err);
+    if(typeof showToast==='function') showToast('Something went wrong — please try again.', 'error');
+  }
+}
+function subShowEndMessage(endsStr){
+  var ov = document.getElementById('subEndMessage');
+  if(!ov) return;
+  var msgEl = document.getElementById('subEndMessageText');
+  if(msgEl){
+    msgEl.innerHTML = 'Your Pro plan has been cancelled and will not renew.' +
+      (endsStr ? '<br><br>You can keep using all Pro features until <b>' + endsStr + '</b>. After that, your account will switch to the Free plan.' : '');
+  }
+  ov.classList.add('visible');
+}
+function subCloseEndMessage(){
+  var ov = document.getElementById('subEndMessage');
+  if(ov) ov.classList.remove('visible');
 }
 
 async function startProCheckout() {
