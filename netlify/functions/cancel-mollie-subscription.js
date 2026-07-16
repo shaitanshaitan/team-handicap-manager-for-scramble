@@ -81,7 +81,8 @@ exports.handler = async function (event) {
     let proEndsAt = data.proEndsAt ? new Date(data.proEndsAt) : null;
     if (!proEndsAt) {
       const since = data.proSince && data.proSince.toDate ? data.proSince.toDate().toISOString()
-                  : (typeof data.proSince === 'string' ? data.proSince : null);
+                  : (typeof data.proSinceIso === 'string' ? data.proSinceIso
+                  : (typeof data.proSince === 'string' ? data.proSince : null));
       proEndsAt = oneYearAfter(since);
     }
 

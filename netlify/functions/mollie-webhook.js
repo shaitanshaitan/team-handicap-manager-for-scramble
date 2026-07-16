@@ -67,25 +67,35 @@ exports.handler = async function (event) {
 
     const profileRef = db.collection('users').doc(uid).collection('profile').doc('data');
 
+    // The paid year runs from now until exactly one year out. Anchor that end
+    // date HERE, at purchase, so activation date + end date are fixed facts —
+    // cancellation later just reads proEndsAt instead of recomputing it.
+    const nowIso = new Date().toISOString();
+    const endDate = new Date();
+    endDate.setFullYear(endDate.getFullYear() + 1);
+    const endIso = endDate.toISOString();
+    const startDateStr = endIso.split('T')[0]; // YYYY-MM-DD — renewal subscription starts the day access would end
+
     // Grant Pro for the year already paid for.
     await profileRef.set(
       {
         tier: 'pro',
         proSince: admin.firestore.FieldValue.serverTimestamp(),
+        proSinceIso: nowIso,          // plain ISO copy, easy for the client to read/display
+        proEndsAt: endIso,            // fixed end of the paid year (also the renewal date)
+        proAutoRenew: true,
+        proCancelled: false,
         proSource: (payment.metadata && payment.metadata.promo) || 'unknown',
         molliePaymentId: payment.id,
         mollieCustomerId: payment.customerId,
       },
       { merge: true }
     );
-    console.log(`Granted Pro to uid ${uid} (${payment.metadata && payment.metadata.promo})`);
+    console.log(`Granted Pro to uid ${uid} (${payment.metadata && payment.metadata.promo}), ends ${endIso}`);
 
-    // Set up automatic renewal at the STANDARD price, starting exactly
-    // 1 year from today — so year 2 bills at €35 with no manual action,
-    // regardless of whether year 1 was the €13.99 promo or already €35.
-    const startDate = new Date();
-    startDate.setFullYear(startDate.getFullYear() + 1);
-    const startDateStr = startDate.toISOString().split('T')[0]; // YYYY-MM-DD, Mollie's expected format
+    // Set up automatic renewal at the STANDARD price, starting exactly when the
+    // paid year ends — so year 2 bills at €35 with no manual action, regardless
+    // of whether year 1 was the €13.99 promo or already €35.
 
     try {
       const subscription = await mollieClient.customerSubscriptions.create({
