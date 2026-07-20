@@ -13138,7 +13138,10 @@ async function saveProfile() {
   };
 
   try {
-    await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(data);
+    // MERGE (not overwrite): this legacy save must never wipe cover, custom
+    // avatar/cover URLs, gender, or subscription fields that live on the same
+    // profile doc. Using .set(..., {merge:true}) preserves everything not listed.
+    await window._fbDb.collection('users').doc(uid).collection('profile').doc('data').set(data, { merge: true });
     // Write to public_profiles for buddy search (flat collection, no index needed)
     await window._fbDb.collection('public_profiles').doc(uid).set({
       displayName: data.displayName,
@@ -13146,8 +13149,10 @@ async function saveProfile() {
       homeCourse:  data.homeCourse,
       avatarId:    data.avatarId,
       email:       data.email
-    });
-    _profile = data;
+    }, { merge: true });
+    // Merge into the in-memory profile too — do NOT replace it, or cover/avatar/
+    // tier fields already loaded would be dropped until the next reload.
+    _profile = Object.assign({}, _profile || {}, data);
     updateUserPill();
     prefillFromProfile();
     showProfileSummary();
