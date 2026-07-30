@@ -956,6 +956,15 @@ input { transition:border-color 0.4s, background 0.2s; }
 .auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border2); }
 .auth-divider span { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
 .auth-fields { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+#pausedRoundConfirm.sub-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9999; padding:24px; }
+#pausedRoundConfirm.sub-overlay.visible { display:flex; }
+#pausedRoundConfirm .sub-dialog { background:#fff; border-radius:18px; padding:24px 22px; max-width:340px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+#pausedRoundConfirm .sub-dialog-title { font-size:1.15rem; font-weight:800; color:#1a1a1a; margin-bottom:10px; }
+#pausedRoundConfirm .sub-dialog-text { font-size:0.9rem; color:#555; line-height:1.55; margin-bottom:20px; }
+#pausedRoundConfirm .sub-dialog-actions { display:flex; gap:10px; }
+#pausedRoundConfirm .sub-dialog-btn { flex:1; padding:12px; border-radius:10px; font-size:0.92rem; font-weight:700; cursor:pointer; border:1.5px solid transparent; }
+#pausedRoundConfirm .sub-dialog-btn.no { background:#f2f2f2; color:#333; }
+#pausedRoundConfirm .sub-dialog-btn.yes { background:#c0392b; color:#fff; }
 .btn-auth { width:100%; padding:15px; background:var(--gold); border:none; border-radius:var(--radius-sm); font-family:'Roboto',sans-serif; font-size:0.72rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:#0a1a10; cursor:pointer; transition:all 0.18s; }
 
 /* ── AUTH MODAL: larger inputs + readable button (EDIT THESE FOR THE LOGIN SCREEN) ── */
@@ -5954,6 +5963,24 @@ input { transition:border-color 0.4s, background 0.2s; }
   <span class="live-match-banner-dot"></span>
   <span class="live-match-banner-text" id="liveMatchBannerText" data-i18n="banner_live">⚡ Live Match in progress — tap to return</span>
   <span class="live-match-banner-arrow">›</span>
+</div>
+
+<!-- Paused (unsaved) TR round banner — tap to resume, X to discard -->
+<div id="pausedRoundBanner" style="display:none;" class="live-match-banner">
+  <span class="live-match-banner-text" id="pausedRoundBannerText" onclick="resumePausedRound()" style="flex:1;cursor:pointer;">⛳ Round in progress — tap to resume</span>
+  <button onclick="event.stopPropagation();discardPausedRound();" aria-label="Discard round" style="background:rgba(255,255,255,0.25);border:none;color:#fff;font-size:15px;font-weight:800;width:26px;height:26px;border-radius:50%;cursor:pointer;flex-shrink:0;line-height:1;">×</button>
+</div>
+
+<!-- Discard paused round confirmation -->
+<div class="sub-overlay" id="pausedRoundConfirm">
+  <div class="sub-dialog">
+    <div class="sub-dialog-title">Discard this round?</div>
+    <div class="sub-dialog-text">Your in-progress round will be permanently deleted and can't be recovered. Scores you entered will be lost.</div>
+    <div class="sub-dialog-actions">
+      <button class="sub-dialog-btn no" onclick="closePausedRoundConfirm()">Keep it</button>
+      <button class="sub-dialog-btn yes" onclick="confirmDiscardPausedRound()">Discard</button>
+    </div>
+  </div>
 </div>
 
 <!-- RESULTS OVERLAY -->
@@ -14396,6 +14423,7 @@ async function onSignedIn(user) {
   startNotifListener(user.uid);
   if(typeof startThreadsBellListener==='function') startThreadsBellListener(user.uid);
   checkForActiveMatch(user.uid);
+  if (typeof restorePausedRoundFromCloud === 'function') restorePausedRoundFromCloud(user.uid);
   loadOpenGames(user.uid).then(function(){ if(typeof updateNotifBadge==='function') updateNotifBadge(); }).catch(function(){});
   checkWhatsNew();
   applyLang();
@@ -14701,6 +14729,11 @@ let _numpad = { holeIdx: -1, team: 'my', buffer: '' };
 function openScorecard() {
   const n = _holes;
   const isMatch = _gameMode === 'match';
+  // Starting a fresh round: clear any previously paused round + its banner, and
+  // reset the saved flag so this new round is tracked as unsaved.
+  _pausedRound = null;
+  _scRoundSaved = false;
+  if (typeof hidePausedRoundBanner === 'function') hidePausedRoundBanner();
   _sc.holes      = n;
   _sc.isMatch    = isMatch;
   _sc.isCarousel = true;
@@ -14799,17 +14832,151 @@ function closeScorecard() {
   }
   document.getElementById('scorecardOverlay').classList.remove('open');
   numpadCancel();
+
+  // TR (single/non-live) round with scores entered but not yet saved:
+  // pause it rather than discard, and surface a banner to resume or discard.
+  const hasScores = Array.isArray(_sc.scores) && _sc.scores.some(s => s > 0);
+  if (!_sc.isLive && hasScores && !_scRoundSaved) {
+    _pausedRound = {
+      snapshot: JSON.parse(JSON.stringify(_sc)),
+      courseName: _sc.courseName,
+      holesPlayed: _sc.scores.filter(s => s > 0).length,
+      holes: _sc.holes,
+      pausedAt: new Date().toISOString(),
+    };
+    showPausedRoundBanner();
+    savePausedRoundToCloud();   // persist so it survives app close / re-login
+    showToast('Round paused — tap the banner to resume.', 'info');
+    _sc.isCarousel  = false;
+    _sc.currentHole = 0;
+    restoreScorecardChrome();
+    return;
+  }
+
   _sc.isCarousel  = false;
   _sc.currentHole = 0;
+  // Clear round data on exit so an unsaved round can never bleed into the next
+  // game (previously scores/oppScores persisted in _sc and showed up in a new round).
+  _sc.scores      = [];
+  _sc.oppScores   = [];
+  _sc.isMatch     = false;
+  _sc.isLive      = false;
+  _sc.matchId     = null;
+  _sc.myRole      = null;
+  restoreScorecardChrome();
+}
+
+// Restore the scorecard's default chrome (buttons/columns) after closing.
+function restoreScorecardChrome() {
   const backBtn = document.getElementById('sc_backBtn');
   const endBtn  = document.getElementById('sc_endMatchBtn');
   const codeEl  = document.getElementById('sc_liveCode');
   if (backBtn) backBtn.style.display = '';
   if (endBtn)  endBtn.style.display  = 'none';
   if (codeEl)  codeEl.style.display  = 'none';
-  document.getElementById('sc_holes').style.display     = '';
-  document.getElementById('sc_colHeader').style.display = '';
-  document.getElementById('sc_carousel').style.display  = 'none';
+  const holesEl = document.getElementById('sc_holes');
+  const colEl   = document.getElementById('sc_colHeader');
+  const carEl   = document.getElementById('sc_carousel');
+  if (holesEl) holesEl.style.display = '';
+  if (colEl)   colEl.style.display   = '';
+  if (carEl)   carEl.style.display   = 'none';
+}
+
+// ── PAUSED (unsaved) TR ROUND — banner, resume, discard ─────────────────
+let _pausedRound = null;   // holds a snapshot of an unsaved TR round
+let _scRoundSaved = false; // set true when a round is saved, so we don't offer to resume it
+
+function showPausedRoundBanner() {
+  if (!_pausedRound) return;
+  const banner = document.getElementById('pausedRoundBanner');
+  const textEl = document.getElementById('pausedRoundBannerText');
+  if (textEl) {
+    textEl.textContent = '⛳ Round in progress · ' + _pausedRound.courseName +
+      ' (' + _pausedRound.holesPlayed + '/' + _pausedRound.holes + ') — tap to resume';
+  }
+  if (banner) banner.style.display = '';
+  document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '44px');
+}
+
+function hidePausedRoundBanner() {
+  const banner = document.getElementById('pausedRoundBanner');
+  if (banner) banner.style.display = 'none';
+  document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '');
+}
+
+// Tapping the banner: resume straight back into the scorecard where you left off.
+function resumePausedRound() {
+  if (!_pausedRound) { hidePausedRoundBanner(); return; }
+  _sc = JSON.parse(JSON.stringify(_pausedRound.snapshot));
+  _sc.isCarousel = true;
+  hidePausedRoundBanner();
+  const overlay = document.getElementById('scorecardOverlay');
+  if (overlay) overlay.classList.add('open');
+  // Rebuild the carousel view at the last hole the player was on.
+  if (typeof renderCarouselHole === 'function') renderCarouselHole(_sc.currentHole || 0);
+  if (typeof renderCarouselDots === 'function') renderCarouselDots();
+  if (typeof updateScorecardTotals === 'function') updateScorecardTotals();
+  document.getElementById('sc_carousel').style.display = '';
+  document.getElementById('sc_holes').style.display = 'none';
+  document.getElementById('sc_colHeader').style.display = 'none';
+}
+
+// Discard the paused round entirely (with confirmation).
+function discardPausedRound() {
+  document.getElementById('pausedRoundConfirm').classList.add('visible');
+}
+function closePausedRoundConfirm() {
+  document.getElementById('pausedRoundConfirm').classList.remove('visible');
+}
+function confirmDiscardPausedRound() {
+  closePausedRoundConfirm();
+  _pausedRound = null;
+  hidePausedRoundBanner();
+  _sc.scores = []; _sc.oppScores = [];
+  _sc.isMatch = false; _sc.isLive = false; _sc.matchId = null; _sc.myRole = null;
+  if (typeof showToast === 'function') showToast('Round discarded.', 'info');
+  clearPausedRoundFromCloud();
+}
+
+// ── Paused-round cloud persistence (survives app close / re-login) ──────────
+// Stored at users/{uid}/state/pausedRound — one per user (at most one paused TR).
+function _pausedRoundDocRef() {
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if (!user || !window._fbDb) return null;
+  return window._fbDb.collection('users').doc(user.uid).collection('state').doc('pausedRound');
+}
+
+async function savePausedRoundToCloud() {
+  const ref = _pausedRoundDocRef();
+  if (!ref || !_pausedRound) return;
+  try { await ref.set(_pausedRound); }
+  catch (e) { console.warn('Could not save paused round:', e); }
+}
+
+async function clearPausedRoundFromCloud() {
+  const ref = _pausedRoundDocRef();
+  if (!ref) return;
+  try { await ref.delete(); }
+  catch (e) { console.warn('Could not clear paused round:', e); }
+}
+
+// Called at login: if a paused round was left behind, restore it and show the banner.
+async function restorePausedRoundFromCloud(uid) {
+  if (!window._fbDb) return;
+  try {
+    const snap = await window._fbDb.collection('users').doc(uid).collection('state').doc('pausedRound').get();
+    if (!snap.exists) return;
+    const data = snap.data();
+    if (!data || !data.snapshot || !Array.isArray(data.snapshot.scores) || !data.snapshot.scores.some(s => s > 0)) {
+      await window._fbDb.collection('users').doc(uid).collection('state').doc('pausedRound').delete().catch(()=>{});
+      return;
+    }
+    _pausedRound = data;
+    _scRoundSaved = false;
+    if (typeof showPausedRoundBanner === 'function') showPausedRoundBanner();
+  } catch (e) {
+    console.warn('Could not restore paused round:', e);
+  }
 }
 
 function forceCloseScorecard() {
@@ -15493,7 +15660,9 @@ function showAllHoles() {
   // Totals row
   const myTotal  = _sc.scores.reduce((a,b)    => a + (b > 0 ? b : 0), 0);
   const oppTotal = _sc.oppScores.reduce((a,b) => a + (b > 0 ? b : 0), 0);
-  const myPar    = _sc.par.reduce((a,b) => a + b, 0);
+  // Par of PLAYED holes only (not the whole course) so vs-par matches the top
+  // banner. Using full-course par here made vs-par wrong until every hole was in.
+  const myPar    = _sc.par.reduce((a,b,i) => a + (_sc.scores[i] > 0 ? b : 0), 0);
   if (myTotal > 0) {
     if (isMatch) {
       html += `
@@ -15997,6 +16166,12 @@ async function saveRound() {
       if (btn) btn.textContent = '✓ Saved!';
     });
     showToast(`Round saved — ${vsPar >= 0 ? '+' : ''}${vsPar} vs par`, 'success');
+    // Round is now persisted: mark saved and clear any paused-round banner so we
+    // don't offer to "resume" a round that's already been saved.
+    _scRoundSaved = true;
+    _pausedRound = null;
+    if (typeof hidePausedRoundBanner === 'function') hidePausedRoundBanner();
+    if (typeof clearPausedRoundFromCloud === 'function') clearPausedRoundFromCloud();
     setTimeout(() => setSaveBtnsState(false), 3000);
   } catch(e) {
     setSaveBtnsState(false);
