@@ -16367,11 +16367,37 @@ async function abandonMatch(matchId) {
 // ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW failed:', err));
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        // Check for an updated SW whenever the app loads.
+        reg.update().catch(() => {});
+        // When a new SW is found and finishes installing, activate it immediately.
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage('SKIP_WAITING');
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('SW failed:', err));
+    // When the controlling SW changes (new version took over), reload once so the
+    // page runs the new code. The flag guards against reload loops.
+    let _swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swReloaded) return;
+      _swReloaded = true;
+      window.location.reload();
+    });
   });
 }
 
 document.addEventListener('DOMContentLoaded', applyLang);
+// BUILD STAMP — check this in the browser console to confirm which version is live.
+// If you deploy and don't see this exact string, you're being served a cached/old build.
+console.log('%cParmate build: 2026-07-29-scorecard-fixes+paused-round', 'color:#1a6b3c;font-weight:bold;font-size:14px;');
 </script>
 
 <!-- ── MATCH GATE OVERLAY ── -->

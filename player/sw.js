@@ -1,6 +1,7 @@
 // ─── Parmate Team HCP · Service Worker ───
-// v3 — root-served paths, network-first navigations, stale-while-revalidate assets.
-const APP_VERSION = 'parmate-team-hcp-v3';
+// v4 — root-served paths, network-first navigations, stale-while-revalidate assets.
+// Bump APP_VERSION on every deploy that must invalidate caches.
+const APP_VERSION = 'parmate-team-hcp-v4';
 const APP_CACHE   = APP_VERSION;
 
 // Minimal app shell (served at the site root). Kept tiny and cached individually
