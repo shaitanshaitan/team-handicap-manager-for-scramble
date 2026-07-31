@@ -2432,6 +2432,16 @@ input { transition:border-color 0.4s, background 0.2s; }
 #screen-acconfirm .confirm-section-title {font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
     color: var(--green); letter-spacing: 0.08em; text-transform: uppercase;
     margin-bottom: 10px; display: flex; align-items: center; gap: 6px;}
+
+/* ── Tappable summary rows that open the full Loop Layout / Par&SI views ── */
+/* Global boxed-card style so these rows look identical on TR summary AND TM tmhcp. */
+.summary-open-row { width:100%; height:48px; border:1.5px solid var(--green); border-radius:8px;
+    padding:0 14px; display:flex; align-items:center; justify-content:space-between;
+    font-family:'Inter',sans-serif; font-size:14px; color:var(--text); background:#fff;
+    margin-bottom:10px; cursor:pointer; box-sizing:border-box; }
+.summary-open-row:active { background:#f5fdf8; }
+.summary-open-row .row-label { font-weight:500; }
+.summary-open-row .row-value { font-size:13px; }
 #screen-acconfirm .confirm-section-title::after {content: ''; flex: 1; height: 1px; background: rgba(26,107,60,0.15);}
 #screen-acconfirm .summary-row {display: flex; align-items: center; justify-content: space-between;
     padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
@@ -7840,6 +7850,8 @@ function showScreen(id, opts) {
         document.getElementById('screen-trscore').classList.contains('active') &&
         id !== 'trscore' && id !== 'trfull';
   if (_leavingTrScore && typeof maybePauseTrRound === 'function') maybePauseTrRound();
+  // Clear read-only view mode once we navigate anywhere except the view screens.
+  if (id !== 'trloop' && id !== 'trparsi' && typeof _viewMode !== 'undefined') { _viewMode = false; }
   if (id !== 'tmscore' && id !== 'tmfull') window._tmView = null;  // leave saved-match view
   const el = document.getElementById('screen-' + id);
   if (!el) { console.warn('showScreen: no #screen-' + id); return; }
@@ -8931,7 +8943,12 @@ function trInit_trcourse(ROOT){
     _trFlow.twice = state.twice;
     _trFlow.course = trComposeCourse(baseCourse, state.holes, state.loopSel, state.twice);
     _trFlow.loopIdx = state.loopSel[0] != null ? state.loopSel[0] : 0;
-    showScreen('trloop');
+    // Loop Layout + Par/SI are no longer separate steps — they're viewable in the
+    // Summary. Course par/SI is already composed above, so skip straight to team.
+    // (trComposeCourse also sets _trFlow.parByHole/siByHole indirectly; ensure the
+    // flow-level copies used by the TM live-match builder are populated here too.)
+    if (typeof trSyncParSiFromCourse === 'function') trSyncParSiFromCourse();
+    showScreen('trteam');
   });
 
   // ── Add-new-course button — flash ──────────────────────
@@ -9088,7 +9105,7 @@ function trComposeCourse(base, holes, loopSel, twice) {
 }
 
 // ── TR step navigation (collect + advance) ──
-const TR_ORDER = ['trcourse','trloop','trparsi','trteam','trtee','trformat','trsummary','trresult','trscore','trfullscore'];
+const TR_ORDER = ['trcourse','trteam','trtee','trformat','trsummary','trresult','trscore','trfullscore'];
 function trNext(fromId) {
   if (fromId === 'trparsi') trCollectParSi();
   const i = TR_ORDER.indexOf(fromId);
@@ -9129,6 +9146,24 @@ function trRenderLoop(scr) {
   hideIf('tr_teeWomenChampion', wChamp); hideIf('tr_teeWomenMedal', wMedal); hideIf('tr_teeWomenForward', wFwd);
   const wSection = document.getElementById('tr_womenTeesSection');
   if (wSection) wSection.style.display = womenTees.length ? '' : 'none';
+
+  // View mode (opened from summary): BACK returns to the summary, NEXT is hidden.
+  applyViewMode('screen-trloop', 'tr_loopNextBtn');
+}
+
+// Configure a viewed screen: reroute its BACK to viewBack() and hide its NEXT
+// when opened as a read-only view from the summary; restore normal otherwise.
+function applyViewMode(screenId, nextBtnId) {
+  const scr = document.getElementById(screenId); if (!scr) return;
+  const back = scr.querySelector('.back-pill');
+  const next = nextBtnId ? document.getElementById(nextBtnId) : scr.querySelector('.play-btn');
+  if (_viewMode) {
+    if (back) back.onclick = function(){ viewBack(); };
+    if (next) next.style.display = 'none';
+  } else {
+    if (next) next.style.display = '';
+    // (normal BACK handlers are set by the screens' own markup/wiring)
+  }
 }
 
 // ── Screen 06: pre-fill par buttons + SI grid from course ──
@@ -9180,6 +9215,12 @@ function trRenderParSi(scr) {
     }
   }
   trUpdateParTotal(scr);
+
+  // View mode (opened from summary): BACK returns to summary, NEXT hidden,
+  // par buttons read-only (no accidental edits from a view).
+  applyViewMode('screen-trparsi', null);
+  const parsiScr = document.getElementById('screen-trparsi');
+  if (parsiScr) parsiScr.querySelectorAll('.par-btn').forEach(b => { b.style.pointerEvents = _viewMode ? 'none' : ''; });
 }
 
 function trUpdateParTotal(scr) {
@@ -9190,6 +9231,16 @@ function trUpdateParTotal(scr) {
 }
 
 // ── Collect par/SI edits back into _trFlow ──
+// Populate the flow-level par/SI arrays from the already-composed course.
+// Replaces what the (now-hidden) trparsi screen's trCollectParSi() used to do,
+// so the TM live-match builder (which reads _trFlow.parByHole/siByHole) still works.
+function trSyncParSiFromCourse() {
+  if (!_trFlow || !_trFlow.course) return;
+  const c = _trFlow.course;
+  _trFlow.parByHole = Array.isArray(c.parPerHole) ? c.parPerHole.slice() : [];
+  _trFlow.siByHole  = Array.isArray(c.indexPerHole) ? c.indexPerHole.slice() : [];
+}
+
 function trCollectParSi() {
   const scr = document.getElementById('screen-trparsi'); if (!scr || !_trFlow) return;
   const holes = scr.querySelectorAll('.si-input').length || 9;
@@ -9497,7 +9548,7 @@ function trRenderTeam(scr) {
     if (btn._wired) return;
     const txt = (btn.textContent || '').trim().toUpperCase();
     if (txt === 'SAVE')      btn.addEventListener('click', trbSaveTeam);
-    else if (txt === 'BACK') btn.addEventListener('click', () => showScreen('trparsi'));
+    else if (txt === 'BACK') btn.addEventListener('click', () => showScreen('trcourse'));
     btn._wired = true;
   });
   // wire saved-team name dropdown (chevron toggles; options populated dynamically)
@@ -9843,6 +9894,26 @@ function trRenderFormats(scr) {
 }
 
 // ── Screen 10: Game Summary ──
+// ── Open the existing full-fidelity Loop Layout / Par&SI screens as read-only
+// views from the summary (TR) or tmhcp (TM). _viewReturnScreen remembers where
+// to send BACK. _viewMode makes the screens read-only (no editing from here).
+let _viewReturnScreen = null;
+let _viewMode = false;
+function openLayoutView(fromScreen) {
+  _viewReturnScreen = fromScreen; _viewMode = true;
+  showScreen('trloop');
+}
+function openParSiView(fromScreen) {
+  _viewReturnScreen = fromScreen; _viewMode = true;
+  showScreen('trparsi');
+}
+// BACK handler for the view screens: return to whoever opened them.
+function viewBack() {
+  const dest = _viewReturnScreen || 'trsummary';
+  _viewMode = false; _viewReturnScreen = null;
+  showScreen(dest);
+}
+
 function trRenderSummary(scr) {
   const c=_trFlow.course||{};
   const rows=scr.querySelectorAll('.summary-row .row-value');
@@ -16485,7 +16556,7 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('DOMContentLoaded', applyLang);
 // BUILD STAMP — check this in the browser console to confirm which version is live.
 // If you deploy and don't see this exact string, you're being served a cached/old build.
-console.log('%cParmate build: 2026-07-31-notif-paused-round', 'color:#1a6b3c;font-weight:bold;font-size:14px;');
+console.log('%cParmate build: 2026-07-31-tm-row-style', 'color:#1a6b3c;font-weight:bold;font-size:14px;');
 </script>
 
 <!-- ── MATCH GATE OVERLAY ── -->
@@ -20418,6 +20489,16 @@ console.log('%cParmate build: 2026-07-31-notif-paused-round', 'color:#1a6b3c;fon
           <span class="row-value">30%/15%</span>
         </div>
 
+        <!-- Open the existing full-fidelity screens as read-only views -->
+        <div class="summary-row summary-open-row" onclick="openLayoutView('trsummary')">
+          <span class="row-label">Loop Layout</span>
+          <span class="row-value" style="color:var(--green);font-weight:700;">View ›</span>
+        </div>
+        <div class="summary-row summary-open-row" onclick="openParSiView('trsummary')">
+          <span class="row-label">Par &amp; Stroke Index</span>
+          <span class="row-value" style="color:var(--green);font-weight:700;">View ›</span>
+        </div>
+
       </div>
 
       <div class="dock">
@@ -20931,6 +21012,15 @@ console.log('%cParmate build: 2026-07-31-notif-paused-round', 'color:#1a6b3c;fon
         <div class="course-header" id="tmhcp_courseHdr"></div>
         <div id="tmhcp_team1"></div>
         <div id="tmhcp_team2"></div>
+        <!-- Open the existing full-fidelity screens as read-only views -->
+        <div class="summary-row summary-open-row" onclick="openLayoutView('tmhcp')" style="margin-top:8px;">
+          <span class="row-label">Loop Layout</span>
+          <span class="row-value" style="color:var(--green);font-weight:700;">View ›</span>
+        </div>
+        <div class="summary-row summary-open-row" onclick="openParSiView('tmhcp')">
+          <span class="row-label">Par &amp; Stroke Index</span>
+          <span class="row-value" style="color:var(--green);font-weight:700;">View ›</span>
+        </div>
         <button class="match-code-btn" type="button" onclick="tmHcpNext()">Create Match Code</button>
       </div>
 
