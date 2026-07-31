@@ -7833,6 +7833,13 @@ let _navFromPop = false;
 function _activeScreenId(){ var el=document.querySelector('.screen.active'); return el ? el.id.replace('screen-','') : 'home'; }
 function showScreen(id, opts) {
   opts = opts || {};
+  // Leaving the TR scorecard by ANY route (BACK pill, Home nav tab, etc.):
+  // if there are unsaved scores, pause the round so it can be resumed later.
+  // Excludes 'trfull' (the all-holes view) and 'trscore' itself (staying put).
+  const _leavingTrScore = document.getElementById('screen-trscore') &&
+        document.getElementById('screen-trscore').classList.contains('active') &&
+        id !== 'trscore' && id !== 'trfull';
+  if (_leavingTrScore && typeof maybePauseTrRound === 'function') maybePauseTrRound();
   if (id !== 'tmscore' && id !== 'tmfull') window._tmView = null;  // leave saved-match view
   const el = document.getElementById('screen-' + id);
   if (!el) { console.warn('showScreen: no #screen-' + id); return; }
@@ -9919,8 +9926,15 @@ function trbStartScorecard() {
     if (typeof showToast==='function') showToast('Scorecard unavailable'); return;
   }
   const n = trcTotal();
-  if (!_trcScores.length || _trcScores.length !== n) _trcScores = new Array(n).fill(null);
+  // Always start a fresh scorecard. Previously this only reset when the hole
+  // count changed, so replaying the same 9/18-hole size kept the old scores
+  // (causing stale scores + a phantom vs-par on a brand-new round).
+  _trcScores = new Array(n).fill(null);
   _trcHole = 0; _trcBuf = '';
+  // Fresh round: clear any paused round + banner and reset the saved flag.
+  _pausedRound = null; _scRoundSaved = false;
+  if (typeof hidePausedRoundBanner === 'function') hidePausedRoundBanner();
+  if (typeof clearPausedRoundFromCloud === 'function') clearPausedRoundFromCloud();
   showScreen('trscore');
 }
 
@@ -10022,18 +10036,32 @@ function trcRenderFull(scr) {
   const cm=scr.querySelector('.course-meta'); if(cm) cm.textContent=(c._playedLoopName?c._playedLoopName+' · ':'')+'Par '+(c.par||'–');
   const tbody=scr.querySelector('.sc-table tbody');
   if(!tbody) return;
-  let rows='', totPar=0, totScore=0, anyScore=false;
+  let rows='', totPar=0, totScore=0, anyScore=false, playedCount=0, parPlayed=0;
   for(let i=0;i<n;i++){
     const par=trcPar(i), si=trcSI(i), sc=_trcScores[i];
     totPar+=par;
     let scCell='\u2013';
-    if(sc!=null){ totScore+=sc; anyScore=true; scCell = (sc>par)?'<span class="over-par">'+sc+'</span>':(sc<par?'<span class="under-par">'+sc+'</span>':sc); }
+    if(sc!=null){ totScore+=sc; anyScore=true; playedCount++; parPlayed+=par; scCell = (sc>par)?'<span class="over-par">'+sc+'</span>':(sc<par?'<span class="under-par">'+sc+'</span>':sc); }
     rows+='<tr><td>'+(i+1)+'</td><td>'+par+'</td><td>'+scCell+'</td><td><span class="si-badge '+trcSIClass(si)+'">'+si+'</span></td></tr>';
   }
-  const vs=totScore-totPar;
+  // Footer SCORE row: vs-par is against PLAYED holes' par, not the whole course.
+  const vs=totScore-parPlayed;
   const totScoreCell = anyScore ? (vs>0?'<span class="over-par">'+totScore+'</span>':(vs<0?'<span class="under-par">'+totScore+'</span>':totScore)) : '\u2013';
   rows+='<tr><td>SCORE</td><td>'+totPar+'</td><td>'+totScoreCell+'</td><td>\u2013</td></tr>';
   tbody.innerHTML=rows;
+
+  // Update the top stats bar from real data. Previously this bar was never
+  // refreshed, so it showed the hardcoded HTML placeholders (37 / 34 / +3 / 9-of-9)
+  // even on an empty round — the "+3 with no scores" bug.
+  const cells = scr.querySelectorAll('.stats-bar .stat-value');
+  if (cells.length >= 4) {
+    cells[0].textContent = anyScore ? totScore : '\u2013';                 // Gross
+    cells[1].textContent = anyScore ? parPlayed : '\u2013';                // Par Played
+    const vsEl = cells[2];                                                 // vs Par
+    vsEl.textContent = anyScore ? (vs>0?'+'+vs:(vs===0?'E':vs)) : '\u2013';
+    vsEl.className = 'stat-value' + (anyScore ? (vs>0?' positive':(vs<0?' negative':'')) : '');
+    cells[3].textContent = playedCount + ' / ' + n;                        // Holes
+  }
 }
 
 // ── Save the completed round (Firestore + Home list) ──
@@ -10074,6 +10102,9 @@ async function trcSaveRound() {
     if(typeof renderMyData==='function') renderMyData();
     if(saveBtn) saveBtn.textContent='\u2713 Saved';
     if(typeof showToast==='function') showToast('Round saved \u2014 '+(vsPar>=0?'+':'')+vsPar+' vs par','success');
+    _scRoundSaved = true; _pausedRound = null;
+    if (typeof hidePausedRoundBanner === 'function') hidePausedRoundBanner();
+    if (typeof clearPausedRoundFromCloud === 'function') clearPausedRoundFromCloud();
     showScreen('home');
   } catch(e){
     if(saveBtn) saveBtn.textContent='Save Round';
@@ -14220,6 +14251,11 @@ async function loadProfileData(uid) {
 // ═══════════════════════════════════
 function renderHomeScreen() {
   const scr = document.getElementById('screen-home'); if (!scr) return;
+  // If a round is paused, make sure the banner stays visible on Home (navigation
+  // to Home must not hide it).
+  if (typeof _pausedRound !== 'undefined' && _pausedRound && typeof showPausedRoundBanner === 'function') {
+    showPausedRoundBanner();
+  }
   const prof = _profile || {};
   const cu = window._fbAuth && window._fbAuth.currentUser;
   const AV = (typeof AVATARS !== 'undefined') ? AVATARS : {};
@@ -14887,14 +14923,26 @@ let _pausedRound = null;   // holds a snapshot of an unsaved TR round
 let _scRoundSaved = false; // set true when a round is saved, so we don't offer to resume it
 
 function showPausedRoundBanner() {
-  if (!_pausedRound) return;
+  if (!_pausedRound) { console.log('[PAUSE] showBanner: no _pausedRound'); return; }
   const banner = document.getElementById('pausedRoundBanner');
   const textEl = document.getElementById('pausedRoundBannerText');
+  console.log('[PAUSE] showBanner: bannerEl=', !!banner, 'textEl=', !!textEl);
   if (textEl) {
     textEl.textContent = '⛳ Round in progress · ' + _pausedRound.courseName +
       ' (' + _pausedRound.holesPlayed + '/' + _pausedRound.holes + ') — tap to resume';
   }
-  if (banner) banner.style.display = '';
+  if (banner) {
+    // Force-show with explicit styles + very high z-index so no header/overlay can
+    // hide it, regardless of the current screen's stacking context.
+    banner.style.display    = 'flex';
+    banner.style.position   = 'fixed';
+    banner.style.top        = '0';
+    banner.style.left       = '0';
+    banner.style.right      = '0';
+    banner.style.zIndex     = '99999';
+    banner.style.visibility = 'visible';
+    banner.style.opacity    = '1';
+  }
   document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '44px');
 }
 
@@ -14904,21 +14952,54 @@ function hidePausedRoundBanner() {
   document.querySelectorAll('.page-inner').forEach(el => el.style.paddingTop = '');
 }
 
-// Tapping the banner: resume straight back into the scorecard where you left off.
+// Pause the current TR round if it has unsaved scores. Safe to call multiple
+// times — it no-ops if already paused or nothing to save.
+function maybePauseTrRound() {
+  console.log('[PAUSE] maybePauseTrRound called. _pausedRound=', !!_pausedRound,
+    '_scRoundSaved=', _scRoundSaved,
+    '_trcScores=', JSON.stringify(_trcScores),
+    'hasFlow=', !!(_trFlow && _trFlow.course));
+  if (_pausedRound) { console.log('[PAUSE] skip: already paused'); return; }
+  if (_scRoundSaved) { console.log('[PAUSE] skip: round already saved'); return; }
+  const hasScores = Array.isArray(_trcScores) && _trcScores.some(s => s != null);
+  if (!hasScores || !_trFlow || !_trFlow.course) { console.log('[PAUSE] skip: no scores or no flow'); return; }
+  const c = _trFlow.course;
+  _pausedRound = {
+    trcScores: _trcScores.slice(),
+    trcHole: _trcHole,
+    course: JSON.parse(JSON.stringify(c)),
+    team: _trFlow.team ? JSON.parse(JSON.stringify(_trFlow.team)) : null,
+    courseName: c.name || 'Course',
+    holesPlayed: _trcScores.filter(s => s != null).length,
+    holes: trcTotal(),
+    pausedAt: new Date().toISOString(),
+  };
+  console.log('[PAUSE] paused round created:', _pausedRound.courseName, _pausedRound.holesPlayed + '/' + _pausedRound.holes);
+  showPausedRoundBanner();
+  savePausedRoundToCloud();
+  if (typeof updateNotifBadge === 'function') updateNotifBadge();
+  if (typeof showToast === 'function') showToast('Round paused — tap the banner to resume.', 'info');
+}
+
+// Called when leaving the TR scorecard via the BACK pill.
+function trcLeaveScorecard() {
+  maybePauseTrRound();
+  showScreen('trresult');
+}
+
+// Tapping the banner: restore the TR flow + scores and jump back into the scorecard.
 function resumePausedRound() {
   if (!_pausedRound) { hidePausedRoundBanner(); return; }
-  _sc = JSON.parse(JSON.stringify(_pausedRound.snapshot));
-  _sc.isCarousel = true;
+  if (!_trFlow) _trFlow = {};
+  _trFlow.course = JSON.parse(JSON.stringify(_pausedRound.course));
+  if (_pausedRound.team) _trFlow.team = JSON.parse(JSON.stringify(_pausedRound.team));
+  _trcScores = _pausedRound.trcScores.slice();
+  _trcHole = _pausedRound.trcHole || 0;
+  _trcBuf = '';
+  _scRoundSaved = false;
+  _pausedRound = null;   // cleared so leaving again snapshots the latest scores
   hidePausedRoundBanner();
-  const overlay = document.getElementById('scorecardOverlay');
-  if (overlay) overlay.classList.add('open');
-  // Rebuild the carousel view at the last hole the player was on.
-  if (typeof renderCarouselHole === 'function') renderCarouselHole(_sc.currentHole || 0);
-  if (typeof renderCarouselDots === 'function') renderCarouselDots();
-  if (typeof updateScorecardTotals === 'function') updateScorecardTotals();
-  document.getElementById('sc_carousel').style.display = '';
-  document.getElementById('sc_holes').style.display = 'none';
-  document.getElementById('sc_colHeader').style.display = 'none';
+  showScreen('trscore');
 }
 
 // Discard the paused round entirely (with confirmation).
@@ -14932,10 +15013,11 @@ function confirmDiscardPausedRound() {
   closePausedRoundConfirm();
   _pausedRound = null;
   hidePausedRoundBanner();
-  _sc.scores = []; _sc.oppScores = [];
-  _sc.isMatch = false; _sc.isLive = false; _sc.matchId = null; _sc.myRole = null;
   if (typeof showToast === 'function') showToast('Round discarded.', 'info');
   clearPausedRoundFromCloud();
+  if (typeof updateNotifBadge === 'function') updateNotifBadge();
+  var notifScr = document.getElementById('screen-notifications');
+  if (notifScr && notifScr.classList.contains('active') && typeof renderNotifList === 'function') renderNotifList();
 }
 
 // ── Paused-round cloud persistence (survives app close / re-login) ──────────
@@ -14948,9 +15030,10 @@ function _pausedRoundDocRef() {
 
 async function savePausedRoundToCloud() {
   const ref = _pausedRoundDocRef();
+  console.log('[PAUSE] savePausedRoundToCloud: ref=', !!ref, 'hasPaused=', !!_pausedRound);
   if (!ref || !_pausedRound) return;
-  try { await ref.set(_pausedRound); }
-  catch (e) { console.warn('Could not save paused round:', e); }
+  try { await ref.set(_pausedRound); console.log('[PAUSE] saved to Firestore OK'); }
+  catch (e) { console.warn('[PAUSE] Could not save paused round:', e); }
 }
 
 async function clearPausedRoundFromCloud() {
@@ -14962,17 +15045,22 @@ async function clearPausedRoundFromCloud() {
 
 // Called at login: if a paused round was left behind, restore it and show the banner.
 async function restorePausedRoundFromCloud(uid) {
-  if (!window._fbDb) return;
+  console.log('[PAUSE] restorePausedRoundFromCloud called for uid=', uid);
+  if (!window._fbDb) { console.log('[PAUSE] no _fbDb'); return; }
   try {
     const snap = await window._fbDb.collection('users').doc(uid).collection('state').doc('pausedRound').get();
+    console.log('[PAUSE] restore: doc exists=', snap.exists);
     if (!snap.exists) return;
     const data = snap.data();
-    if (!data || !data.snapshot || !Array.isArray(data.snapshot.scores) || !data.snapshot.scores.some(s => s > 0)) {
+    console.log('[PAUSE] restore: trcScores=', JSON.stringify(data && data.trcScores));
+    if (!data || !Array.isArray(data.trcScores) || !data.trcScores.some(s => s != null)) {
+      console.log('[PAUSE] restore: no valid scores, deleting doc');
       await window._fbDb.collection('users').doc(uid).collection('state').doc('pausedRound').delete().catch(()=>{});
       return;
     }
     _pausedRound = data;
     _scRoundSaved = false;
+    console.log('[PAUSE] restore: showing banner');
     if (typeof showPausedRoundBanner === 'function') showPausedRoundBanner();
   } catch (e) {
     console.warn('Could not restore paused round:', e);
@@ -16397,7 +16485,7 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('DOMContentLoaded', applyLang);
 // BUILD STAMP — check this in the browser console to confirm which version is live.
 // If you deploy and don't see this exact string, you're being served a cached/old build.
-console.log('%cParmate build: 2026-07-29-scorecard-fixes+paused-round', 'color:#1a6b3c;font-weight:bold;font-size:14px;');
+console.log('%cParmate build: 2026-07-31-notif-paused-round', 'color:#1a6b3c;font-weight:bold;font-size:14px;');
 </script>
 
 <!-- ── MATCH GATE OVERLAY ── -->
@@ -20466,7 +20554,7 @@ console.log('%cParmate build: 2026-07-29-scorecard-fixes+paused-round', 'color:#
       <div class="sub-header">
         <span class="title">Scorecard</span>
         <div class="actions">
-          <button class="back-pill" type="button" onclick="showScreen('trresult')">BACK</button>
+          <button class="back-pill" type="button" onclick="trcLeaveScorecard()">BACK</button>
         </div>
       </div>
 
@@ -26046,9 +26134,30 @@ function renderNotifList(ROOT){
   var _t=(typeof t==='function')?t:function(k){return k;};
   var reqs=(typeof _pendingRequests!=='undefined'&&_pendingRequests)||[];
   var og=(window._openGames||[]);
+  // TR paused round (single-player) — surface it in the same notifications list
+  // as TM open games, with Resume / Discard actions.
+  var pausedHtml = '';
+  if (typeof _pausedRound !== 'undefined' && _pausedRound) {
+    var pr = _pausedRound;
+    var prBits = [];
+    if (pr.courseName) prBits.push(pr.courseName);
+    prBits.push((pr.holesPlayed||0) + '/' + (pr.holes||'?') + ' holes');
+    pausedHtml = '<div class="og-section-label">Round in progress</div>' +
+      '<div class="open-game-card">' +
+        '<div class="og-btns">' +
+          '<button class="og-btn og-cancel" onclick="discardPausedRound()">\u2715 Discard</button>' +
+          '<button class="og-btn og-continue" onclick="resumePausedRound()">\u25B6 Resume</button>' +
+        '</div>' +
+        '<div class="og-info">' +
+          '<span class="og-badge active">TEAM ROUND</span>' +
+          '<div class="og-title">Resume your round</div>' +
+          '<div class="og-sub">' + prBits.join(' \u00b7 ') + '</div>' +
+        '</div>' +
+      '</div>';
+  }
   var reqHtml = reqs.length ? ('<div class="og-section-label">'+_t('bell_requests')+'</div>'+reqs.map(renderBellRequest).join('')) : '';
   var ogHtml = og.length ? ('<div class="og-section-label">'+_t('og_section')+'</div>'+og.map(renderOpenGameCard).join('')) : '';
-  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : ((reqs.length||og.length||(typeof _msgUnread!=='undefined'&&_msgUnread>0)) ? '' : '<div class="notif-empty">No notifications yet.</div>');
+  var notifHtml = _notifications.length ? _notifications.map(renderNotifRow).join('') : ((reqs.length||og.length||pausedHtml||(typeof _msgUnread!=='undefined'&&_msgUnread>0)) ? '' : '<div class="notif-empty">No notifications yet.</div>');
   var msgHtml='';
   if(typeof _msgUnread!=='undefined' && _msgUnread>0){
     msgHtml='<div class="og-section-label">'+_t('inbox_title')+'</div>'+
@@ -26061,7 +26170,7 @@ function renderNotifList(ROOT){
         '<span style="color:#1a6b3c;font-weight:700;font-size:18px;">\u203a</span>'+
       '</div>';
   }
-  list.innerHTML = msgHtml + reqHtml + ogHtml + notifHtml;
+  list.innerHTML = pausedHtml + msgHtml + reqHtml + ogHtml + notifHtml;
 }
 async function renderNotifications(ROOT){
   ROOT=ROOT||document.getElementById('screen-notifications'); if(!ROOT) return;
@@ -26087,7 +26196,7 @@ function markNotifsReadSilently(uid){
     .catch(function(e){ console.warn('markNotifsReadSilently',e); });
 }
 function updateNotifBadge(){
-  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0)+((typeof _pendingRequests!=='undefined'&&_pendingRequests)?_pendingRequests.length:0)+((typeof _msgUnread!=='undefined'&&_msgUnread)?_msgUnread:0);
+  var n=(_notifUnread||0)+((window._openGames&&window._openGames.length)||0)+((typeof _pendingRequests!=='undefined'&&_pendingRequests)?_pendingRequests.length:0)+((typeof _msgUnread!=='undefined'&&_msgUnread)?_msgUnread:0)+((typeof _pausedRound!=='undefined'&&_pausedRound)?1:0);
   document.querySelectorAll('.header-icons').forEach(function(hdr){
     var icons=hdr.querySelectorAll('.icon-btn'); var bell=icons[1]; if(!bell) return;
     bell.style.position='relative';
